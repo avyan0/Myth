@@ -11,12 +11,9 @@ const G = gsap;
 // ── State ─────────────────────────────────────────────
 const player = {
   name: '',
-  friendGroup: null,   // 'mob' | 'balance' | 'grind'
-  personality: null,   // 'grinder' | 'social' | 'wildcard'
+  friendGroup: null,
+  personality: null,
   height: null,
-  skinTone: null,
-  eyeColor: null,
-  hairColor: null,
   rumor: null,
   background: null,
   secret: null,
@@ -58,21 +55,17 @@ const STAT_LABELS = {
 // Stat bar colors: gold for high, white for mid, red for low / toxic
 function statColor(key, val) {
   if (key === 'toxicity' || key === 'stress') {
-    // Higher = bad
-    if (val >= 7) return '#FF2D55';
-    if (val >= 4) return '#FFD700';
-    return '#4ade80';
+    if (val >= 7) return '#FC7B54';
+    if (val >= 4) return '#F7B731';
+    return '#6BCB77';
   }
-  if (val >= 7) return '#FFD700';
-  if (val >= 4) return '#00C6FF';
-  return '#FF2D55';
+  if (val >= 7) return '#F7B731';
+  if (val >= 4) return '#6BCB77';
+  return '#FC7B54';
 }
 
 // ── Randomization pools ───────────────────────────────
-const HEIGHTS = ["5'3\"","5'4\"","5'5\"","5'6\"","5'7\"","5'8\"","5'9\"","5'10\"","5'11\"","6'0\"","6'1\"","6'2\"","6'3\"","6'4\""];
-const SKIN_TONES = ['Fair','Light','Medium','Tan','Brown','Dark Brown','Deep'];
-const EYE_COLORS = ['Brown','Dark Brown','Hazel','Blue','Green','Gray','Amber'];
-const HAIR_COLORS = ['Black','Dark Brown','Brown','Light Brown','Dirty Blonde','Blonde','Red','Auburn'];
+const HEIGHTS = ["5'2\"","5'3\"","5'4\"","5'5\"","5'6\"","5'7\"","5'8\"","5'9\"","5'10\"","5'11\"","6'0\"","6'1\"","6'2\"","6'3\"","6'4\"","6'5\""];
 
 const RUMORS = [
   { text: 'Got expelled from their last school', tox: +2 },
@@ -85,6 +78,26 @@ const RUMORS = [
   { text: "Supposedly the child of someone important", tox: +1 },
   { text: "Overheard: 'Watch out for that one.'", tox: +1 },
   { text: "They say they turned down a scholarship somewhere else", tox: 0 },
+  { text: "Someone said they used to be a completely different person", tox: 0 },
+  { text: "Apparently there's a video of them doing something embarrassing", tox: +2 },
+  { text: "Word is they've been to three different schools in two years", tox: +1 },
+  { text: "Supposedly they ghosted their entire old friend group over the summer", tox: +1 },
+  { text: "Heard they can actually fight — like, for real", tox: +1 },
+  { text: "People say they went through something serious last year", tox: 0 },
+  { text: "Word is they have a record", tox: +2 },
+  { text: "Someone swears they've seen them cry in a bathroom stall", tox: 0 },
+  { text: "They say this one's running from something", tox: +1 },
+  { text: "Heard they used to be homeschooled — this is their first real school", tox: 0 },
+  { text: "Supposedly dated someone twice their age over the summer", tox: +2 },
+  { text: "Heard they only got in because of a deal their parents made", tox: +1 },
+  { text: "Word is their parents are going through a really bad divorce", tox: 0 },
+  { text: "People say they're already talking to someone's girlfriend", tox: +2 },
+  { text: "Apparently they got caught cheating at their last school", tox: +2 },
+  { text: "Someone said they're only here for a semester", tox: 0 },
+  { text: "Overheard two teachers whispering about them on day one", tox: +1 },
+  { text: "Word is they turned down an offer from a D1 program", tox: 0 },
+  { text: "Supposedly they know something about someone powerful here", tox: +1 },
+  { text: "People say they used to be best friends with someone who hates them now", tox: +1 },
 ];
 
 const BACKGROUNDS = [
@@ -106,17 +119,67 @@ const BACKGROUNDS = [
     desc: 'You earned your place. Everyone knows it.',
     bonus: { gpa: +1, athleticism: +1, stress: +1 },
   },
+  {
+    id: 'transfer',
+    label: 'TRANSFER STUDENT',
+    desc: 'You chose to leave somewhere else. That choice follows you.',
+    bonus: { selfAwareness: +2, toxicity: +1, friendships: -1 },
+  },
+  {
+    id: 'local_legend',
+    label: 'LOCAL KID',
+    desc: "You've been in this neighborhood forever. Half these people knew you in 4th grade.",
+    bonus: { friendships: +2, culturality: +1, selfAwareness: -1 },
+  },
+  {
+    id: 'military',
+    label: 'MILITARY KID',
+    desc: "You've moved five times. This is just another school. You've gotten good at starting over.",
+    bonus: { selfAwareness: +2, stress: -1, relationships: -1 },
+  },
+  {
+    id: 'online_famous',
+    label: 'QUIETLY INTERNET FAMOUS',
+    desc: "You have a following. Most people here don't know it yet.",
+    bonus: { culturality: +2, wealth: +1, toxicity: +1 },
+  },
+  {
+    id: 'returnee',
+    label: 'RETURNEE',
+    desc: 'You went to middle school here, left for two years, and came back. Nobody knows why.',
+    bonus: { selfAwareness: +1, integrity: +1, friendships: -1, toxicity: +1 },
+  },
+  {
+    id: 'prodigy',
+    label: 'SKIPPED A GRADE',
+    desc: "You're younger than everyone. Some respect it. Others use it against you.",
+    bonus: { gpa: +2, selfAwareness: +1, stress: +1, looks: -1 },
+  },
+  {
+    id: 'old_money',
+    label: 'OLD MONEY',
+    desc: "Your family has history at this school. Not all of it flattering.",
+    bonus: { wealth: +3, integrity: -1, stress: +1 },
+  },
 ];
 
 const SECRETS = [
-  { id: 'anxiety',    label: 'You have anxiety',             desc: 'You manage it. Mostly.', icon: '🫀' },
-  { id: 'learning',   label: 'Learning disability (hidden)', desc: "You've been compensating for years.", icon: '🧠' },
-  { id: 'wealthy',    label: 'Secretly very wealthy',        desc: "You don't look it. On purpose.", icon: '💰' },
-  { id: 'talent',     label: 'Hidden artistic talent',       desc: "You haven't shown anyone yet.", icon: '🎨' },
-  { id: 'family',     label: 'Family issues at home',        desc: "You leave that at the door.", icon: '🏠' },
-  { id: 'athlete',    label: 'Quit a sport you were elite at', desc: 'The muscle memory stays.', icon: '⚡' },
-  { id: 'crush',      label: 'Already in love with someone', desc: "First day. Already complicated.", icon: '💛' },
-  { id: 'following',  label: 'Anonymous online following',   desc: "Thousands of people know your work. Not your face.", icon: '📱' },
+  { id: 'anxiety',      label: 'You have anxiety',                  desc: 'You manage it. Mostly.',                                     icon: '🫀' },
+  { id: 'learning',     label: 'Learning disability (hidden)',       desc: "You've been compensating for years.",                         icon: '🧠' },
+  { id: 'wealthy',      label: 'Secretly very wealthy',             desc: "You don't look it. On purpose.",                             icon: '💰' },
+  { id: 'talent',       label: 'Hidden artistic talent',            desc: "You haven't shown anyone yet.",                              icon: '🎨' },
+  { id: 'family',       label: 'Difficult home life',               desc: "You leave it at the door. Every single day.",                icon: '🏠' },
+  { id: 'ex_athlete',   label: 'Quit a sport you were elite at',    desc: 'The muscle memory stays.',                                   icon: '⚡' },
+  { id: 'crush',        label: 'Already in love with someone here', desc: "First day. Already complicated.",                            icon: '💛' },
+  { id: 'following',    label: 'Anonymous online following',        desc: "Thousands know your work. Not your face.",                   icon: '📱' },
+  { id: 'chronic',      label: 'Chronic illness — managed, hidden', desc: "Invisible. Exhausting. Nobody knows.",                       icon: '💊' },
+  { id: 'therapy',      label: "You've been in therapy for 2 years", desc: "Best decision you ever made. You'll never tell anyone.",   icon: '🛋' },
+  { id: 'ghosted',      label: 'You ghosted your entire old friend group', desc: "They still don't know why. Neither do you, fully.",   icon: '👻' },
+  { id: 'writer',       label: 'You write — real stuff, dark stuff', desc: "Not for class. It goes somewhere nobody will ever read.",   icon: '✍️' },
+  { id: 'bad_breakup',  label: 'A relationship ended badly',        desc: "It shaped you more than you want to admit.",                 icon: '💔' },
+  { id: 'secret_keep',  label: "You know someone's secret",         desc: "Something big. You haven't decided what to do with it.",    icon: '🔑' },
+  { id: 'language',     label: 'Fluent in a language nobody here speaks', desc: "You use it to think. To stay private.",               icon: '🗣' },
+  { id: 'dropout_risk', label: 'You almost didn\'t come back this year', desc: "Something almost changed everything. It still might.", icon: '🚪' },
 ];
 
 // ── Utility ───────────────────────────────────────────
@@ -410,13 +473,10 @@ function applyPersonalityStats(p) {
 //  SCENE 5 — RANDOMIZE
 // ════════════════════════════════════════════════════════
 const RANDOM_SEQUENCE = [
-  { key: 'height',   label: 'HEIGHT',     pool: HEIGHTS,     icon: '📏', accent: '#00C6FF', glow: 'rgba(0,198,255,0.15)' },
-  { key: 'skinTone', label: 'SKIN TONE',  pool: SKIN_TONES,  icon: '🎨', accent: '#FF9F43', glow: 'rgba(255,159,67,0.15)' },
-  { key: 'eyeColor', label: 'EYE COLOR',  pool: EYE_COLORS,  icon: '👁',  accent: '#A8E063', glow: 'rgba(168,224,99,0.15)' },
-  { key: 'hairColor',label: 'HAIR',       pool: HAIR_COLORS, icon: '✂️',  accent: '#FFD700', glow: 'rgba(255,215,0,0.15)' },
-  { key: 'rumor',    label: 'RUMOR',      pool: RUMORS,      icon: '💬', accent: '#FF2D55', glow: 'rgba(255,45,85,0.2)',  special: true },
-  { key: 'background',label:'BACKGROUND', pool: BACKGROUNDS, icon: '📋', accent: '#00C6FF', glow: 'rgba(0,198,255,0.2)',  special: true },
-  { key: 'secret',   label: 'SECRET',     pool: SECRETS,     icon: '🔒', accent: '#FFD700', glow: 'rgba(255,215,0,0.2)', special: true, hidden: true },
+  { key: 'height',     label: 'HEIGHT',     pool: HEIGHTS,     icon: '📏', accent: '#F7B731', glow: 'rgba(247,183,49,0.18)' },
+  { key: 'rumor',      label: 'RUMOR',      pool: RUMORS,      icon: '💬', accent: '#FC7B54', glow: 'rgba(252,123,84,0.2)',  special: true },
+  { key: 'background', label: 'BACKGROUND', pool: BACKGROUNDS, icon: '📋', accent: '#6BCB77', glow: 'rgba(107,203,119,0.2)', special: true },
+  { key: 'secret',     label: 'SECRET',     pool: SECRETS,     icon: '🔒', accent: '#E8849A', glow: 'rgba(232,132,154,0.2)', special: true, hidden: true },
 ];
 
 let revealIdx = 0;
@@ -424,10 +484,7 @@ const revealedMinis = [];
 
 function startRandomizeScene() {
   // Roll all values now
-  player.height    = rand(HEIGHTS);
-  player.skinTone  = rand(SKIN_TONES);
-  player.eyeColor  = rand(EYE_COLORS);
-  player.hairColor = rand(HAIR_COLORS);
+  player.height = rand(HEIGHTS);
 
   const rumorData = rand(RUMORS);
   player.rumor = rumorData.text;
@@ -620,7 +677,7 @@ function startCharCardScene() {
   document.getElementById('cc-name-display').textContent = player.name.toUpperCase();
 
   const groupLabels = { mob: 'GAYGOS', balance: 'XBOX', grind: "LUCAS'S GANG" };
-  const groupColors = { mob: '#E85D4A', balance: '#0DD9D4', grind: '#F5A623' };
+  const groupColors = { mob: '#FC7B54', balance: '#F7B731', grind: '#6BCB77' };
   const persLabels  = {
     grinder:  'THE GRINDER',
     social:   'SOCIAL BUTTERFLY',
@@ -634,19 +691,16 @@ function startCharCardScene() {
 
   const gBadge = document.getElementById('cc-group-display');
   gBadge.textContent = groupLabels[player.friendGroup] || '—';
-  gBadge.style.borderColor = (groupColors[player.friendGroup] || '#0DD9D4') + '88';
-  gBadge.style.color = groupColors[player.friendGroup] || '#0DD9D4';
-  gBadge.style.background = (groupColors[player.friendGroup] || '#0DD9D4') + '18';
+  gBadge.style.borderColor = (groupColors[player.friendGroup] || '#F7B731') + '88';
+  gBadge.style.color = groupColors[player.friendGroup] || '#F7B731';
+  gBadge.style.background = (groupColors[player.friendGroup] || '#F7B731') + '18';
 
   document.getElementById('cc-pers-display').textContent = persLabels[player.personality] || '—';
 
   // Attributes
   const attrsEl = document.getElementById('cc-attributes');
   const attrs = [
-    { label: 'HEIGHT',     val: player.height },
-    { label: 'SKIN',       val: player.skinTone },
-    { label: 'EYES',       val: player.eyeColor },
-    { label: 'HAIR',       val: player.hairColor },
+    { label: 'HEIGHT', val: player.height },
   ];
   attrsEl.innerHTML = attrs.map(a => `
     <div class="cc-attr">
@@ -667,19 +721,19 @@ function startCharCardScene() {
     {
       label: 'RUMOR',
       val: player.rumor,
-      color: '#FF2D55',
+      color: '#FC7B54',
       hidden: false,
     },
     {
       label: 'BACKGROUND',
       val: player.background.label + ' — ' + player.background.desc,
-      color: '#00C6FF',
+      color: '#6BCB77',
       hidden: false,
     },
     {
       label: 'SECRET',
       val: player.secret.label,
-      color: '#FFD700',
+      color: '#E8849A',
       hidden: true,
     },
   ];
