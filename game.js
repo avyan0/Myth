@@ -1,0 +1,837 @@
+/* ═══════════════════════════════════════════════════════
+   MYTH — game.js
+   Scene sequencer + character creation logic
+═══════════════════════════════════════════════════════ */
+
+'use strict';
+
+// ── GSAP shorthand ────────────────────────────────────
+const G = gsap;
+
+// ── State ─────────────────────────────────────────────
+const player = {
+  name: '',
+  friendGroup: null,   // 'mob' | 'balance' | 'grind'
+  personality: null,   // 'grinder' | 'social' | 'wildcard'
+  height: null,
+  skinTone: null,
+  eyeColor: null,
+  hairColor: null,
+  rumor: null,
+  background: null,
+  secret: null,
+  stats: {
+    gpa:            5,
+    friendships:    3,
+    relationships:  2,
+    toxicity:       1,
+    looks:          5,
+    physique:       5,
+    athleticism:    4,
+    extracurriculars: 2,
+    culturality:    3,
+    integrity:      7,
+    stress:         3,
+    wealth:         5,
+    selfAwareness:  4,
+    sleep:          6,
+  }
+};
+
+const STAT_LABELS = {
+  gpa:              'GPA',
+  friendships:      'FRIENDSHIPS',
+  relationships:    'RELATIONSHIPS',
+  toxicity:         'TOXICITY',
+  looks:            'LOOKS',
+  physique:         'PHYSIQUE',
+  athleticism:      'ATHLETICISM',
+  extracurriculars: 'EXTRACURRICULARS',
+  culturality:      'CULTURALITY',
+  integrity:        'INTEGRITY',
+  stress:           'STRESS',
+  wealth:           'WEALTH',
+  selfAwareness:    'SELF-AWARENESS',
+  sleep:            'SLEEP',
+};
+
+// Stat bar colors: gold for high, white for mid, red for low / toxic
+function statColor(key, val) {
+  if (key === 'toxicity' || key === 'stress') {
+    // Higher = bad
+    if (val >= 7) return '#FF2D55';
+    if (val >= 4) return '#FFD700';
+    return '#4ade80';
+  }
+  if (val >= 7) return '#FFD700';
+  if (val >= 4) return '#00C6FF';
+  return '#FF2D55';
+}
+
+// ── Randomization pools ───────────────────────────────
+const HEIGHTS = ["5'3\"","5'4\"","5'5\"","5'6\"","5'7\"","5'8\"","5'9\"","5'10\"","5'11\"","6'0\"","6'1\"","6'2\"","6'3\"","6'4\""];
+const SKIN_TONES = ['Fair','Light','Medium','Tan','Brown','Dark Brown','Deep'];
+const EYE_COLORS = ['Brown','Dark Brown','Hazel','Blue','Green','Gray','Amber'];
+const HAIR_COLORS = ['Black','Dark Brown','Brown','Light Brown','Dirty Blonde','Blonde','Red','Auburn'];
+
+const RUMORS = [
+  { text: 'Got expelled from their last school', tox: +2 },
+  { text: "Rumor is they're loaded but hiding it", tox: +1 },
+  { text: 'People say they were a prodigy at something', tox: 0 },
+  { text: "Word is they've already hooked up with someone here", tox: +2 },
+  { text: "Apparently their family is... controversial", tox: +1 },
+  { text: "People say they're not actually from here", tox: 0 },
+  { text: "They say this one's got a dark side", tox: +2 },
+  { text: "Supposedly the child of someone important", tox: +1 },
+  { text: "Overheard: 'Watch out for that one.'", tox: +1 },
+  { text: "They say they turned down a scholarship somewhere else", tox: 0 },
+];
+
+const BACKGROUNDS = [
+  {
+    id: 'new_kid',
+    label: 'NEW KID',
+    desc: 'Nobody knows your story yet.',
+    bonus: { integrity: +1, selfAwareness: +1, friendships: -1 },
+  },
+  {
+    id: 'legacy',
+    label: 'LEGACY STUDENT',
+    desc: "Your family's name opens doors here.",
+    bonus: { wealth: +2, friendships: +1, integrity: -1 },
+  },
+  {
+    id: 'scholarship',
+    label: 'SCHOLARSHIP KID',
+    desc: 'You earned your place. Everyone knows it.',
+    bonus: { gpa: +1, athleticism: +1, stress: +1 },
+  },
+];
+
+const SECRETS = [
+  { id: 'anxiety',    label: 'You have anxiety',             desc: 'You manage it. Mostly.', icon: '🫀' },
+  { id: 'learning',   label: 'Learning disability (hidden)', desc: "You've been compensating for years.", icon: '🧠' },
+  { id: 'wealthy',    label: 'Secretly very wealthy',        desc: "You don't look it. On purpose.", icon: '💰' },
+  { id: 'talent',     label: 'Hidden artistic talent',       desc: "You haven't shown anyone yet.", icon: '🎨' },
+  { id: 'family',     label: 'Family issues at home',        desc: "You leave that at the door.", icon: '🏠' },
+  { id: 'athlete',    label: 'Quit a sport you were elite at', desc: 'The muscle memory stays.', icon: '⚡' },
+  { id: 'crush',      label: 'Already in love with someone', desc: "First day. Already complicated.", icon: '💛' },
+  { id: 'following',  label: 'Anonymous online following',   desc: "Thousands of people know your work. Not your face.", icon: '📱' },
+];
+
+// ── Utility ───────────────────────────────────────────
+const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+function flash(cb) {
+  const el = document.getElementById('flash-overlay');
+  G.timeline()
+    .to(el, { opacity: 1, duration: 0.08 })
+    .to(el, { opacity: 0, duration: 0.25, onComplete: cb });
+}
+
+function showScene(id, onDone) {
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  G.to(el, { opacity: 1, duration: 0.4, ease: 'power2.out', onComplete: onDone });
+}
+
+function hideScene(id, onDone) {
+  const el = document.getElementById(id);
+  G.to(el, {
+    opacity: 0, duration: 0.3, ease: 'power2.in',
+    onComplete: () => {
+      el.classList.remove('active');
+      if (onDone) onDone();
+    }
+  });
+}
+
+// ── Noise Canvas ──────────────────────────────────────
+(function initNoise() {
+  const canvas = document.getElementById('noise-canvas');
+  const ctx    = canvas.getContext('2d');
+  let frame;
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  function draw() {
+    const { width: w, height: h } = canvas;
+    const img  = ctx.createImageData(w, h);
+    const data = img.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const v = Math.random() * 255 | 0;
+      data[i] = data[i+1] = data[i+2] = v;
+      data[i+3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    frame = requestAnimationFrame(draw);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+})();
+
+// ════════════════════════════════════════════════════════
+//  SCENE 0 — BOOT
+// ════════════════════════════════════════════════════════
+(function bootScene() {
+  showScene('scene-boot');
+  // After ~2.6 s, fade to intro
+  setTimeout(() => {
+    hideScene('scene-boot', startIntro);
+  }, 2600);
+})();
+
+// ════════════════════════════════════════════════════════
+//  SCENE 1 — INTRO
+// ════════════════════════════════════════════════════════
+function startIntro() {
+  showScene('scene-intro');
+
+  const l1 = document.getElementById('intro-l1');
+  const l2 = document.getElementById('intro-l2');
+  const l3 = document.getElementById('intro-l3');
+  const continueEl = document.getElementById('intro-continue');
+
+  // Animate hallway layers
+  G.from('.hall-layer', {
+    scale: 0.6,
+    opacity: 0,
+    duration: 2.5,
+    stagger: 0.15,
+    ease: 'power3.out',
+  });
+
+  // Lines slash in
+  const tl = G.timeline({ delay: 0.5 });
+  tl.to(l1, {
+    opacity: 1, x: 0,
+    clipPath: 'inset(0 0% 0 0)',
+    duration: 0.7, ease: 'power3.out',
+    onStart() { l1.style.clipPath = 'inset(0 100% 0 0)'; l1.style.opacity = 1; }
+  })
+  .to(l2, { opacity: 1, x: 0, duration: 0.5, ease: 'power3.out' }, '+=0.1')
+  .to(l3, { opacity: 1, x: 0, duration: 0.5, ease: 'power3.out' }, '+=0.15')
+  .to(continueEl, { opacity: 1, duration: 0.5 }, '+=0.6');
+
+  // Any key → next scene
+  let ready = false;
+  function proceed() {
+    if (!ready) return;
+    window.removeEventListener('keydown', proceed);
+    continueEl.removeEventListener('click', proceed);
+    flash(() => {
+      hideScene('scene-intro', startNameScene);
+    });
+  }
+
+  tl.call(() => {
+    ready = true;
+    window.addEventListener('keydown', proceed);
+    continueEl.addEventListener('click', proceed);
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  SCENE 2 — NAME
+// ════════════════════════════════════════════════════════
+function startNameScene() {
+  showScene('scene-name');
+
+  // Card drops in
+  G.from('#id-card', {
+    y: -60, rotateX: -15, opacity: 0,
+    duration: 0.9, ease: 'back.out(1.4)',
+    delay: 0.1
+  });
+
+  G.from('.scene-header > *', {
+    y: 20, opacity: 0,
+    stagger: 0.08, duration: 0.5,
+    ease: 'power3.out', delay: 0.2
+  });
+
+  const input  = document.getElementById('name-input');
+  const btn    = document.getElementById('name-confirm');
+  const numEl  = document.querySelector('.id-number');
+
+  input.addEventListener('input', () => {
+    const v = input.value.trim();
+    btn.disabled = v.length < 2;
+    numEl.textContent = v.length >= 2
+      ? `WB–2026–${Math.abs(v.split('').reduce((a,c) => a + c.charCodeAt(0), 0) % 9000 + 1000)}`
+      : 'WB–2026–????';
+  });
+
+  btn.addEventListener('click', () => {
+    player.name = input.value.trim();
+    flash(() => hideScene('scene-name', startGroupScene));
+  });
+
+  // Focus the input after animation
+  setTimeout(() => input.focus(), 400);
+}
+
+// ════════════════════════════════════════════════════════
+//  SCENE 3 — FRIEND GROUP
+// ════════════════════════════════════════════════════════
+function startGroupScene() {
+  showScene('scene-group');
+
+  G.from('.scene-header > *', {
+    y: 20, opacity: 0, stagger: 0.08, duration: 0.5,
+    ease: 'power3.out', delay: 0.1
+  });
+
+  // Cards stagger in
+  G.to('.group-card', {
+    opacity: 1, y: 0,
+    stagger: 0.12, duration: 0.7,
+    ease: 'back.out(1.2)', delay: 0.3
+  });
+
+  document.querySelectorAll('.group-card').forEach(card => {
+    card.addEventListener('click', () => {
+      // Deselect all
+      document.querySelectorAll('.group-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      const g = card.dataset.group;
+      player.friendGroup = g;
+      applyGroupStats(g);
+
+      // Small bounce
+      G.from(card, { scale: 1.06, duration: 0.3, ease: 'back.out(2)' });
+
+      // Reveal continue button or auto-advance
+      setTimeout(() => {
+        flash(() => hideScene('scene-group', startPersonalityScene));
+      }, 500);
+    });
+  });
+}
+
+function applyGroupStats(g) {
+  const s = player.stats;
+  if (g === 'mob') {
+    s.friendships    = clamp(s.friendships    + 3, 0, 10);
+    s.toxicity       = clamp(s.toxicity       + 3, 0, 10);
+    s.gpa            = clamp(s.gpa            - 2, 0, 10);
+    s.integrity      = clamp(s.integrity      - 2, 0, 10);
+  } else if (g === 'balance') {
+    s.looks          = clamp(s.looks          + 2, 0, 10);
+    s.physique       = clamp(s.physique       + 2, 0, 10);
+    s.gpa            = clamp(s.gpa            + 1, 0, 10);
+    // −consistency is handled narratively, no direct stat
+  } else if (g === 'grind') {
+    s.gpa            = clamp(s.gpa            + 3, 0, 10);
+    s.selfAwareness  = clamp(s.selfAwareness  + 2, 0, 10);
+    s.relationships  = clamp(s.relationships  - 2, 0, 10);
+    s.looks          = clamp(s.looks          - 1, 0, 10);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  SCENE 4 — PERSONALITY
+// ════════════════════════════════════════════════════════
+function startPersonalityScene() {
+  showScene('scene-personality');
+
+  G.from('.scene-header > *', {
+    y: 20, opacity: 0, stagger: 0.08, duration: 0.5,
+    ease: 'power3.out', delay: 0.1
+  });
+
+  G.to('.pers-card', {
+    opacity: 1, y: 0,
+    stagger: 0.15, duration: 0.7,
+    ease: 'back.out(1.2)', delay: 0.3
+  });
+
+  document.querySelectorAll('.pers-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.pers-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      player.personality = card.dataset.pers;
+      applyPersonalityStats(player.personality);
+
+      G.from(card, { scale: 1.05, duration: 0.3, ease: 'back.out(2)' });
+
+      setTimeout(() => {
+        flash(() => hideScene('scene-personality', startRandomizeScene));
+      }, 500);
+    });
+  });
+}
+
+function applyPersonalityStats(p) {
+  const s = player.stats;
+  if (p === 'grinder') {
+    s.gpa             = clamp(s.gpa             + 2, 0, 10);
+    s.selfAwareness   = clamp(s.selfAwareness   + 2, 0, 10);
+  } else if (p === 'social') {
+    s.friendships     = clamp(s.friendships     + 2, 0, 10);
+    s.relationships   = clamp(s.relationships   + 2, 0, 10);
+  } else if (p === 'athlete') {
+    s.athleticism     = clamp(s.athleticism     + 3, 0, 10);
+    s.physique        = clamp(s.physique        + 2, 0, 10);
+    s.extracurriculars= clamp(s.extracurriculars+ 1, 0, 10);
+    s.sleep           = clamp(s.sleep           - 1, 0, 10);
+  } else if (p === 'charmer') {
+    s.relationships   = clamp(s.relationships   + 2, 0, 10);
+    s.friendships     = clamp(s.friendships     + 1, 0, 10);
+    s.looks           = clamp(s.looks           + 1, 0, 10);
+    s.integrity       = clamp(s.integrity       - 1, 0, 10);
+  } else if (p === 'observer') {
+    s.selfAwareness   = clamp(s.selfAwareness   + 3, 0, 10);
+    s.culturality     = clamp(s.culturality     + 1, 0, 10);
+    s.friendships     = clamp(s.friendships     - 1, 0, 10);
+  } else if (p === 'rebel') {
+    s.toxicity        = clamp(s.toxicity        + 2, 0, 10);
+    s.integrity       = clamp(s.integrity       - 1, 0, 10);
+    s.stress          = clamp(s.stress          - 1, 0, 10);
+    s.extracurriculars= clamp(s.extracurriculars+ 1, 0, 10);
+  } else if (p === 'empath') {
+    s.relationships   = clamp(s.relationships   + 2, 0, 10);
+    s.selfAwareness   = clamp(s.selfAwareness   + 1, 0, 10);
+    s.stress          = clamp(s.stress          + 2, 0, 10);
+    s.sleep           = clamp(s.sleep           - 1, 0, 10);
+  } else if (p === 'wildcard') {
+    const keys = Object.keys(s);
+    const picks = keys.sort(() => Math.random() - 0.5).slice(0, 3);
+    s[picks[0]] = clamp(s[picks[0]] + 2, 0, 10);
+    s[picks[1]] = clamp(s[picks[1]] + 2, 0, 10);
+    s[picks[2]] = clamp(s[picks[2]] - 1, 0, 10);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  SCENE 5 — RANDOMIZE
+// ════════════════════════════════════════════════════════
+const RANDOM_SEQUENCE = [
+  { key: 'height',   label: 'HEIGHT',     pool: HEIGHTS,     icon: '📏', accent: '#00C6FF', glow: 'rgba(0,198,255,0.15)' },
+  { key: 'skinTone', label: 'SKIN TONE',  pool: SKIN_TONES,  icon: '🎨', accent: '#FF9F43', glow: 'rgba(255,159,67,0.15)' },
+  { key: 'eyeColor', label: 'EYE COLOR',  pool: EYE_COLORS,  icon: '👁',  accent: '#A8E063', glow: 'rgba(168,224,99,0.15)' },
+  { key: 'hairColor',label: 'HAIR',       pool: HAIR_COLORS, icon: '✂️',  accent: '#FFD700', glow: 'rgba(255,215,0,0.15)' },
+  { key: 'rumor',    label: 'RUMOR',      pool: RUMORS,      icon: '💬', accent: '#FF2D55', glow: 'rgba(255,45,85,0.2)',  special: true },
+  { key: 'background',label:'BACKGROUND', pool: BACKGROUNDS, icon: '📋', accent: '#00C6FF', glow: 'rgba(0,198,255,0.2)',  special: true },
+  { key: 'secret',   label: 'SECRET',     pool: SECRETS,     icon: '🔒', accent: '#FFD700', glow: 'rgba(255,215,0,0.2)', special: true, hidden: true },
+];
+
+let revealIdx = 0;
+const revealedMinis = [];
+
+function startRandomizeScene() {
+  // Roll all values now
+  player.height    = rand(HEIGHTS);
+  player.skinTone  = rand(SKIN_TONES);
+  player.eyeColor  = rand(EYE_COLORS);
+  player.hairColor = rand(HAIR_COLORS);
+
+  const rumorData = rand(RUMORS);
+  player.rumor = rumorData.text;
+  player.stats.toxicity = clamp(player.stats.toxicity + rumorData.tox, 0, 10);
+
+  const bgData = rand(BACKGROUNDS);
+  player.background = bgData;
+  Object.entries(bgData.bonus).forEach(([k, v]) => {
+    if (player.stats[k] !== undefined)
+      player.stats[k] = clamp(player.stats[k] + v, 0, 10);
+  });
+
+  player.secret = rand(SECRETS);
+
+  showScene('scene-randomize');
+
+  G.from('.scene-header > *', {
+    y: 20, opacity: 0, stagger: 0.08, duration: 0.5,
+    ease: 'power3.out', delay: 0.1
+  });
+
+  // Start revealing after short pause
+  setTimeout(() => revealNext(), 700);
+}
+
+function revealNext() {
+  if (revealIdx >= RANDOM_SEQUENCE.length) {
+    // All revealed — show continue
+    setTimeout(() => {
+      flash(() => hideScene('scene-randomize', startCharCardScene));
+    }, 800);
+    return;
+  }
+
+  const seq  = RANDOM_SEQUENCE[revealIdx];
+  const stage = document.getElementById('random-stage');
+
+  // Update dot
+  document.querySelectorAll('.rp-dot').forEach((d, i) => {
+    d.classList.remove('active');
+    if (i < revealIdx) d.classList.add('done');
+  });
+  const activeDot = document.querySelector(`.rp-dot[data-idx="${revealIdx}"]`);
+  if (activeDot) activeDot.classList.add('active');
+
+  // Resolve display value
+  let displayVal, displaySub;
+  if (seq.key === 'rumor') {
+    displayVal = '"' + player.rumor + '"';
+    displaySub = 'Affects early reputation';
+  } else if (seq.key === 'background') {
+    displayVal = player.background.label;
+    displaySub = player.background.desc;
+  } else if (seq.key === 'secret') {
+    displayVal = player.secret.label;
+    displaySub = player.secret.desc;
+  } else {
+    displayVal = player[seq.key];
+  }
+
+  // Build card
+  const card = document.createElement('div');
+  card.className = seq.special ? 'reveal-card special-card' : 'reveal-card';
+  card.style.setProperty('--card-accent', seq.accent);
+  card.style.setProperty('--card-glow-color', seq.glow);
+
+  card.innerHTML = `
+    <div class="rc-glow"></div>
+    <div class="rc-corner-tl"></div>
+    <div class="rc-corner-br"></div>
+    <div class="rc-type">${seq.label}</div>
+    <div class="rc-icon">${seq.icon}</div>
+    <div class="rc-value">${displayVal}</div>
+    ${displaySub ? `<div class="rc-sub">${displaySub}</div>` : ''}
+  `;
+
+  // If secret, show "ONLY YOU CAN SEE THIS"
+  if (seq.key === 'secret') {
+    const notice = document.createElement('div');
+    notice.style.cssText = 'font-family:var(--font-m);font-size:7px;letter-spacing:2px;color:var(--gold);margin-top:8px;position:relative;z-index:1;';
+    notice.textContent = '— ONLY YOU CAN SEE THIS —';
+    card.appendChild(notice);
+  }
+
+  // Shuffle animation — card appears with slot-machine spin
+  stage.innerHTML = '';
+  stage.appendChild(card);
+
+  // Brief shuffle of values before landing
+  if (!seq.special) {
+    let shuffles = 0;
+    const maxShuffles = 10;
+    const interval = setInterval(() => {
+      const tempVal = card.querySelector('.rc-value');
+      if (tempVal) tempVal.textContent = rand(seq.pool);
+      shuffles++;
+      if (shuffles >= maxShuffles) {
+        clearInterval(interval);
+        const final = card.querySelector('.rc-value');
+        if (final) final.textContent = displayVal;
+        finalizeCard(card, seq, displayVal);
+      }
+    }, 60);
+  } else {
+    // Special cards: dramatic pause then reveal
+    G.to(card, { opacity: 0.3, duration: 0.1 });
+
+    setTimeout(() => {
+      G.to(card, {
+        opacity: 1, rotateY: 0, scale: 1,
+        duration: 0.7, ease: 'back.out(1.4)',
+      });
+      // Glow pulse on special
+      G.to(card, {
+        boxShadow: `0 0 40px ${seq.glow}, 0 0 0 2px ${seq.accent}`,
+        duration: 0.3,
+        yoyo: true, repeat: 3,
+        ease: 'power2.inOut',
+        onComplete: () => finalizeCard(card, seq, displayVal),
+      });
+    }, 300);
+  }
+}
+
+function finalizeCard(card, seq, val) {
+  // Animate card into view
+  G.to(card, {
+    opacity: 1, rotateY: 0, scale: 1,
+    duration: 0.6, ease: 'back.out(1.4)',
+  });
+
+  // Add to mini revealed grid below
+  const stage = document.getElementById('random-stage');
+
+  // After 0.9 s, shrink current card and show it in the grid below
+  setTimeout(() => {
+    // Swap stage to revealed grid
+    let grid = document.querySelector('.revealed-grid');
+    if (!grid) {
+      grid = document.createElement('div');
+      grid.className = 'revealed-grid';
+      stage.appendChild(grid);
+    }
+
+    // Remove the large card
+    G.to(card, { scale: 0, opacity: 0, duration: 0.25, ease: 'power2.in',
+      onComplete: () => {
+        if (card.parentNode) card.parentNode.removeChild(card);
+        // Add mini card
+        addMiniCard(grid, seq, val);
+        revealIdx++;
+        setTimeout(revealNext, 400);
+      }
+    });
+  }, seq.special ? 1400 : 900);
+}
+
+function addMiniCard(grid, seq, val) {
+  const mini = document.createElement('div');
+  mini.className = 'mini-reveal-card';
+  mini.style.borderColor = seq.accent + '44';
+  mini.innerHTML = `
+    <div class="mrc-type">${seq.label}</div>
+    <div class="mrc-value" style="color:${seq.accent};font-size:${seq.special?'11px':'16px'}">${val}</div>
+  `;
+  grid.appendChild(mini);
+
+  G.to(mini, {
+    opacity: 1, scale: 1, y: 0,
+    duration: 0.4, ease: 'back.out(1.5)',
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  SCENE 6 — CHARACTER CARD
+// ════════════════════════════════════════════════════════
+function startCharCardScene() {
+  showScene('scene-charcard');
+
+  const wrap = document.getElementById('cc-wrap');
+
+  // Wrap animates in
+  G.to(wrap, {
+    opacity: 1, scale: 1, y: 0,
+    duration: 0.9, ease: 'back.out(1.2)',
+    delay: 0.15,
+  });
+
+  // Fill identity
+  document.getElementById('cc-name-display').textContent = player.name.toUpperCase();
+
+  const groupLabels = { mob: 'GAYGOS', balance: 'XBOX', grind: "LUCAS'S GANG" };
+  const groupColors = { mob: '#E85D4A', balance: '#0DD9D4', grind: '#F5A623' };
+  const persLabels  = {
+    grinder:  'THE GRINDER',
+    social:   'SOCIAL BUTTERFLY',
+    athlete:  'THE ATHLETE',
+    charmer:  'THE CHARMER',
+    observer: 'THE OBSERVER',
+    rebel:    'THE REBEL',
+    empath:   'THE EMPATH',
+    wildcard: 'THE WILDCARD',
+  };
+
+  const gBadge = document.getElementById('cc-group-display');
+  gBadge.textContent = groupLabels[player.friendGroup] || '—';
+  gBadge.style.borderColor = (groupColors[player.friendGroup] || '#0DD9D4') + '88';
+  gBadge.style.color = groupColors[player.friendGroup] || '#0DD9D4';
+  gBadge.style.background = (groupColors[player.friendGroup] || '#0DD9D4') + '18';
+
+  document.getElementById('cc-pers-display').textContent = persLabels[player.personality] || '—';
+
+  // Attributes
+  const attrsEl = document.getElementById('cc-attributes');
+  const attrs = [
+    { label: 'HEIGHT',     val: player.height },
+    { label: 'SKIN',       val: player.skinTone },
+    { label: 'EYES',       val: player.eyeColor },
+    { label: 'HAIR',       val: player.hairColor },
+  ];
+  attrsEl.innerHTML = attrs.map(a => `
+    <div class="cc-attr">
+      <div class="cc-attr-label">${a.label}</div>
+      <div class="cc-attr-val">${a.val}</div>
+    </div>
+  `).join('');
+
+  G.to('.cc-attr', {
+    opacity: 1, x: 0,
+    stagger: 0.08, duration: 0.4,
+    ease: 'power3.out', delay: 0.8
+  });
+
+  // Mini special cards
+  const miniCardsEl = document.getElementById('cc-cards-mini');
+  const specials = [
+    {
+      label: 'RUMOR',
+      val: player.rumor,
+      color: '#FF2D55',
+      hidden: false,
+    },
+    {
+      label: 'BACKGROUND',
+      val: player.background.label + ' — ' + player.background.desc,
+      color: '#00C6FF',
+      hidden: false,
+    },
+    {
+      label: 'SECRET',
+      val: player.secret.label,
+      color: '#FFD700',
+      hidden: true,
+    },
+  ];
+
+  miniCardsEl.innerHTML = specials.map(sp => `
+    <div class="mini-special-card" style="--msc-color:${sp.color}">
+      <div class="msc-type">${sp.label}</div>
+      ${sp.hidden
+        ? `<div class="msc-value msc-hidden">${sp.val}</div>
+           <div class="msc-hidden-label">🔒 ONLY YOU KNOW</div>`
+        : `<div class="msc-value">${sp.val}</div>`
+      }
+    </div>
+  `).join('');
+
+  G.to('.mini-special-card', {
+    opacity: 1, y: 0,
+    stagger: 0.1, duration: 0.5,
+    ease: 'back.out(1.3)', delay: 1.0
+  });
+
+  // Stat bars
+  const statsEl = document.getElementById('cc-stats-bars');
+  statsEl.innerHTML = Object.entries(player.stats).map(([key, val]) => `
+    <div class="stat-row" data-key="${key}" data-val="${val}">
+      <div class="stat-row-top">
+        <span class="stat-name">${STAT_LABELS[key]}</span>
+        <span class="stat-val">${val.toFixed(1)}</span>
+      </div>
+      <div class="stat-bar-track">
+        <div class="stat-bar-fill" style="background:${statColor(key, val)}"></div>
+      </div>
+    </div>
+  `).join('');
+
+  G.to('.stat-row', {
+    opacity: 1, x: 0,
+    stagger: 0.06, duration: 0.4,
+    ease: 'power3.out', delay: 0.5,
+    onComplete: animateStatBars,
+  });
+
+  // Begin button
+  document.getElementById('begin-btn').addEventListener('click', startTransition);
+}
+
+function animateStatBars() {
+  document.querySelectorAll('.stat-row').forEach(row => {
+    const val  = parseFloat(row.dataset.val);
+    const fill = row.querySelector('.stat-bar-fill');
+    G.to(fill, {
+      width: (val / 10 * 100) + '%',
+      duration: 1.2,
+      ease: 'power3.out',
+      delay: Math.random() * 0.3,
+    });
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  SCENE 7 — TRANSITION
+// ════════════════════════════════════════════════════════
+function startTransition() {
+  flash(() => {
+    hideScene('scene-charcard', () => {
+      showScene('scene-transition');
+      const textEl = document.getElementById('trans-text');
+
+      const lines = ['FRESHMAN YEAR', 'BEGINS.'];
+      let lineIdx = 0;
+
+      function showNextLine() {
+        if (lineIdx >= lines.length) {
+          // Hold, then final flash + game would start
+          setTimeout(() => {
+            G.to(textEl, { opacity: 0, duration: 0.5 });
+            G.to('#scene-transition', {
+              opacity: 0, duration: 1.0, delay: 0.6,
+              onComplete: () => {
+                // ↓ Hand off to game logic here
+                showGamePlaceholder();
+              }
+            });
+          }, 1200);
+          return;
+        }
+        textEl.textContent = lines[lineIdx];
+        G.fromTo(textEl,
+          { opacity: 0, y: 20, letterSpacing: '2px' },
+          { opacity: 1, y: 0, letterSpacing: '6px', duration: 0.7, ease: 'back.out(1.4)',
+            onComplete: () => {
+              lineIdx++;
+              setTimeout(showNextLine, 600);
+            }
+          }
+        );
+      }
+
+      setTimeout(showNextLine, 300);
+    });
+  });
+}
+
+function showGamePlaceholder() {
+  // In a full game, this would load the first gameplay scene.
+  // For now, show a summary screen.
+  document.getElementById('scene-transition').classList.remove('active');
+  document.getElementById('scene-transition').style.opacity = 0;
+
+  const div = document.createElement('div');
+  div.style.cssText = `
+    position:fixed;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:24px;
+    background:var(--bg);z-index:100;
+    font-family:var(--font-m);color:var(--gray);text-align:center;padding:40px;
+  `;
+  div.innerHTML = `
+    <div style="font-family:var(--font-h);font-size:64px;color:var(--red);letter-spacing:4px;text-shadow:0 0 30px rgba(255,45,85,0.5)">MYTH</div>
+    <div style="font-size:10px;letter-spacing:4px;color:var(--gray)">CHARACTER CREATION COMPLETE</div>
+    <div style="max-width:420px;font-size:12px;line-height:1.8;color:var(--light);margin-top:8px">
+      <strong style="color:var(--white)">${player.name.toUpperCase()}</strong><br>
+      ${groupLabels_g(player.friendGroup)} &nbsp;·&nbsp; ${persLabels_g(player.personality)}<br>
+      ${player.background.label} &nbsp;·&nbsp; ${player.height}
+    </div>
+    <div style="width:300px;height:1px;background:rgba(255,255,255,0.08);margin:8px 0"></div>
+    <div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.3)">GAMEPLAY SCENE WOULD LOAD HERE</div>
+    <button onclick="location.reload()" style="
+      margin-top:16px;font-family:var(--font-h);font-size:16px;letter-spacing:3px;
+      padding:12px 32px;background:rgba(255,45,85,0.15);
+      border:1px solid rgba(255,45,85,0.4);color:var(--red);
+      cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);
+      transition:all 0.2s
+    " onmouseover="this.style.background='rgba(255,45,85,0.25)'" onmouseout="this.style.background='rgba(255,45,85,0.15)'">
+      ↺ RESTART
+    </button>
+  `;
+  document.body.appendChild(div);
+  G.from(div, { opacity: 0, duration: 1 });
+}
+
+function groupLabels_g(g) {
+  return { mob: 'GAYGOS', balance: 'XBOX', grind: "LUCAS'S GANG" }[g] || '—';
+}
+function persLabels_g(p) {
+  return {
+    grinder:  'THE GRINDER',
+    social:   'SOCIAL BUTTERFLY',
+    athlete:  'THE ATHLETE',
+    charmer:  'THE CHARMER',
+    observer: 'THE OBSERVER',
+    rebel:    'THE REBEL',
+    empath:   'THE EMPATH',
+    wildcard: 'THE WILDCARD',
+  }[p] || '—';
+}

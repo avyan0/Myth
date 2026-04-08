@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MYTH — High School Life Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;700&family=Playfair+Display:ital@1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- NOISE OVERLAY -->
+<canvas id="noise-canvas"></canvas>
+
+<!-- SCANLINES -->
+<div id="scanlines"></div>
+
+<!-- ─────────────────────────────── SCENE: BOOT ──────────────────────────── -->
+<div id="scene-boot" class="scene active">
+  <div class="boot-logo">
+    <span class="boot-letter" style="--i:0">M</span>
+    <span class="boot-letter" style="--i:1">Y</span>
+    <span class="boot-letter" style="--i:2">T</span>
+    <span class="boot-letter" style="--i:3">H</span>
+  </div>
+  <p class="boot-sub">A HIGH SCHOOL LIFE SIMULATOR</p>
+  <div class="boot-bar"><div class="boot-bar-fill"></div></div>
+</div>
+
+<!-- ─────────────────────────────── SCENE: INTRO ─────────────────────────── -->
+<div id="scene-intro" class="scene">
+  <div id="hallway">
+    <div class="hall-layer hall-l5"></div>
+    <div class="hall-layer hall-l4"></div>
+    <div class="hall-layer hall-l3"></div>
+    <div class="hall-layer hall-l2"></div>
+    <div class="hall-layer hall-l1"></div>
+    <div class="hall-center-light"></div>
+  </div>
+  <div class="intro-text-wrap">
+    <p class="intro-line" id="intro-l1">FIRST DAY.</p>
+    <p class="intro-line" id="intro-l2">Every decision matters.</p>
+    <p class="intro-line" id="intro-l3">Four years go fast.</p>
+  </div>
+  <div class="intro-continue" id="intro-continue">
+    <span>PRESS ANY KEY</span>
+    <div class="blink-bar"></div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── SCENE: NAME ──────────────────────────── -->
+<div id="scene-name" class="scene">
+  <div class="scene-header">
+    <div class="scene-step">STEP 01 / 04</div>
+    <div class="scene-title">WHO ARE YOU?</div>
+  </div>
+  <div class="id-card" id="id-card">
+    <div class="id-card-header">
+      <span class="id-school">WESTBROOK HIGH SCHOOL</span>
+      <span class="id-year">CLASS OF 2030</span>
+    </div>
+    <div class="id-card-body">
+      <div class="id-photo-slot">
+        <div class="id-photo-silhouette"></div>
+        <div class="id-photo-label">PHOTO ID</div>
+      </div>
+      <div class="id-fields">
+        <div class="id-field">
+          <label class="id-label">STUDENT NAME</label>
+          <div class="id-input-wrap">
+            <input type="text" id="name-input" class="id-input" placeholder="Type your name..." maxlength="24" autocomplete="off" spellcheck="false" />
+            <div class="input-cursor"></div>
+          </div>
+        </div>
+        <div class="id-field">
+          <label class="id-label">GRADE</label>
+          <div class="id-prefill">09 — FRESHMAN</div>
+        </div>
+        <div class="id-field">
+          <label class="id-label">STUDENT ID</label>
+          <div class="id-prefill id-number">WB–2026–????</div>
+        </div>
+      </div>
+    </div>
+    <div class="id-stripe"></div>
+  </div>
+  <button class="btn-primary" id="name-confirm" disabled>CONFIRM NAME →</button>
+</div>
+
+<!-- ─────────────────────────────── SCENE: FRIEND GROUP ──────────────────── -->
+<div id="scene-group" class="scene">
+  <div class="scene-header">
+    <div class="scene-step">STEP 02 / 04</div>
+    <div class="scene-title">CHOOSE YOUR CIRCLE</div>
+    <div class="scene-subtitle">Who you run with shapes who you become.</div>
+  </div>
+  <div class="group-cards" id="group-cards">
+
+    <!-- GAYGOS -->
+    <div class="group-card" data-group="mob" style="--accent:#E85D4A">
+      <div class="card-slash"></div>
+      <div class="card-glow"></div>
+      <div class="card-top">
+        <span class="card-badge" style="background:#E85D4A;color:#fff">POPULAR</span>
+        <span class="card-size">~20 people</span>
+      </div>
+      <div class="card-name">GAYGOS</div>
+      <div class="card-tagline">"Run the school or burn it down."</div>
+      <div class="card-desc">Most visible. Most chaotic. Hookup culture, weekend parties, half the soccer team. People know your name by Monday.</div>
+      <div class="card-vibes">
+        <span class="vibe-tag">🎉 Parties</span>
+        <span class="vibe-tag">⚽ Soccer</span>
+        <span class="vibe-tag">💊 Risk</span>
+      </div>
+    </div>
+
+    <!-- XBOX -->
+    <div class="group-card featured" data-group="balance" style="--accent:#0DD9D4">
+      <div class="card-slash"></div>
+      <div class="card-glow"></div>
+      <div class="featured-banner">MOST DIVERSE</div>
+      <div class="card-top">
+        <span class="card-badge" style="background:#0DD9D4;color:#08111A">WELL-ROUNDED</span>
+        <span class="card-size">~12 people</span>
+      </div>
+      <div class="card-name">XBOX</div>
+      <div class="card-tagline">"Best physiques. Most complicated love lives."</div>
+      <div class="card-desc">Good-looking, decently academic, some athletes. Range from never-dated to serial daters. Casual about everything — including you.</div>
+      <div class="card-vibes">
+        <span class="vibe-tag">💪 Fitness</span>
+        <span class="vibe-tag">💛 Hookups</span>
+        <span class="vibe-tag">📚 Sometimes</span>
+      </div>
+    </div>
+
+    <!-- LUCAS'S GANG -->
+    <div class="group-card" data-group="grind" style="--accent:#F5A623">
+      <div class="card-slash"></div>
+      <div class="card-glow"></div>
+      <div class="card-top">
+        <span class="card-badge" style="background:#F5A623;color:#0A0A00">ACADEMIC</span>
+        <span class="card-size">~8 people</span>
+      </div>
+      <div class="card-name">LUCAS'S GANG</div>
+      <div class="card-tagline">"They'll own companies. Eventually."</div>
+      <div class="card-desc">Top GPAs, zero drama, zero romantic experience. Underestimated. They know exactly what they're doing — even if no one else does yet.</div>
+      <div class="card-vibes">
+        <span class="vibe-tag">📖 Study</span>
+        <span class="vibe-tag">🏆 Goals</span>
+        <span class="vibe-tag">🔒 Private</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── SCENE: PERSONALITY ───────────────────── -->
+<div id="scene-personality" class="scene">
+  <div class="scene-header">
+    <div class="scene-step">STEP 03 / 04</div>
+    <div class="scene-title">HOW DO YOU MOVE?</div>
+    <div class="scene-subtitle">Your default energy. Your instinct.</div>
+  </div>
+  <div class="personality-cards" id="personality-cards">
+
+    <div class="pers-card" data-pers="grinder">
+      <div class="pers-icon">📚</div>
+      <div class="pers-name">THE GRINDER</div>
+      <div class="pers-desc">You optimize. You plan five steps ahead. You don't do anything without a reason.</div>
+    </div>
+
+    <div class="pers-card" data-pers="social">
+      <div class="pers-icon">🦋</div>
+      <div class="pers-name">SOCIAL BUTTERFLY</div>
+      <div class="pers-desc">You live for the connection. Every room you enter, you read instantly. People gravitate to you.</div>
+    </div>
+
+    <div class="pers-card" data-pers="athlete">
+      <div class="pers-icon">⚡</div>
+      <div class="pers-name">THE ATHLETE</div>
+      <div class="pers-desc">You've been in a jersey since you could walk. The gym is where you think. Competition is how you breathe.</div>
+    </div>
+
+    <div class="pers-card" data-pers="charmer">
+      <div class="pers-icon">🎭</div>
+      <div class="pers-name">THE CHARMER</div>
+      <div class="pers-desc">You talk your way in and out of everything. Teachers like you. Enemies become allies. You always land on your feet.</div>
+    </div>
+
+    <div class="pers-card" data-pers="observer">
+      <div class="pers-icon">👁</div>
+      <div class="pers-name">THE OBSERVER</div>
+      <div class="pers-desc">You watch. You listen. You know things about people before they tell you. Quiet isn't the same as invisible.</div>
+    </div>
+
+    <div class="pers-card" data-pers="rebel">
+      <div class="pers-icon">🔥</div>
+      <div class="pers-name">THE REBEL</div>
+      <div class="pers-desc">Rules are suggestions. Authority is a suggestion. You do it your way — consequences figure themselves out later.</div>
+    </div>
+
+    <div class="pers-card" data-pers="empath">
+      <div class="pers-icon">🫀</div>
+      <div class="pers-name">THE EMPATH</div>
+      <div class="pers-desc">You feel everything — yours and everyone else's. People come to you with their problems. You carry more than you show.</div>
+    </div>
+
+    <div class="pers-card wildcard" data-pers="wildcard">
+      <div class="pers-icon">🎲</div>
+      <div class="pers-name">THE WILDCARD</div>
+      <div class="pers-desc">Even you don't know what you are yet. Hidden bonuses. Unpredictable paths. High risk. High reward.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─────────────────────────────── SCENE: RANDOMIZE ─────────────────────── -->
+<div id="scene-randomize" class="scene">
+  <div class="scene-header">
+    <div class="scene-step">STEP 04 / 04</div>
+    <div class="scene-title">RANDOMIZING YOUR STORY</div>
+    <div class="scene-subtitle">Some things you don't choose.</div>
+  </div>
+
+  <div class="random-stage" id="random-stage">
+    <!-- Cards revealed here dynamically -->
+  </div>
+
+  <div class="random-progress" id="random-progress">
+    <div class="rp-dots">
+      <span class="rp-dot" data-idx="0"></span>
+      <span class="rp-dot" data-idx="1"></span>
+      <span class="rp-dot" data-idx="2"></span>
+      <span class="rp-dot" data-idx="3"></span>
+      <span class="rp-dot" data-idx="4"></span>
+      <span class="rp-dot" data-idx="5"></span>
+      <span class="rp-dot" data-idx="6"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── SCENE: CHARACTER CARD ────────────────── -->
+<div id="scene-charcard" class="scene">
+  <div class="cc-wrap" id="cc-wrap">
+    <div class="cc-header">
+      <div class="cc-school">WESTBROOK HIGH SCHOOL — CLASS OF 2030</div>
+      <div class="cc-title">STUDENT PROFILE</div>
+    </div>
+    <div class="cc-body">
+      <div class="cc-left">
+        <div class="cc-avatar" id="cc-avatar">
+          <div class="cc-avatar-inner"></div>
+          <div class="cc-avatar-glitch"></div>
+        </div>
+        <div class="cc-identity">
+          <div class="cc-name" id="cc-name-display">—</div>
+          <div class="cc-group-badge" id="cc-group-display">—</div>
+          <div class="cc-pers-badge" id="cc-pers-display">—</div>
+        </div>
+        <div class="cc-attributes" id="cc-attributes">
+          <!-- Height, skin, eyes, hair filled by JS -->
+        </div>
+        <div class="cc-cards-mini" id="cc-cards-mini">
+          <!-- Rumor / Background / Secret mini cards -->
+        </div>
+      </div>
+      <div class="cc-right">
+        <div class="cc-stats-title">STARTING STATS</div>
+        <div class="cc-stats" id="cc-stats-bars">
+          <!-- Stat bars filled by JS -->
+        </div>
+      </div>
+    </div>
+    <div class="cc-footer">
+      <div class="cc-footer-line">EVERYTHING STARTS HERE.</div>
+      <button class="btn-primary btn-large" id="begin-btn">FRESHMAN YEAR BEGINS →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── SCENE: TRANSITION ───────────────────── -->
+<div id="scene-transition" class="scene">
+  <div class="trans-text" id="trans-text"></div>
+</div>
+
+<!-- FLASH OVERLAY -->
+<div id="flash-overlay"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
