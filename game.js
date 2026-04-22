@@ -526,26 +526,20 @@ function launchGame() {
 
   // Show game scene, then wire everything once it's visible
   showScene('scene-game', () => {
-    // Wire engine events now that UI is ready
-    Engine.on('zone_enter',    ({ zone }) => { updateZonePanel(zone); safeEventCheck(); });
-    Engine.on('stat_change',   ()        => refreshStatsSidebar());
-    Engine.on('period_change', ()        => { updateHUD(); safeEventCheck(); });
-    Engine.on('grade_up',      ({ to })  => showGradeUnlock(to));
-    Engine.on('npc_talk',      ({ npc, node }) => openDialogue(npc, node));
-    Engine.on('dialogue_close',()        => closeDialogueBox());
+    Engine.on('stat_change',    ()               => refreshStatsSidebar());
+    Engine.on('period_change',  ()               => { updateHUD(); safeEventCheck(); });
+    Engine.on('grade_up',       ({ to })         => showGradeUnlock(to));
+    Engine.on('npc_talk',       ({ npc, node })  => openDialogue(npc, node));
+    Engine.on('dialogue_close', ()               => closeDialogueBox());
 
-    // Navigate to starting zone (fires zone_enter → updateZonePanel)
     Engine.goTo('front_entrance');
-
-    renderMap();
     updateHUD();
     wireGameButtons();
 
-    G.from('#campus-map', { opacity: 0, y: 16, duration: 0.6, ease: 'power3.out', delay: 0.1 });
-    G.from('#zone-panel',  { opacity: 0, x: 20, duration: 0.5, ease: 'power3.out', delay: 0.2 });
+    // Launch Phaser world after a frame so the container has layout
+    requestAnimationFrame(() => initPhaserGame(player));
 
-    // Fire first-event check after a short settle delay
-    setTimeout(safeEventCheck, 600);
+    setTimeout(safeEventCheck, 800);
   });
 }
 
@@ -553,9 +547,10 @@ function safeEventCheck() {
   try { EventManager.checkTriggers(Engine.getState()); } catch (e) {}
 }
 
-// ── Campus map renderer ───────────────────────────────
+// ── Campus map renderer (legacy — replaced by Phaser) ─
 function renderMap() {
   const mapEl = document.getElementById('campus-map');
+  if (!mapEl) return;
   const accessible = Engine.getAccessibleZones();
   const accessibleIds = new Set(accessible.map(z => z.id));
   const state = Engine.getState();
@@ -604,13 +599,12 @@ function renderMap() {
   });
 }
 
-// ── Zone detail panel ─────────────────────────────────
+// ── Zone detail panel (legacy stub — Phaser handles zone display) ─
 function updateZonePanel(zone) {
   if (!zone) return;
-  document.getElementById('hud-zone').textContent = zone.name;
-  document.getElementById('zp-name').textContent  = zone.name;
-  document.getElementById('zp-type').textContent  = (zone.type || 'outdoor').toUpperCase() + ' ZONE';
-  document.getElementById('zp-desc').textContent  = zone.description;
+  const hudZone = document.getElementById('hud-zone');
+  if (hudZone) hudZone.textContent = zone.name;
+  if (!document.getElementById('zp-name')) return;
 
   // People
   const peopleList = document.getElementById('zp-people-list');
@@ -721,31 +715,19 @@ function showGradeUnlock(grade) {
   document.getElementById('gut-title').textContent = `GRADE ${grade}`;
   G.timeline()
     .to(toast, { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.4)' })
-    .to(toast, { opacity: 0, y: -10, duration: 0.4, delay: 2.5 })
-    .call(() => renderMap());
+    .to(toast, { opacity: 0, y: -10, duration: 0.4, delay: 2.5 });
 }
 
 // ── Button wiring ─────────────────────────────────────
 function wireGameButtons() {
-  // Stats toggle
   document.getElementById('hud-stats-btn').addEventListener('click', () => {
+    refreshStatsSidebar();
     document.getElementById('stats-sidebar').classList.toggle('open');
   });
   document.getElementById('stats-close').addEventListener('click', () => {
     document.getElementById('stats-sidebar').classList.remove('open');
   });
-
-  // Dialogue close
   document.getElementById('db-close').addEventListener('click', closeDialogueBox);
-
-  // Advance period
-  document.getElementById('btn-advance-period').addEventListener('click', () => {
-    Engine.advancePeriod();
-    updateHUD();
-    renderMap();
-    const state = Engine.getState();
-    updateZonePanel(state.currentZone);
-  });
 }
 
 function groupLabels_g(g) {
