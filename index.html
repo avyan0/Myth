@@ -254,10 +254,93 @@
   <div class="trans-text" id="trans-text"></div>
 </div>
 
+<!-- ─────────────────────────────── SCENE: GAME WORLD ───────────────────── -->
+<div id="scene-game" class="scene">
+
+  <!-- HUD top bar -->
+  <div id="game-hud">
+    <span class="hud-school">WESTBROOK HIGH</span>
+    <div class="hud-divider"></div>
+    <span class="hud-grade" id="hud-grade">GRADE 9</span>
+    <div class="hud-divider"></div>
+    <span class="hud-period" id="hud-period">Before School</span>
+    <span class="hud-day" id="hud-day">Monday</span>
+    <div class="hud-spacer"></div>
+    <span class="hud-zone-current" id="hud-zone">—</span>
+    <div class="hud-divider"></div>
+    <button class="hud-stats-toggle" id="hud-stats-btn">STATS ↗</button>
+  </div>
+
+  <!-- Body -->
+  <div id="game-body">
+
+    <!-- Campus map -->
+    <div id="campus-map-wrap">
+      <div id="campus-map">
+        <!-- Populated by game.js renderMap() -->
+      </div>
+    </div>
+
+    <!-- Zone detail panel -->
+    <div id="zone-panel">
+      <div class="zp-header">
+        <div class="zp-zone-name" id="zp-name">Select a zone</div>
+        <div class="zp-zone-type" id="zp-type">WESTBROOK CAMPUS</div>
+      </div>
+      <div class="zp-desc" id="zp-desc">Click any zone on the map to explore it.</div>
+
+      <div class="zp-section-label" id="zp-people-label">PEOPLE HERE</div>
+      <div class="zp-list" id="zp-people-list"></div>
+
+      <div class="zp-section-label" id="zp-things-label">THINGS TO DO</div>
+      <div class="zp-list" id="zp-things-list"></div>
+
+      <div class="zp-time-nav">
+        <button class="btn-secondary" id="btn-advance-period" style="flex:1">Next Period →</button>
+      </div>
+    </div>
+
+  </div><!-- /game-body -->
+
+  <!-- Stats sidebar (slides in) -->
+  <div id="stats-sidebar">
+    <div class="ss-header">
+      STATS
+      <span class="ss-close" id="stats-close">✕</span>
+    </div>
+    <div class="ss-stats" id="ss-stats-list">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Dialogue box (slides up from bottom) -->
+  <div id="dialogue-box">
+    <div class="db-close-btn" id="db-close">CLOSE ✕</div>
+    <div class="db-speaker-row">
+      <div class="db-portrait" id="db-portrait">👤</div>
+      <div>
+        <div class="db-speaker-name" id="db-speaker-name">—</div>
+        <div class="db-speaker-role" id="db-speaker-role">—</div>
+      </div>
+    </div>
+    <div class="db-text" id="db-text"></div>
+    <div class="db-choices" id="db-choices"></div>
+  </div>
+
+  <!-- Grade unlock toast -->
+  <div class="grade-unlock-toast" id="grade-unlock-toast">
+    <div class="gut-title" id="gut-title">GRADE 10</div>
+    <div class="gut-sub">NEW AREAS UNLOCKED</div>
+  </div>
+
+</div><!-- /scene-game -->
+
 <!-- FLASH OVERLAY -->
 <div id="flash-overlay"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="campus.js"></script>
+<script src="engine.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

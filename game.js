@@ -813,8 +813,7 @@ function startTransition() {
             G.to('#scene-transition', {
               opacity: 0, duration: 1.0, delay: 0.6,
               onComplete: () => {
-                // ↓ Hand off to game logic here
-                showGamePlaceholder();
+                launchGame();
               }
             });
           }, 1200);
@@ -837,41 +836,232 @@ function startTransition() {
   });
 }
 
-function showGamePlaceholder() {
-  // In a full game, this would load the first gameplay scene.
-  // For now, show a summary screen.
+// ════════════════════════════════════════════════════════
+//  GAME WORLD — launch, render, UI
+// ════════════════════════════════════════════════════════
+
+function launchGame() {
+  // Init engine with character creation data
+  Engine.init(player);
+
+  // Wire engine events → UI
+  Engine.on('zone_enter',    ({ zone })  => updateZonePanel(zone));
+  Engine.on('stat_change',   ()         => refreshStatsSidebar());
+  Engine.on('period_change', ({ period })=> updateHUD());
+  Engine.on('grade_up',      ({ to })    => showGradeUnlock(to));
+  Engine.on('npc_talk',      ({ npc, node }) => openDialogue(npc, node));
+  Engine.on('dialogue_close',()         => closeDialogueBox());
+
+  // Go to starting zone
+  Engine.goTo('front_entrance');
+
+  // Show game scene
   document.getElementById('scene-transition').classList.remove('active');
   document.getElementById('scene-transition').style.opacity = 0;
+  showScene('scene-game', () => {
+    renderMap();
+    updateHUD();
+    updateZonePanel(Engine.getState().currentZone);
+    refreshStatsSidebar();
+    wireGameButtons();
+    G.from('#campus-map', { opacity: 0, y: 16, duration: 0.6, ease: 'power3.out', delay: 0.1 });
+    G.from('#zone-panel',  { opacity: 0, x: 20, duration: 0.5, ease: 'power3.out', delay: 0.2 });
+  });
+}
 
-  const div = document.createElement('div');
-  div.style.cssText = `
-    position:fixed;inset:0;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:24px;
-    background:var(--bg);z-index:100;
-    font-family:var(--font-m);color:var(--gray);text-align:center;padding:40px;
-  `;
-  div.innerHTML = `
-    <div style="font-family:var(--font-h);font-size:64px;color:var(--red);letter-spacing:4px;text-shadow:0 0 30px rgba(255,45,85,0.5)">MYTH</div>
-    <div style="font-size:10px;letter-spacing:4px;color:var(--gray)">CHARACTER CREATION COMPLETE</div>
-    <div style="max-width:420px;font-size:12px;line-height:1.8;color:var(--light);margin-top:8px">
-      <strong style="color:var(--white)">${player.name.toUpperCase()}</strong><br>
-      ${groupLabels_g(player.friendGroup)} &nbsp;·&nbsp; ${persLabels_g(player.personality)}<br>
-      ${player.background.label} &nbsp;·&nbsp; ${player.height}
+// ── Campus map renderer ───────────────────────────────
+function renderMap() {
+  const mapEl = document.getElementById('campus-map');
+  const accessible = Engine.getAccessibleZones();
+  const accessibleIds = new Set(accessible.map(z => z.id));
+  const state = Engine.getState();
+
+  // Title strip
+  mapEl.innerHTML = `
+    <div class="map-title-strip" style="grid-column:1/-1">
+      WESTBROOK HIGH SCHOOL
+      <span class="map-compass">CUPERTINO, CA ☀️</span>
     </div>
-    <div style="width:300px;height:1px;background:rgba(255,255,255,0.08);margin:8px 0"></div>
-    <div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.3)">GAMEPLAY SCENE WOULD LOAD HERE</div>
-    <button onclick="location.reload()" style="
-      margin-top:16px;font-family:var(--font-h);font-size:16px;letter-spacing:3px;
-      padding:12px 32px;background:rgba(255,45,85,0.15);
-      border:1px solid rgba(255,45,85,0.4);color:var(--red);
-      cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);
-      transition:all 0.2s
-    " onmouseover="this.style.background='rgba(255,45,85,0.25)'" onmouseout="this.style.background='rgba(255,45,85,0.15)'">
-      ↺ RESTART
-    </button>
   `;
-  document.body.appendChild(div);
-  G.from(div, { opacity: 0, duration: 1 });
+
+  // Render each zone with a grid position
+  ZONES.filter(z => z.mapGrid).forEach(zone => {
+    const isLocked  = !accessibleIds.has(zone.id);
+    const isActive  = state.currentZone?.id === zone.id;
+    const npcsHere  = Engine.getNPCsInZone(zone.id);
+
+    const tile = document.createElement('div');
+    tile.className = `zone-tile${isLocked ? ' locked' : ''}${isActive ? ' active' : ''}`;
+    tile.dataset.zoneId = zone.id;
+    tile.dataset.type   = zone.type;
+    tile.style.gridColumn = zone.mapGrid.col;
+    tile.style.gridRow    = zone.mapGrid.row;
+
+    const npcDots = npcsHere.slice(0, 4).map(() =>
+      `<div class="zt-npc-dot"></div>`).join('');
+
+    tile.innerHTML = `
+      <div class="zt-top">
+        <span class="zt-icon">${isLocked ? '🔒' : zone.icon}</span>
+        ${isLocked ? `<span class="zt-lock">GR.${zone.unlocksAt}</span>` : ''}
+      </div>
+      <div class="zt-name">${zone.shortName || zone.name}</div>
+      ${!isLocked && npcsHere.length ? `<div class="zt-npc-dots">${npcDots}</div>` : ''}
+    `;
+
+    if (!isLocked) {
+      tile.addEventListener('click', () => {
+        Engine.goTo(zone.id);
+        renderMap();  // re-render to update active tile
+      });
+    }
+
+    mapEl.appendChild(tile);
+  });
+}
+
+// ── Zone detail panel ─────────────────────────────────
+function updateZonePanel(zone) {
+  if (!zone) return;
+  document.getElementById('hud-zone').textContent = zone.name;
+  document.getElementById('zp-name').textContent  = zone.name;
+  document.getElementById('zp-type').textContent  = (zone.type || 'outdoor').toUpperCase() + ' ZONE';
+  document.getElementById('zp-desc').textContent  = zone.description;
+
+  // People
+  const peopleList = document.getElementById('zp-people-list');
+  const npcs = Engine.getNPCsInZone(zone.id);
+  if (npcs.length) {
+    peopleList.innerHTML = npcs.map(npc => `
+      <div class="zp-npc-row" data-npc-id="${npc.id}">
+        <div class="zp-npc-portrait">${npc.portrait}</div>
+        <div class="zp-npc-info">
+          <div class="zp-npc-name">${npc.name}</div>
+          <div class="zp-npc-role">${npc.role.toUpperCase()}</div>
+        </div>
+      </div>
+    `).join('');
+    peopleList.querySelectorAll('.zp-npc-row').forEach(row => {
+      row.addEventListener('click', () => Engine.talkTo(row.dataset.npcId));
+    });
+  } else {
+    peopleList.innerHTML = '<div class="zp-empty">Nobody here right now.</div>';
+  }
+
+  // Objects / interactions
+  const thingsList = document.getElementById('zp-things-list');
+  const objects = Engine.getObjectsInZone(zone.id);
+  if (objects.length) {
+    thingsList.innerHTML = objects.map(obj => `
+      <div class="zp-obj-row" data-obj-id="${obj.id}">
+        <span class="zp-obj-icon">${obj.icon || '●'}</span>
+        <span class="zp-obj-label">${obj.label}</span>
+      </div>
+    `).join('');
+    thingsList.querySelectorAll('.zp-obj-row').forEach(row => {
+      row.addEventListener('click', () => Engine.triggerInteraction(row.dataset.objId));
+    });
+  } else {
+    thingsList.innerHTML = '<div class="zp-empty">Nothing to interact with yet.</div>';
+  }
+
+  // Animate panel update
+  G.from(['.zp-npc-row', '.zp-obj-row'], {
+    opacity: 0, x: 8, stagger: 0.05, duration: 0.3, ease: 'power2.out',
+  });
+}
+
+// ── HUD update ────────────────────────────────────────
+function updateHUD() {
+  const s = Engine.getState();
+  if (!s) return;
+  document.getElementById('hud-grade').textContent  = `GRADE ${s.grade}`;
+  document.getElementById('hud-period').textContent = s.period.label;
+  document.getElementById('hud-day').textContent    = `· ${s.day} · Week ${s.week}`;
+}
+
+// ── Stats sidebar ─────────────────────────────────────
+function refreshStatsSidebar() {
+  const s = Engine.getState();
+  if (!s) return;
+  const list = document.getElementById('ss-stats-list');
+  list.innerHTML = Object.entries(s.stats).map(([key, val]) => `
+    <div class="ss-stat-row">
+      <div class="ss-stat-top">
+        <span class="ss-stat-name">${STAT_LABELS[key]}</span>
+        <span class="ss-stat-val">${val.toFixed(1)}</span>
+      </div>
+      <div class="ss-bar-track">
+        <div class="ss-bar-fill" style="width:${val/10*100}%;background:${statColor(key,val)}"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Dialogue box ──────────────────────────────────────
+function openDialogue(npc, node) {
+  const box = document.getElementById('dialogue-box');
+  document.getElementById('db-portrait').textContent     = npc.portrait;
+  document.getElementById('db-speaker-name').textContent = npc.name;
+  document.getElementById('db-speaker-role').textContent = npc.role.toUpperCase();
+
+  if (node) {
+    document.getElementById('db-text').textContent = node.line;
+    const choicesEl = document.getElementById('db-choices');
+    choicesEl.innerHTML = (node.choices || []).map((c, i) => `
+      <button class="db-choice" data-idx="${i}">${c.label}</button>
+    `).join('');
+    choicesEl.querySelectorAll('.db-choice').forEach((btn, i) => {
+      btn.addEventListener('click', () => {
+        Engine.resolveChoice(node.choices[i]);
+        closeDialogueBox();
+      });
+    });
+  } else {
+    document.getElementById('db-text').textContent =
+      `${npc.name} is here but doesn't have anything to say right now.`;
+    document.getElementById('db-choices').innerHTML = '';
+  }
+
+  box.classList.add('open');
+}
+
+function closeDialogueBox() {
+  document.getElementById('dialogue-box').classList.remove('open');
+  Engine.closeDialogue();
+}
+
+// ── Grade unlock toast ────────────────────────────────
+function showGradeUnlock(grade) {
+  const toast = document.getElementById('grade-unlock-toast');
+  document.getElementById('gut-title').textContent = `GRADE ${grade}`;
+  G.timeline()
+    .to(toast, { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.4)' })
+    .to(toast, { opacity: 0, y: -10, duration: 0.4, delay: 2.5 })
+    .call(() => renderMap());
+}
+
+// ── Button wiring ─────────────────────────────────────
+function wireGameButtons() {
+  // Stats toggle
+  document.getElementById('hud-stats-btn').addEventListener('click', () => {
+    document.getElementById('stats-sidebar').classList.toggle('open');
+  });
+  document.getElementById('stats-close').addEventListener('click', () => {
+    document.getElementById('stats-sidebar').classList.remove('open');
+  });
+
+  // Dialogue close
+  document.getElementById('db-close').addEventListener('click', closeDialogueBox);
+
+  // Advance period
+  document.getElementById('btn-advance-period').addEventListener('click', () => {
+    Engine.advancePeriod();
+    updateHUD();
+    renderMap();
+    const state = Engine.getState();
+    updateZonePanel(state.currentZone);
+  });
 }
 
 function groupLabels_g(g) {
