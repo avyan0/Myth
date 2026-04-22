@@ -316,6 +316,7 @@ function applyGroupStats(g) {
 // ════════════════════════════════════════════════════════
 function startPersonalityScene() {
   showScene('scene-personality', () => {
+   G.to('.group-card', { opacity: 1, y: 0, duration: 0.4, stagger: 0.1, ease: 'power2.out' });
     document.querySelectorAll('.pers-card').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.pers-card').forEach(c => c.classList.remove('selected'));
