@@ -219,57 +219,29 @@ function hideScene(id, onDone) {
 // ════════════════════════════════════════════════════════
 (function bootScene() {
   showScene('scene-boot');
-  // After ~2.6 s, fade to intro
-  setTimeout(() => {
-    hideScene('scene-boot', startIntro);
-  }, 2600);
+  setTimeout(() => hideScene('scene-boot', startIntro), 1200);
 })();
 
 // ════════════════════════════════════════════════════════
 //  SCENE 1 — INTRO
 // ════════════════════════════════════════════════════════
 function startIntro() {
-  showScene('scene-intro');
-
-  const l1 = document.getElementById('intro-l1');
-  const l2 = document.getElementById('intro-l2');
-  const l3 = document.getElementById('intro-l3');
-  const continueEl = document.getElementById('intro-continue');
-
-  // Animate hallway layers
-  G.from('.hall-layer', {
-    scale: 0.6,
-    opacity: 0,
-    duration: 2.5,
-    stagger: 0.15,
-    ease: 'power3.out',
-  });
-
-  // Lines slash in
-  const tl = G.timeline({ delay: 0.5 });
-  tl.to(l1, {
-    opacity: 1, x: 0,
-    clipPath: 'inset(0 0% 0 0)',
-    duration: 0.7, ease: 'power3.out',
-    onStart() { l1.style.clipPath = 'inset(0 100% 0 0)'; l1.style.opacity = 1; }
-  })
-  .to(l2, { opacity: 1, x: 0, duration: 0.5, ease: 'power3.out' }, '+=0.1')
-  .to(l3, { opacity: 1, x: 0, duration: 0.5, ease: 'power3.out' }, '+=0.15')
-  .to(continueEl, { opacity: 1, duration: 0.5 }, '+=0.6');
-
-  // Any key → next scene
-  let ready = false;
-  function proceed() {
-    if (!ready) return;
-    window.removeEventListener('keydown', proceed);
-    continueEl.removeEventListener('click', proceed);
-    flash(() => {
-      hideScene('scene-intro', startNameScene);
+  showScene('scene-intro', () => {
+    // Make all intro text immediately visible
+    ['intro-l1','intro-l2','intro-l3'].forEach(id => {
+      const el = document.getElementById(id);
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+      el.style.clipPath = 'none';
     });
-  }
+    const continueEl = document.getElementById('intro-continue');
+    continueEl.style.opacity = '1';
 
-  tl.call(() => {
-    ready = true;
+    function proceed() {
+      window.removeEventListener('keydown', proceed);
+      continueEl.removeEventListener('click', proceed);
+      hideScene('scene-intro', startNameScene);
+    }
     window.addEventListener('keydown', proceed);
     continueEl.addEventListener('click', proceed);
   });
@@ -279,76 +251,41 @@ function startIntro() {
 //  SCENE 2 — NAME
 // ════════════════════════════════════════════════════════
 function startNameScene() {
-  showScene('scene-name');
+  showScene('scene-name', () => {
+    const input = document.getElementById('name-input');
+    const btn   = document.getElementById('name-confirm');
+    const numEl = document.querySelector('.id-number');
 
-  // Card drops in
-  G.from('#id-card', {
-    y: -60, rotateX: -15, opacity: 0,
-    duration: 0.9, ease: 'back.out(1.4)',
-    delay: 0.1
+    input.addEventListener('input', () => {
+      const v = input.value.trim();
+      btn.disabled = v.length < 2;
+      numEl.textContent = v.length >= 2
+        ? `WB–2026–${Math.abs(v.split('').reduce((a,c) => a + c.charCodeAt(0), 0) % 9000 + 1000)}`
+        : 'WB–2026–????';
+    });
+
+    btn.addEventListener('click', () => {
+      player.name = input.value.trim();
+      hideScene('scene-name', startGroupScene);
+    });
+
+    input.focus();
   });
-
-  G.from('.scene-header > *', {
-    y: 20, opacity: 0,
-    stagger: 0.08, duration: 0.5,
-    ease: 'power3.out', delay: 0.2
-  });
-
-  const input  = document.getElementById('name-input');
-  const btn    = document.getElementById('name-confirm');
-  const numEl  = document.querySelector('.id-number');
-
-  input.addEventListener('input', () => {
-    const v = input.value.trim();
-    btn.disabled = v.length < 2;
-    numEl.textContent = v.length >= 2
-      ? `WB–2026–${Math.abs(v.split('').reduce((a,c) => a + c.charCodeAt(0), 0) % 9000 + 1000)}`
-      : 'WB–2026–????';
-  });
-
-  btn.addEventListener('click', () => {
-    player.name = input.value.trim();
-    flash(() => hideScene('scene-name', startGroupScene));
-  });
-
-  // Focus the input after animation
-  setTimeout(() => input.focus(), 400);
 }
 
 // ════════════════════════════════════════════════════════
 //  SCENE 3 — FRIEND GROUP
 // ════════════════════════════════════════════════════════
 function startGroupScene() {
-  showScene('scene-group');
-
-  G.from('.scene-header > *', {
-    y: 20, opacity: 0, stagger: 0.08, duration: 0.5,
-    ease: 'power3.out', delay: 0.1
-  });
-
-  // Cards stagger in
-  G.to('.group-card', {
-    opacity: 1, y: 0,
-    stagger: 0.12, duration: 0.7,
-    ease: 'back.out(1.2)', delay: 0.3
-  });
-
-  document.querySelectorAll('.group-card').forEach(card => {
-    card.addEventListener('click', () => {
-      // Deselect all
-      document.querySelectorAll('.group-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      const g = card.dataset.group;
-      player.friendGroup = g;
-      applyGroupStats(g);
-
-      // Small bounce
-      G.from(card, { scale: 1.06, duration: 0.3, ease: 'back.out(2)' });
-
-      // Reveal continue button or auto-advance
-      setTimeout(() => {
-        flash(() => hideScene('scene-group', startPersonalityScene));
-      }, 500);
+  showScene('scene-group', () => {
+    document.querySelectorAll('.group-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.group-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        player.friendGroup = card.dataset.group;
+        applyGroupStats(card.dataset.group);
+        hideScene('scene-group', startPersonalityScene);
+      });
     });
   });
 }
@@ -377,31 +314,15 @@ function applyGroupStats(g) {
 //  SCENE 4 — PERSONALITY
 // ════════════════════════════════════════════════════════
 function startPersonalityScene() {
-  showScene('scene-personality');
-
-  G.from('.scene-header > *', {
-    y: 20, opacity: 0, stagger: 0.08, duration: 0.5,
-    ease: 'power3.out', delay: 0.1
-  });
-
-  G.to('.pers-card', {
-    opacity: 1, y: 0,
-    stagger: 0.15, duration: 0.7,
-    ease: 'back.out(1.2)', delay: 0.3
-  });
-
-  document.querySelectorAll('.pers-card').forEach(card => {
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.pers-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      player.personality = card.dataset.pers;
-      applyPersonalityStats(player.personality);
-
-      G.from(card, { scale: 1.05, duration: 0.3, ease: 'back.out(2)' });
-
-      setTimeout(() => {
-        flash(() => hideScene('scene-personality', startRandomizeScene));
-      }, 500);
+  showScene('scene-personality', () => {
+    document.querySelectorAll('.pers-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.pers-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        player.personality = card.dataset.pers;
+        applyPersonalityStats(player.personality);
+        hideScene('scene-personality', startRandomizeScene);
+      });
     });
   });
 }
@@ -457,11 +378,8 @@ const RANDOM_SEQUENCE = [
   { key: 'secret',     label: 'SECRET',     pool: SECRETS,     icon: '🔒', accent: '#E8849A', glow: 'rgba(232,132,154,0.2)', special: true, hidden: true },
 ];
 
-let revealIdx = 0;
-const revealedMinis = [];
-
 function startRandomizeScene() {
-  // Roll all values now
+  // Roll all values
   player.height = rand(HEIGHTS);
 
   const rumorData = rand(RUMORS);
@@ -477,162 +395,46 @@ function startRandomizeScene() {
 
   player.secret = rand(SECRETS);
 
-  showScene('scene-randomize');
+  showScene('scene-randomize', () => {
+    const stage = document.getElementById('random-stage');
 
-  G.from('.scene-header > *', {
-    y: 20, opacity: 0, stagger: 0.08, duration: 0.5,
-    ease: 'power3.out', delay: 0.1
-  });
+    // Show all cards at once in a grid
+    const items = [
+      { label: 'HEIGHT',     value: player.height,            sub: null,                       accent: '#C9913A', secret: false },
+      { label: 'RUMOR',      value: '"' + player.rumor + '"', sub: 'Affects early reputation', accent: '#C4613A', secret: false },
+      { label: 'BACKGROUND', value: player.background.label,  sub: player.background.desc,     accent: '#6E9E60', secret: false },
+      { label: 'SECRET',     value: player.secret.label,      sub: player.secret.desc,         accent: '#C47A82', secret: true  },
+    ];
 
-  // Start revealing after short pause
-  setTimeout(() => revealNext(), 700);
-}
+    const grid = document.createElement('div');
+    grid.className = 'revealed-grid';
 
-function revealNext() {
-  if (revealIdx >= RANDOM_SEQUENCE.length) {
-    // All revealed — show continue
-    setTimeout(() => {
-      flash(() => hideScene('scene-randomize', startCharCardScene));
-    }, 800);
-    return;
-  }
-
-  const seq  = RANDOM_SEQUENCE[revealIdx];
-  const stage = document.getElementById('random-stage');
-
-  // Update dot
-  document.querySelectorAll('.rp-dot').forEach((d, i) => {
-    d.classList.remove('active');
-    if (i < revealIdx) d.classList.add('done');
-  });
-  const activeDot = document.querySelector(`.rp-dot[data-idx="${revealIdx}"]`);
-  if (activeDot) activeDot.classList.add('active');
-
-  // Resolve display value
-  let displayVal, displaySub;
-  if (seq.key === 'rumor') {
-    displayVal = '"' + player.rumor + '"';
-    displaySub = 'Affects early reputation';
-  } else if (seq.key === 'background') {
-    displayVal = player.background.label;
-    displaySub = player.background.desc;
-  } else if (seq.key === 'secret') {
-    displayVal = player.secret.label;
-    displaySub = player.secret.desc;
-  } else {
-    displayVal = player[seq.key];
-  }
-
-  // Build card
-  const card = document.createElement('div');
-  card.className = seq.special ? 'reveal-card special-card' : 'reveal-card';
-  card.style.setProperty('--card-accent', seq.accent);
-  card.style.setProperty('--card-glow-color', seq.glow);
-
-  card.innerHTML = `
-    <div class="rc-glow"></div>
-    <div class="rc-corner-tl"></div>
-    <div class="rc-corner-br"></div>
-    <div class="rc-type">${seq.label}</div>
-    <div class="rc-icon">${seq.icon}</div>
-    <div class="rc-value">${displayVal}</div>
-    ${displaySub ? `<div class="rc-sub">${displaySub}</div>` : ''}
-  `;
-
-  // If secret, show "ONLY YOU CAN SEE THIS"
-  if (seq.key === 'secret') {
-    const notice = document.createElement('div');
-    notice.style.cssText = 'font-family:var(--font-m);font-size:7px;letter-spacing:2px;color:var(--gold);margin-top:8px;position:relative;z-index:1;';
-    notice.textContent = '— ONLY YOU CAN SEE THIS —';
-    card.appendChild(notice);
-  }
-
-  // Shuffle animation — card appears with slot-machine spin
-  stage.innerHTML = '';
-  stage.appendChild(card);
-
-  // Brief shuffle of values before landing
-  if (!seq.special) {
-    let shuffles = 0;
-    const maxShuffles = 10;
-    const interval = setInterval(() => {
-      const tempVal = card.querySelector('.rc-value');
-      if (tempVal) tempVal.textContent = rand(seq.pool);
-      shuffles++;
-      if (shuffles >= maxShuffles) {
-        clearInterval(interval);
-        const final = card.querySelector('.rc-value');
-        if (final) final.textContent = displayVal;
-        finalizeCard(card, seq, displayVal);
-      }
-    }, 60);
-  } else {
-    // Special cards: dramatic pause then reveal
-    G.to(card, { opacity: 0.3, duration: 0.1 });
-
-    setTimeout(() => {
-      G.to(card, {
-        opacity: 1, rotateY: 0, scale: 1,
-        duration: 0.7, ease: 'back.out(1.4)',
-      });
-      // Glow pulse on special
-      G.to(card, {
-        boxShadow: `0 0 40px ${seq.glow}, 0 0 0 2px ${seq.accent}`,
-        duration: 0.3,
-        yoyo: true, repeat: 3,
-        ease: 'power2.inOut',
-        onComplete: () => finalizeCard(card, seq, displayVal),
-      });
-    }, 300);
-  }
-}
-
-function finalizeCard(card, seq, val) {
-  // Animate card into view
-  G.to(card, {
-    opacity: 1, rotateY: 0, scale: 1,
-    duration: 0.6, ease: 'back.out(1.4)',
-  });
-
-  // Add to mini revealed grid below
-  const stage = document.getElementById('random-stage');
-
-  // After 0.9 s, shrink current card and show it in the grid below
-  setTimeout(() => {
-    // Swap stage to revealed grid
-    let grid = document.querySelector('.revealed-grid');
-    if (!grid) {
-      grid = document.createElement('div');
-      grid.className = 'revealed-grid';
-      stage.appendChild(grid);
-    }
-
-    // Remove the large card
-    G.to(card, { scale: 0, opacity: 0, duration: 0.25, ease: 'power2.in',
-      onComplete: () => {
-        if (card.parentNode) card.parentNode.removeChild(card);
-        // Add mini card
-        addMiniCard(grid, seq, val);
-        revealIdx++;
-        setTimeout(revealNext, 400);
-      }
+    items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'mini-reveal-card';
+      card.style.borderColor = item.accent + '66';
+      card.innerHTML = `
+        <div class="mrc-type">${item.label}</div>
+        <div class="mrc-value" style="color:${item.accent}">${item.secret ? '🔒 ' + item.value : item.value}</div>
+        ${item.sub ? `<div class="mrc-sub">${item.sub}</div>` : ''}
+        ${item.secret ? '<div class="mrc-secret-note">Only you can see this</div>' : ''}
+      `;
+      grid.appendChild(card);
     });
-  }, seq.special ? 1400 : 900);
-}
 
-function addMiniCard(grid, seq, val) {
-  const mini = document.createElement('div');
-  mini.className = 'mini-reveal-card';
-  mini.style.borderColor = seq.accent + '44';
-  mini.innerHTML = `
-    <div class="mrc-type">${seq.label}</div>
-    <div class="mrc-value" style="color:${seq.accent};font-size:${seq.special?'11px':'16px'}">${val}</div>
-  `;
-  grid.appendChild(mini);
+    stage.innerHTML = '';
+    stage.appendChild(grid);
 
-  G.to(mini, {
-    opacity: 1, scale: 1, y: 0,
-    duration: 0.4, ease: 'back.out(1.5)',
+    // Mark all dots done
+    document.querySelectorAll('.rp-dot').forEach(d => d.classList.add('done'));
+
+    // Continue button
+    const continueBtn = document.createElement('button');
+    continueBtn.className = 'btn-primary';
+    continueBtn.textContent = 'CONTINUE →';
+    continueBtn.style.marginTop = '24px';
+    continueBtn.addEventListener('click', () => hideScene('scene-randomize', startCharCardScene));
+    stage.appendChild(continueBtn);
   });
 }
 
@@ -640,32 +442,16 @@ function addMiniCard(grid, seq, val) {
 //  SCENE 6 — CHARACTER CARD
 // ════════════════════════════════════════════════════════
 function startCharCardScene() {
-  showScene('scene-charcard');
-
-  const wrap = document.getElementById('cc-wrap');
-
-  // Wrap animates in
-  G.to(wrap, {
-    opacity: 1, scale: 1, y: 0,
-    duration: 0.9, ease: 'back.out(1.2)',
-    delay: 0.15,
-  });
-
-  // Fill identity
-  document.getElementById('cc-name-display').textContent = player.name.toUpperCase();
-
   const groupLabels = { mob: 'GAYGOS', balance: 'XBOX', grind: "LUCAS'S GANG" };
   const groupColors = { mob: '#FC7B54', balance: '#F7B731', grind: '#6BCB77' };
   const persLabels  = {
-    grinder:  'THE GRINDER',
-    social:   'SOCIAL BUTTERFLY',
-    athlete:  'THE ATHLETE',
-    charmer:  'THE CHARMER',
-    observer: 'THE OBSERVER',
-    rebel:    'THE REBEL',
-    empath:   'THE EMPATH',
-    wildcard: 'THE WILDCARD',
+    grinder: 'THE GRINDER', social: 'SOCIAL BUTTERFLY',
+    athlete: 'THE ATHLETE', charmer: 'THE CHARMER',
+    observer: 'THE OBSERVER', rebel: 'THE REBEL',
+    empath: 'THE EMPATH', wildcard: 'THE WILDCARD',
   };
+
+  document.getElementById('cc-name-display').textContent = player.name.toUpperCase();
 
   const gBadge = document.getElementById('cc-group-display');
   gBadge.textContent = groupLabels[player.friendGroup] || '—';
@@ -675,99 +461,40 @@ function startCharCardScene() {
 
   document.getElementById('cc-pers-display').textContent = persLabels[player.personality] || '—';
 
-  // Attributes
-  const attrsEl = document.getElementById('cc-attributes');
-  const attrs = [
-    { label: 'HEIGHT', val: player.height },
-  ];
-  attrsEl.innerHTML = attrs.map(a => `
+  document.getElementById('cc-attributes').innerHTML = `
     <div class="cc-attr">
-      <div class="cc-attr-label">${a.label}</div>
-      <div class="cc-attr-val">${a.val}</div>
+      <div class="cc-attr-label">HEIGHT</div>
+      <div class="cc-attr-val">${player.height}</div>
     </div>
-  `).join('');
+  `;
 
-  G.to('.cc-attr', {
-    opacity: 1, x: 0,
-    stagger: 0.08, duration: 0.4,
-    ease: 'power3.out', delay: 0.8
-  });
-
-  // Mini special cards
-  const miniCardsEl = document.getElementById('cc-cards-mini');
-  const specials = [
-    {
-      label: 'RUMOR',
-      val: player.rumor,
-      color: '#FC7B54',
-      hidden: false,
-    },
-    {
-      label: 'BACKGROUND',
-      val: player.background.label + ' — ' + player.background.desc,
-      color: '#6BCB77',
-      hidden: false,
-    },
-    {
-      label: 'SECRET',
-      val: player.secret.label,
-      color: '#E8849A',
-      hidden: true,
-    },
-  ];
-
-  miniCardsEl.innerHTML = specials.map(sp => `
+  document.getElementById('cc-cards-mini').innerHTML = [
+    { label: 'RUMOR',      val: player.rumor,                                         color: '#FC7B54', hidden: false },
+    { label: 'BACKGROUND', val: player.background.label + ' — ' + player.background.desc, color: '#6BCB77', hidden: false },
+    { label: 'SECRET',     val: player.secret.label,                                  color: '#E8849A', hidden: true  },
+  ].map(sp => `
     <div class="mini-special-card" style="--msc-color:${sp.color}">
       <div class="msc-type">${sp.label}</div>
       ${sp.hidden
-        ? `<div class="msc-value msc-hidden">${sp.val}</div>
-           <div class="msc-hidden-label">🔒 ONLY YOU KNOW</div>`
-        : `<div class="msc-value">${sp.val}</div>`
-      }
+        ? `<div class="msc-value msc-hidden">${sp.val}</div><div class="msc-hidden-label">🔒 ONLY YOU KNOW</div>`
+        : `<div class="msc-value">${sp.val}</div>`}
     </div>
   `).join('');
 
-  G.to('.mini-special-card', {
-    opacity: 1, y: 0,
-    stagger: 0.1, duration: 0.5,
-    ease: 'back.out(1.3)', delay: 1.0
-  });
-
-  // Stat bars
-  const statsEl = document.getElementById('cc-stats-bars');
-  statsEl.innerHTML = Object.entries(player.stats).map(([key, val]) => `
-    <div class="stat-row" data-key="${key}" data-val="${val}">
+  document.getElementById('cc-stats-bars').innerHTML = Object.entries(player.stats).map(([key, val]) => `
+    <div class="stat-row">
       <div class="stat-row-top">
         <span class="stat-name">${STAT_LABELS[key]}</span>
         <span class="stat-val">${val.toFixed(1)}</span>
       </div>
       <div class="stat-bar-track">
-        <div class="stat-bar-fill" style="background:${statColor(key, val)}"></div>
+        <div class="stat-bar-fill" style="background:${statColor(key,val)};width:${val/10*100}%"></div>
       </div>
     </div>
   `).join('');
 
-  G.to('.stat-row', {
-    opacity: 1, x: 0,
-    stagger: 0.06, duration: 0.4,
-    ease: 'power3.out', delay: 0.5,
-    onComplete: animateStatBars,
-  });
-
-  // Begin button
-  document.getElementById('begin-btn').addEventListener('click', startTransition);
-}
-
-function animateStatBars() {
-  document.querySelectorAll('.stat-row').forEach(row => {
-    const val  = parseFloat(row.dataset.val);
-    const fill = row.querySelector('.stat-bar-fill');
-    G.to(fill, {
-      width: (val / 10 * 100) + '%',
-      duration: 1.2,
-      ease: 'power3.out',
-      delay: Math.random() * 0.3,
-    });
+  showScene('scene-charcard', () => {
+    document.getElementById('begin-btn').addEventListener('click', startTransition);
   });
 }
 
@@ -775,41 +502,12 @@ function animateStatBars() {
 //  SCENE 7 — TRANSITION
 // ════════════════════════════════════════════════════════
 function startTransition() {
-  flash(() => {
-    hideScene('scene-charcard', () => {
-      showScene('scene-transition');
+  hideScene('scene-charcard', () => {
+    showScene('scene-transition', () => {
       const textEl = document.getElementById('trans-text');
-
-      const lines = ['FRESHMAN YEAR', 'BEGINS.'];
-      let lineIdx = 0;
-
-      function showNextLine() {
-        if (lineIdx >= lines.length) {
-          // Hold, then final flash + game would start
-          setTimeout(() => {
-            G.to(textEl, { opacity: 0, duration: 0.5 });
-            G.to('#scene-transition', {
-              opacity: 0, duration: 1.0, delay: 0.6,
-              onComplete: () => {
-                launchGame();
-              }
-            });
-          }, 1200);
-          return;
-        }
-        textEl.textContent = lines[lineIdx];
-        G.fromTo(textEl,
-          { opacity: 0, y: 20, letterSpacing: '2px' },
-          { opacity: 1, y: 0, letterSpacing: '6px', duration: 0.7, ease: 'back.out(1.4)',
-            onComplete: () => {
-              lineIdx++;
-              setTimeout(showNextLine, 600);
-            }
-          }
-        );
-      }
-
-      setTimeout(showNextLine, 300);
+      textEl.textContent = 'FRESHMAN YEAR BEGINS.';
+      textEl.style.opacity = '1';
+      setTimeout(launchGame, 1200);
     });
   });
 }
