@@ -278,6 +278,7 @@ function startNameScene() {
 // ════════════════════════════════════════════════════════
 function startGroupScene() {
   showScene('scene-group', () => {
+    G.to('.group-card', { opacity: 1, y: 0, duration: 0.4, stagger: 0.1, ease: 'power2.out' });
     document.querySelectorAll('.group-card').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.group-card').forEach(c => c.classList.remove('selected'));
@@ -315,7 +316,7 @@ function applyGroupStats(g) {
 // ════════════════════════════════════════════════════════
 function startPersonalityScene() {
   showScene('scene-personality', () => {
-   G.to('.pers-card', { opacity: 1, y: 0, duration: 0.4, stagger: 0.1, ease: 'power2.out' });
+    G.to('.pers-card', { opacity: 1, y: 0, duration: 0.4, stagger: 0.1, ease: 'power2.out' });
     document.querySelectorAll('.pers-card').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.pers-card').forEach(c => c.classList.remove('selected'));
@@ -425,6 +426,14 @@ function startRandomizeScene() {
 
     stage.innerHTML = '';
     stage.appendChild(grid);
+
+    G.to('.mini-reveal-card', {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      stagger: 0.2, // This creates the "one-by-one" reveal effect
+      ease: 'power2.out'
+    });
 
     // Mark all dots done
     document.querySelectorAll('.rp-dot').forEach(d => d.classList.add('done'));
