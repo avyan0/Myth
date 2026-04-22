@@ -138,7 +138,7 @@
 <div id="scene-personality" class="scene">
   <div class="scene-header">
     <div class="scene-step">STEP 03 / 04</div>
-    <div class="scene-title"WHO ARE YOU??</div>
+    <div class="scene-title">WHO ARE YOU?</div>
   </div>
   <div class="personality-cards" id="personality-cards">
 
@@ -335,12 +335,26 @@
 
 </div><!-- /scene-game -->
 
+<!-- ─────────────────────────────── EVENT MODAL ──────────────────────────── -->
+<div id="event-modal" class="event-modal">
+  <div id="event-modal-card" class="em-card">
+    <div class="em-card-top">
+      <span class="em-category" id="em-category"></span>
+      <span class="em-location" id="em-location"></span>
+    </div>
+    <div class="em-title" id="em-title"></div>
+    <div class="em-setup" id="em-setup"></div>
+    <div class="em-choices" id="em-choices"></div>
+  </div>
+</div>
+
 <!-- FLASH OVERLAY -->
 <div id="flash-overlay"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="campus.js"></script>
 <script src="engine.js"></script>
+<script src="events.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

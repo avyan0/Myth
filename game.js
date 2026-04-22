@@ -210,31 +210,7 @@ function hideScene(id, onDone) {
   });
 }
 
-// ── Noise Canvas ──────────────────────────────────────
-(function initNoise() {
-  const canvas = document.getElementById('noise-canvas');
-  const ctx    = canvas.getContext('2d');
-  let frame;
-  function resize() {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  function draw() {
-    const { width: w, height: h } = canvas;
-    const img  = ctx.createImageData(w, h);
-    const data = img.data;
-    for (let i = 0; i < data.length; i += 4) {
-      const v = Math.random() * 255 | 0;
-      data[i] = data[i+1] = data[i+2] = v;
-      data[i+3] = 255;
-    }
-    ctx.putImageData(img, 0, 0);
-    frame = requestAnimationFrame(draw);
-  }
-  resize();
-  window.addEventListener('resize', resize);
-  draw();
-})();
+// Noise canvas disabled — not used in warm parchment theme
 
 // ════════════════════════════════════════════════════════
 //  SCENE 0 — BOOT
@@ -845,9 +821,9 @@ function launchGame() {
   Engine.init(player);
 
   // Wire engine events → UI
-  Engine.on('zone_enter',    ({ zone })  => updateZonePanel(zone));
+  Engine.on('zone_enter',    ({ zone })  => { updateZonePanel(zone); EventManager.checkTriggers(Engine.getState()); });
   Engine.on('stat_change',   ()         => refreshStatsSidebar());
-  Engine.on('period_change', ({ period })=> updateHUD());
+  Engine.on('period_change', ()         => { updateHUD(); EventManager.checkTriggers(Engine.getState()); });
   Engine.on('grade_up',      ({ to })    => showGradeUnlock(to));
   Engine.on('npc_talk',      ({ npc, node }) => openDialogue(npc, node));
   Engine.on('dialogue_close',()         => closeDialogueBox());
