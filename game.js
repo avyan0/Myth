@@ -195,7 +195,9 @@ function flash(cb) {
 
 function showScene(id, onDone) {
   const el = document.getElementById(id);
+  if (!el) { if (onDone) onDone(); return; }
   el.classList.add('active');
+  el.style.opacity = '0';
   G.to(el, { opacity: 1, duration: 0.4, ease: 'power2.out', onComplete: onDone });
 }
 
@@ -817,32 +819,40 @@ function startTransition() {
 // ════════════════════════════════════════════════════════
 
 function launchGame() {
-  // Init engine with character creation data
   Engine.init(player);
 
-  // Wire engine events → UI
-  Engine.on('zone_enter',    ({ zone })  => { updateZonePanel(zone); EventManager.checkTriggers(Engine.getState()); });
-  Engine.on('stat_change',   ()         => refreshStatsSidebar());
-  Engine.on('period_change', ()         => { updateHUD(); EventManager.checkTriggers(Engine.getState()); });
-  Engine.on('grade_up',      ({ to })    => showGradeUnlock(to));
-  Engine.on('npc_talk',      ({ npc, node }) => openDialogue(npc, node));
-  Engine.on('dialogue_close',()         => closeDialogueBox());
+  // Hide transition scene
+  const transEl = document.getElementById('scene-transition');
+  transEl.classList.remove('active');
+  transEl.style.opacity = '0';
 
-  // Go to starting zone
-  Engine.goTo('front_entrance');
-
-  // Show game scene
-  document.getElementById('scene-transition').classList.remove('active');
-  document.getElementById('scene-transition').style.opacity = 0;
+  // Show game scene, then wire everything once it's visible
   showScene('scene-game', () => {
+    // Wire engine events now that UI is ready
+    Engine.on('zone_enter',    ({ zone }) => { updateZonePanel(zone); safeEventCheck(); });
+    Engine.on('stat_change',   ()        => refreshStatsSidebar());
+    Engine.on('period_change', ()        => { updateHUD(); safeEventCheck(); });
+    Engine.on('grade_up',      ({ to })  => showGradeUnlock(to));
+    Engine.on('npc_talk',      ({ npc, node }) => openDialogue(npc, node));
+    Engine.on('dialogue_close',()        => closeDialogueBox());
+
+    // Navigate to starting zone (fires zone_enter → updateZonePanel)
+    Engine.goTo('front_entrance');
+
     renderMap();
     updateHUD();
-    updateZonePanel(Engine.getState().currentZone);
-    refreshStatsSidebar();
     wireGameButtons();
+
     G.from('#campus-map', { opacity: 0, y: 16, duration: 0.6, ease: 'power3.out', delay: 0.1 });
     G.from('#zone-panel',  { opacity: 0, x: 20, duration: 0.5, ease: 'power3.out', delay: 0.2 });
+
+    // Fire first-event check after a short settle delay
+    setTimeout(safeEventCheck, 600);
   });
+}
+
+function safeEventCheck() {
+  try { EventManager.checkTriggers(Engine.getState()); } catch (e) {}
 }
 
 // ── Campus map renderer ───────────────────────────────
