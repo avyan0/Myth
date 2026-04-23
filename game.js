@@ -529,12 +529,14 @@ function startTransition() {
 function launchGame() {
   Engine.init(player);
 
-  // Hide transition scene
+  // Set freshman zone restriction before anything renders
+  window.MYTH_ORIENTATION_ACTIVE  = true;
+  window.MYTH_FRESHMAN_RESTRICTION = new Set(['gym', 'locker_rooms', 'basketball_courts']);
+
   const transEl = document.getElementById('scene-transition');
   transEl.classList.remove('active');
   transEl.style.opacity = '0';
 
-  // Show game scene, then wire everything once it's visible
   showScene('scene-game', () => {
     Engine.on('stat_change',    ()               => refreshStatsSidebar());
     Engine.on('period_change',  ()               => { updateHUD(); safeEventCheck(); });
@@ -542,19 +544,99 @@ function launchGame() {
     Engine.on('npc_talk',       ({ npc, node })  => openDialogue(npc, node));
     Engine.on('dialogue_close', ()               => closeDialogueBox());
 
-    Engine.goTo('front_entrance');
+    Engine.goTo('gym');
     updateHUD();
     wireGameButtons();
 
-    // Launch Phaser world after a frame so the container has layout
-    requestAnimationFrame(() => initPhaserGame(player));
-
-    setTimeout(safeEventCheck, 800);
+    // Launch Phaser, then show orientation overlay after a short delay
+    requestAnimationFrame(() => {
+      initPhaserGame(player);
+      setTimeout(showOrientationOverlay, 600);
+    });
   });
 }
 
 function safeEventCheck() {
   try { EventManager.checkTriggers(Engine.getState()); } catch (e) {}
+}
+
+// ════════════════════════════════════════════════════════
+//  ORIENTATION OVERLAY
+// ════════════════════════════════════════════════════════
+
+function showOrientationOverlay() {
+  const overlay = document.getElementById('orientation-overlay');
+  overlay.classList.add('open');
+  G.from(overlay.querySelector('.or-inner'), {
+    opacity: 0, y: 20, duration: 0.5, ease: 'power2.out',
+  });
+
+  document.querySelectorAll('.or-choice-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      resolveOrientationChoice(btn.dataset.choice);
+    }, { once: true });
+  });
+}
+
+function resolveOrientationChoice(choice) {
+  const OUTCOMES = {
+    alone_back: {
+      deltas: { selfAwareness: +1, stress: -1 },
+      text: 'You find the top row. Nobody sits next to you. Exactly how you wanted it.',
+      sub:  'You can see everyone from here. Good.',
+    },
+    familiar_face: {
+      deltas: { friendships: +1, relationships: +1 },
+      text: 'They look up — surprised, then relieved. You both are.',
+      sub:  'A small anchor in a sea of strangers.',
+    },
+    front_row: {
+      deltas: { extracurriculars: +1, stress: +1 },
+      text: 'Front row. You can feel eyes on your back the whole time.',
+      sub:  'Coach Rivera noticed. So did everyone else.',
+    },
+    popular_kids: {
+      deltas: { friendships: +2, toxicity: +1, integrity: -1 },
+      text: 'You sit down like you belong there. A few of them glance over. Not all of them look away.',
+      sub:  'Something just started. You\'re not sure what.',
+    },
+  };
+
+  const outcome = OUTCOMES[choice];
+  if (!outcome) return;
+
+  Object.entries(outcome.deltas).forEach(([stat, delta]) => {
+    Engine.modifyStat(stat, delta);
+  });
+
+  // Swap inner content to result screen
+  const inner = document.querySelector('.or-inner');
+  inner.innerHTML = `
+    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN ORIENTATION</div>
+    <p class="or-result-text">"${outcome.text}"</p>
+    <p class="or-result-sub">${outcome.sub}</p>
+    <button class="btn-primary" id="or-continue-btn" style="margin-top:28px;align-self:flex-start">CONTINUE →</button>
+  `;
+
+  G.from(inner, { opacity: 0, duration: 0.35 });
+
+  document.getElementById('or-continue-btn').addEventListener('click', closeOrientationOverlay);
+}
+
+function closeOrientationOverlay() {
+  const overlay = document.getElementById('orientation-overlay');
+  G.to(overlay, {
+    opacity: 0, duration: 0.4, ease: 'power2.in',
+    onComplete: () => {
+      overlay.classList.remove('open');
+      overlay.style.opacity = '';
+      window.MYTH_ORIENTATION_ACTIVE   = false;
+      window.MYTH_FRESHMAN_RESTRICTION = null; // lift zone restriction
+      Engine.setFlag('orientation_complete');
+      refreshStatsSidebar();
+      setTimeout(safeEventCheck, 400);
+    },
+  });
 }
 
 // ── Campus map renderer (legacy — replaced by Phaser) ─

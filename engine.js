@@ -47,12 +47,12 @@ const Engine = (function () {
       periodIndex:  0,   // index into PERIODS array
 
       // Location
-      currentZone:  'front_entrance',
+      currentZone:  'gym',
       prevZone:     null,
 
       // Progression
       storyFlags:   new Set(),
-      visitedZones: new Set(['front_entrance']),
+      visitedZones: new Set(['gym']),
       metNPCs:      new Set(),
 
       // UI

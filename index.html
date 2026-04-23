@@ -264,6 +264,8 @@
     <span class="hud-zone-current" id="hud-zone">—</span>
     <div class="hud-divider"></div>
     <button class="hud-stats-toggle" id="hud-stats-btn">STATS ↗</button>
+    <div class="hud-divider"></div>
+    <button class="hud-stats-toggle" id="hud-pause-btn">[P] PAUSE</button>
   </div>
 
   <!-- Phaser 2D canvas -->
@@ -317,6 +319,51 @@
 
 <!-- FLASH OVERLAY -->
 <div id="flash-overlay"></div>
+
+<!-- ─────────────────────────────── ORIENTATION OVERLAY ──────────────────── -->
+<div id="orientation-overlay" class="or-overlay">
+  <div class="or-inner">
+    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN ORIENTATION</div>
+    <h1 class="or-title">FIRST MORNING.</h1>
+    <div class="or-scene">
+      <p>The gym smells like floor wax and new shoes. Folding chairs line the bleachers. Coach Rivera adjusts the podium mic — it squeals, then settles.</p>
+      <p>Freshmen stream in from the double doors. You've got maybe two minutes before it starts.</p>
+      <p class="or-prompt">You scan the bleachers. Where do you sit?</p>
+    </div>
+    <div class="or-choices">
+      <button class="or-choice-btn" data-choice="alone_back">
+        <span class="ocb-label">ALONE IN THE BACK</span>
+        <span class="ocb-hint">Top row. Nobody bothers you. You can see everything from up here.</span>
+      </button>
+      <button class="or-choice-btn" data-choice="familiar_face">
+        <span class="ocb-label">NEXT TO SOMEONE FAMILIAR</span>
+        <span class="ocb-hint">You recognize them from middle school. Small relief. Just barely.</span>
+      </button>
+      <button class="or-choice-btn" data-choice="front_row">
+        <span class="ocb-label">IN THE FRONT ROW</span>
+        <span class="ocb-hint">Make an impression. Let Coach Rivera see your face first.</span>
+      </button>
+      <button class="or-choice-btn" data-choice="popular_kids">
+        <span class="ocb-label">NEXT TO THE POPULAR KIDS</span>
+        <span class="ocb-hint">You spot them immediately. Everyone does. A few of them glance over.</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── PAUSE OVERLAY ────────────────────────── -->
+<div id="pause-overlay" class="po-overlay">
+  <div class="po-inner">
+    <div class="po-header">
+      <span class="po-title">PAUSED</span>
+      <span class="po-key-hint">[P] RESUME</span>
+    </div>
+    <div class="po-player-info" id="po-player-info"></div>
+    <div class="po-section-label">YOUR STATS</div>
+    <div class="po-stats" id="po-stats"></div>
+    <button class="btn-primary" id="po-resume-btn" style="margin-top:22px;align-self:center">RESUME →</button>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
