@@ -943,7 +943,7 @@ html, body {
    SCENE: GAME WORLD
 ══════════════════════════════════════════════════════ */
 #scene-game {
-  background: var(--bg-page);
+  background: #2D1F12;
   flex-direction: row;
   align-items: stretch;
   justify-content: flex-start;
