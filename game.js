@@ -504,6 +504,8 @@ function startCharCardScene() {
   `).join('');
 
   showScene('scene-charcard', () => {
+    G.to('#cc-wrap', { opacity: 1, scale: 1, y: 0, duration: 0.55, ease: 'back.out(1.3)' });
+    G.to('.stat-row', { opacity: 1, x: 0, stagger: 0.04, duration: 0.35, delay: 0.25, ease: 'power2.out' });
     document.getElementById('begin-btn').addEventListener('click', startTransition);
   });
 }
