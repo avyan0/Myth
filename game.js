@@ -550,10 +550,9 @@ function launchGame() {
     updateHUD();
     wireGameButtons();
 
-    // Launch Phaser, then show orientation overlay after a short delay
+    // Launch Three.js 3D world (showOrientationOverlay called from inside world3d.js after load)
     requestAnimationFrame(() => {
-      initPhaserGame(player);
-      setTimeout(showOrientationOverlay, 600);
+      initWorld3D(player);
     });
   });
 }
