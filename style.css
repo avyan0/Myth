@@ -1712,6 +1712,16 @@ html, body {
 .or-result-sub {
   font-family: var(--font-m); font-size: 9px;
   letter-spacing: 2px; color: var(--text-muted);
+  margin-top: 8px;
+}
+.or-stat-line {
+  margin-top: 18px;
+  font-family: var(--font-m); font-size: 9px;
+  letter-spacing: 1.5px; color: var(--gold);
+  background: rgba(247,183,49,0.08);
+  border: 1px solid rgba(247,183,49,0.2);
+  border-radius: 4px;
+  padding: 7px 12px;
 }
 
 /* ══════════════════════════════════════════════════════

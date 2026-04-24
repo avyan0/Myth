@@ -531,9 +531,9 @@ function startTransition() {
 function launchGame() {
   Engine.init(player);
 
-  // Set freshman zone restriction before anything renders
-  window.MYTH_ORIENTATION_ACTIVE  = true;
-  window.MYTH_FRESHMAN_RESTRICTION = new Set(['gym', 'locker_rooms', 'basketball_courts']);
+  // Freshman restrictions — orientation handled by zone-entry in world3d.js
+  window.MYTH_ORIENTATION_ACTIVE   = false;
+  window.MYTH_FRESHMAN_RESTRICTION = true; // Three.js uses this as a boolean flag for clamp
 
   const transEl = document.getElementById('scene-transition');
   transEl.classList.remove('active');
@@ -582,24 +582,28 @@ function showOrientationOverlay() {
 function resolveOrientationChoice(choice) {
   const OUTCOMES = {
     alone_back: {
-      deltas: { selfAwareness: +1, stress: -1 },
-      text: 'You find the top row. Nobody sits next to you. Exactly how you wanted it.',
-      sub:  'You can see everyone from here. Good.',
+      deltas: { selfAwareness: +2, stress: -1, friendships: -1 },
+      text: 'Top row. You climb past empty seats until there\'s nobody on either side. The gym fills up below you.',
+      sub:  'Devon Clark sits two rows down. He nods once. Neither of you say anything. It\'s fine.',
+      statLine: 'Self-Awareness +2 · Stress -1 · Friendships -1',
     },
     familiar_face: {
-      deltas: { friendships: +1, relationships: +1 },
-      text: 'They look up — surprised, then relieved. You both are.',
-      sub:  'A small anchor in a sea of strangers.',
+      deltas: { friendships: +2, relationships: +1, stress: -1 },
+      text: 'You recognize them from middle school — Jordan Park. Their face changes when they see you. Relief. Same as yours.',
+      sub:  '"Thank god," Jordan says. "Sit down before someone worse does." You do.',
+      statLine: 'Friendships +2 · Relationships +1 · Stress -1',
     },
     front_row: {
-      deltas: { extracurriculars: +1, stress: +1 },
-      text: 'Front row. You can feel eyes on your back the whole time.',
-      sub:  'Coach Rivera noticed. So did everyone else.',
+      deltas: { gpa: +1, extracurriculars: +1, stress: +2, friendships: -1 },
+      text: 'The front row is mostly empty. You take the center seat. Coach Rivera makes eye contact immediately.',
+      sub:  '"Good. A student who pays attention." Someone behind you laughs quietly. You pretend not to hear it.',
+      statLine: 'GPA +1 · Extracurriculars +1 · Stress +2 · Friendships -1',
     },
     popular_kids: {
-      deltas: { friendships: +2, toxicity: +1, integrity: -1 },
-      text: 'You sit down like you belong there. A few of them glance over. Not all of them look away.',
-      sub:  'Something just started. You\'re not sure what.',
+      deltas: { friendships: +2, toxicity: +2, integrity: -2, looks: +1 },
+      text: 'Tyler Brooks is already holding court in the third row. You walk straight toward the group like you\'ve been there before.',
+      sub:  'One of them — tall, red hoodie — slides over without being asked. Tyler watches you sit down. "You\'re new," he says. It\'s not a question.',
+      statLine: 'Friendships +2 · Looks +1 · Toxicity +2 · Integrity -2',
     },
   };
 
@@ -614,9 +618,10 @@ function resolveOrientationChoice(choice) {
   const inner = document.querySelector('.or-inner');
   inner.innerHTML = `
     <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN ORIENTATION</div>
-    <p class="or-result-text">"${outcome.text}"</p>
+    <p class="or-result-text">${outcome.text}</p>
     <p class="or-result-sub">${outcome.sub}</p>
-    <button class="btn-primary" id="or-continue-btn" style="margin-top:28px;align-self:flex-start">CONTINUE →</button>
+    <div class="or-stat-line">${outcome.statLine}</div>
+    <button class="btn-primary" id="or-continue-btn" style="margin-top:28px;align-self:flex-start">BEGIN FRESHMAN YEAR →</button>
   `;
 
   G.from(inner, { opacity: 0, duration: 0.35 });
@@ -632,9 +637,12 @@ function closeOrientationOverlay() {
       overlay.classList.remove('open');
       overlay.style.opacity = '';
       window.MYTH_ORIENTATION_ACTIVE   = false;
-      window.MYTH_FRESHMAN_RESTRICTION = null; // lift zone restriction
+      // Keep freshman restriction active — lifted only when freshman_year_complete
+      // Restriction remains as Set so world3d zone clamp stays live
       Engine.setFlag('orientation_complete');
       refreshStatsSidebar();
+      // Request pointer lock so player can immediately start exploring
+      if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
       setTimeout(safeEventCheck, 400);
     },
   });

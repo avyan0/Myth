@@ -1122,14 +1122,22 @@ function initWorld3D(playerData) {
     NPCS.push({x:tunnelCX, z:gz-gd/2+2, radius:5, label:'Gym Tunnel Entrance',
       msg:'Walk through the tunnel under the bleachers to exit the gym. Follow the lights!'});
 
-    // South bleachers (gz + gd/2 side, face inward)
+    // South bleachers — start 3.5 units back from door for clear entrance path
     for (var br3 = 0; br3 < blRows; br3++) {
       var byS = br3 * 0.62;
-      var bzS = gz + gd/2 - 0.8 - br3 * 0.85;
+      var bzS = gz + gd/2 - 3.5 - br3 * 0.85;
       solidBox(blW, 0.32, 0.88, blMats[br3%2], gx, byS, bzS);
       addSurf(gx, bzS, blW, 0.88, byS + 0.32);
       visBox(blW, byS+0.32, 0.12, mk(0x444444,0.9), gx, (byS+0.32)/2, bzS+0.38);
     }
+
+    // -- PODIUM / SPEAKER AREA -----------------------------------
+    // Podium near center-south for speaker facing students
+    solidBox(1.4, 1.1, 0.8, mk(0x5a3010, 0.7), gx, 0, gz + 4);
+    visBox(1.45, 0.08, 0.82, mk(0x3a1a00, 0.5), gx, 1.1, gz + 4, true);
+    // Mic stand
+    visCyl(0.04, 0.04, 1.2, 6, mk(0x888888, 0.3, 0.7), gx, 0.6, gz + 3.4);
+    visCyl(0.1, 0.04, 0.02, 6, mk(0x333333, 0.5), gx, 1.22, gz + 3.4);
 
     // -- SCOREBOARDS on end walls ---------------------------------
     solidBox(10, 3.2, 0.25, MT.scr, gx, gh - 2.2, gz - gd/2 + 0.35);
@@ -1381,6 +1389,131 @@ function initWorld3D(playerData) {
   prog(50, 'Gymnasium...');
   buildGym(-92, -62);
 
+  // ── ORIENTATION NPC BODIES ──────────────────────────────────
+  // Helper: place a simple character mesh (cylinder body + sphere head)
+  function npcBody(x, z, y, shirtHex, skinHex) {
+    var sm = mk(shirtHex||0x3355aa, 0.7);
+    var hm = mk(skinHex||0xf4c08a, 0.5);
+    visCyl(0.18, 0.22, 0.9, 8, sm, x, y + 0.45, z);   // torso
+    visSph(0.19, hm, x, y + 1.12, z);                  // head
+  }
+
+  // Shirt color palette for crowd variety
+  var shirtCols = [0x3355cc, 0xcc3322, 0x228833, 0xcc8800, 0x882299,
+                   0x117788, 0xcc4422, 0x336688, 0xee6644, 0x3399aa,
+                   0xaa2244, 0x668833, 0x4455bb, 0xcc7700, 0x559944];
+  var skinCols  = [0xf4c08a, 0xe8a070, 0xd08858, 0xc07040, 0xfad4a0,
+                   0xe8b880, 0xd4906a, 0xba7248];
+
+  var npcIdx = 0;
+  function rndNPC(x, z, rowY) {
+    var sc = shirtCols[npcIdx % shirtCols.length];
+    var hc = skinCols[Math.floor(npcIdx / 2) % skinCols.length];
+    npcBody(x, z, rowY, sc, hc);
+    npcIdx++;
+  }
+
+  // South bleachers (rows 0–6, starting at gz+gd/2-3.5 = -49.5, step -0.85)
+  var xSpots = [-108, -104, -100, -96, -92, -88, -84, -80, -76];
+  for (var srN = 0; srN < 6; srN++) {
+    var seatY = srN * 0.62 + 0.32;
+    var seatZ = -62 + 16 - 3.5 - srN * 0.85;
+    // Fill most spots, leave some gaps for realism
+    for (var sx = 0; sx < xSpots.length; sx++) {
+      if (srN === 0 && sx === 4) continue; // leave gap at center front
+      rndNPC(xSpots[sx], seatZ - 0.2, seatY);
+    }
+  }
+  // North bleachers (rows 0–5, inside near north wall)
+  for (var nrN = 0; nrN < 5; nrN++) {
+    var nseatY = nrN * 0.62 + 0.32;
+    var nseatZ = -62 - 16 + 0.8 + nrN * 0.85 + 0.2;
+    for (var nx2 = 0; nx2 < xSpots.length; nx2++) {
+      if (nrN < 2 && (nx2 < 2 || nx2 > 6)) continue; // sparse outer rows
+      rndNPC(xSpots[nx2], nseatZ, nseatY);
+    }
+  }
+
+  // Coach Rivera at the podium — distinctive outfit
+  npcBody(-92, -58, 0, 0x1a1a5a, 0xe8b880);  // dark navy jacket
+
+  // ── STORY NPCs around gym entrance ─────────────────────────
+  // Alex — outside gym, east side
+  NPCS.push({x:-82, z:-44, radius:3.5, label:'Alex Chen',
+    msg:'"Hey — you\'re new too, right? First day. Yeah. I don\'t know anyone either. The gym is right here, orientation\'s about to start."'});
+  npcBody(-82, -44, 0, 0x4488cc, 0xf4c08a);
+
+  // Jordan — just inside the entrance path
+  NPCS.push({x:-92, z:-44, radius:3.5, label:'Jordan Park',
+    msg:'"I heard the popular kids always claim the front bleachers on day one. No idea if that\'s true. Probably is."'});
+  npcBody(-92, -44, 0, 0xcc4422, 0xd08858);
+
+  // Maya — west side of gym entrance
+  NPCS.push({x:-101, z:-44, radius:3.5, label:'Maya Torres',
+    msg:'"My older sister said freshman orientation is basically just the principal telling you not to use your phone. Forty-five minutes."'});
+  npcBody(-101, -44, 0, 0xaa44aa, 0xe8a070);
+
+  // Upperclassman near parking lot (the cool gatekeeper type)
+  NPCS.push({x:-105, z:-38, radius:4, label:'Upperclassman',
+    msg:'"Oh, freshmen. Every year." (He doesn\'t stop walking.)'});
+  npcBody(-105, -38, 0, 0x222222, 0xd4906a);
+
+  // Coach Rivera NPC info point
+  NPCS.push({x:-92, z:-57, radius:5, label:'Coach Rivera',
+    msg:'Coach Rivera adjusts the mic. "Welcome to Westbrook High. Please find your seats — orientation begins in two minutes."'});
+
+  // Naomi — in bleachers, front row (labeled interaction)
+  NPCS.push({x:-84, z:-50, radius:3, label:'Naomi Walsh',
+    msg:'"Front row. I know everyone thinks it\'s try-hard, but I actually want to hear what they\'re saying." She has a pen out already.'});
+
+  // Tyler — popular kids cluster
+  NPCS.push({x:-97, z:-50, radius:3, label:'Tyler Brooks',
+    msg:'Tyler looks up from his phone. "You can sit here." A pause. "If you want." The offer doesn\'t last long.'});
+
+  // Devon — back row, north bleachers
+  NPCS.push({x:-88, z:-76, radius:3, label:'Devon Clark',
+    msg:'"Back row. You can see everything from up here and nobody bothers you. That\'s the whole thing."'});
+
+  // ── ORIENTATION SIGN outside gym ───────────────────────────
+  var orSign = mkLabel('↓  FRESHMAN ORIENTATION  ↓', 13);
+  orSign.position.set(-92, 6, -42);
+  var orSign2 = mkLabel('Walk into the gym to begin', 9);
+  orSign2.position.set(-92, 4.5, -42);
+
+  // ── ADDITIONAL STORY NPCs (freshman accessible zone) ────────
+  // Teacher directing students to orientation
+  NPCS.push({x:-92, z:-30, radius:4, label:'Ms. Patel',
+    msg:'Ms. Patel waves you back toward the gym. "Freshmen orientation is in the gym — up that path. You have about three minutes."'});
+  npcBody(-92, -30, 0, 0x2244aa, 0xf0c090);
+
+  // Student sitting outside locker rooms, skipping
+  NPCS.push({x:-80, z:-32, radius:4, label:'Kid Skipping Orientation',
+    msg:'"I\'ve been to like four of these. New school, same speech. Coach says attendance mandatory though, so." He doesn\'t move.'});
+  npcBody(-80, -32, 0, 0x334433, 0xd4906a);
+
+  // Nervous freshman near the gym entrance path
+  NPCS.push({x:-100, z:-36, radius:3.5, label:'Nervous Freshman',
+    msg:'"Is this where we go? For orientation? I\'ve walked past three times already trying to look like I know where I\'m going."'});
+  npcBody(-100, -36, 0, 0x7788bb, 0xfad4a0);
+
+  // Student group near the west parking lot
+  NPCS.push({x:-125, z:-30, radius:4, label:'Sakura Yamamoto',
+    msg:'"My brother warned me about freshman orientation. Said it\'s actually pretty important — first impressions and all that. Where you sit matters."'});
+  npcBody(-125, -30, 0, 0xcc4488, 0xe8b080);
+
+  NPCS.push({x:-120, z:-38, radius:4, label:'Marcus Webb',
+    msg:'"I heard there are already cliques forming. Like, people already know who\'s popular and who isn\'t. Day one. That\'s wild."'});
+  npcBody(-120, -38, 0, 0x336699, 0xba7248);
+
+  // After orientation — near gym door, someone who stayed outside
+  NPCS.push({x:-84, z:-48, radius:3.5, label:'Quiet Student',
+    msg:'She\'s writing something in a small notebook. She looks up briefly. "Sorry — just writing down first impressions. It\'s a thing I do."'});
+  npcBody(-84, -48, 0, 0x886699, 0xf0c090);
+
+  // Campus boundary sign (invisible NPC info point)
+  NPCS.push({x:-65, z:-55, radius:5, label:'Campus Map',
+    msg:'WESTBROOK HIGH SCHOOL\nMain campus is straight ahead — Buildings A through F, Cafeteria, Library.\nFreshmen: please report to the gym for orientation first.'});
+
   prog(54, 'Locker rooms and weight room...');
   building(-92,-32,28,15,6,mk(0xd0c8b8),mk(0x607080),'Locker Rooms',1,'cls');
   building(-92,-12,22,13,6,mk(0xd0c8b8),mk(0x506070),'Weight Room',1,'wgt');
@@ -1542,9 +1675,10 @@ function initWorld3D(playerData) {
   var PH = 1.75; // player height (camera from ground)
   var PR = 0.32; // player radius
 
-  var px = -92, py = PH, pz = -56; // starting position
+  var px = -92, py = PH, pz = -38; // spawn just outside gym entrance
   var velY = 0, onGnd = true;
-  var yaw = Math.PI, pitch = 0;
+  var yaw = 0, pitch = 0;         // facing north toward gym door
+  var orientationTriggered = false;
   var jcd = 0;
   var keys = {};
 
@@ -1814,10 +1948,10 @@ function initWorld3D(playerData) {
     px = result.x;
     py = result.y;
     pz = result.z;
-    // Freshman zone restriction
+    // Freshman zone restriction — gym + locker room area only
     if (window.MYTH_FRESHMAN_RESTRICTION) {
-      px = Math.max(-116, Math.min(-68, px));
-      pz = Math.max(-82, Math.min(-43, pz));
+      px = Math.max(-138, Math.min(-65, px));
+      pz = Math.max(-85, Math.min(-22, pz));
     }
 
     // Camera
@@ -1845,6 +1979,15 @@ function initWorld3D(playerData) {
     for (var ci2=0;ci2<SCN.children.length;ci2++) {
       if (SCN.children[ci2].isSprite && SCN.children[ci2].material && SCN.children[ci2].material.map === cloudTex) {
         SCN.children[ci2].position.x += Math.sin(t*0.01)*0.01;
+      }
+    }
+
+    // Zone-entry orientation trigger
+    if (!orientationTriggered && !window.MYTH_ORIENTATION_ACTIVE) {
+      if (px >= -113 && px <= -71 && pz >= -78 && pz <= -46) {
+        orientationTriggered = true;
+        window.MYTH_ORIENTATION_ACTIVE = true;
+        if (typeof showOrientationOverlay === 'function') showOrientationOverlay();
       }
     }
 
@@ -1894,11 +2037,6 @@ function initWorld3D(playerData) {
 
   // Expose canvas for external pointer lock requests
   window.MYTH_WORLD3D_CANVAS = canvas;
-
-  // Show orientation overlay after a short delay (world is ready)
-  setTimeout(function() {
-    if (typeof showOrientationOverlay === 'function') showOrientationOverlay();
-  }, 400);
 
   animate();
 }

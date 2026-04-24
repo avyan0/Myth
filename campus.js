@@ -609,9 +609,8 @@ const WORLD_OBJECTS = [
 const GRADE_CONDITIONS = {
   10: {
     description: 'Complete freshman year',
-    // Evaluated by story module completions + minimum stat checks
     minStats: { gpa: 3 },
-    requiredFlags: [],  // story flags — set by story modules
+    requiredFlags: ['freshman_year_complete'],  // must be explicitly set
   },
   11: {
     description: 'Complete sophomore year',
