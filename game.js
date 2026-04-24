@@ -565,18 +565,97 @@ function safeEventCheck() {
 //  ORIENTATION OVERLAY
 // ════════════════════════════════════════════════════════
 
+const OR_SPEECH = [
+  { speaker: 'COACH RIVERA',         text: 'Welcome to Westbrook. You\'re freshmen. That means something here.' },
+  { speaker: 'COACH RIVERA',         text: 'This school has four hundred students. You\'ll see the same faces every single day for the next four years. What they think of you is entirely up to you.' },
+  { speaker: 'COACH RIVERA',         text: 'A few rules. Stay out of the senior lot. Don\'t touch the trophies in the front case. And if you\'re going to make a name for yourself — earn it.' },
+  { speaker: 'VICE PRINCIPAL HAYES', text: 'Your class schedules will be distributed at homeroom. Today is orientation. Look around. These are your people now.' },
+  { speaker: 'COACH RIVERA',         text: 'Before we continue — find your seat. This isn\'t assigned. But remember: where you sit on day one tells people something.' },
+];
+let _orSpeechIdx = 0;
+
 function showOrientationOverlay() {
+  _orSpeechIdx = 0;
   const overlay = document.getElementById('orientation-overlay');
   overlay.classList.add('open');
-  G.from(overlay.querySelector('.or-inner'), {
-    opacity: 0, y: 20, duration: 0.5, ease: 'power2.out',
-  });
+  const inner = overlay.querySelector('.or-inner');
+  G.from(inner, { opacity: 0, y: 20, duration: 0.5, ease: 'power2.out' });
+  _renderSpeechLine(inner);
+}
+
+function _renderSpeechLine(inner) {
+  const line = OR_SPEECH[_orSpeechIdx];
+  inner.innerHTML = `
+    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN ORIENTATION</div>
+    <div class="or-speech-speaker">${line.speaker}</div>
+    <p class="or-speech-text">"${line.text}"</p>
+    <div class="or-speech-nav">
+      <span class="or-speech-progress">${_orSpeechIdx + 1} / ${OR_SPEECH.length}</span>
+      <button class="btn-primary" id="or-next-btn">
+        ${_orSpeechIdx < OR_SPEECH.length - 1 ? 'NEXT →' : 'FIND YOUR SEAT →'}
+      </button>
+    </div>
+  `;
+  G.from(inner.querySelector('.or-speech-text'), { opacity: 0, y: 8, duration: 0.35, ease: 'power2.out' });
+  document.getElementById('or-next-btn').addEventListener('click', () => {
+    _orSpeechIdx++;
+    if (_orSpeechIdx >= OR_SPEECH.length) {
+      _showSeatChoice(inner);
+    } else {
+      _renderSpeechLine(inner);
+    }
+  }, { once: true });
+}
+
+function _showSeatChoice(inner) {
+  inner.innerHTML = `
+    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN ORIENTATION</div>
+    <h1 class="or-title">WHERE DO YOU SIT?</h1>
+    <div class="or-scene">
+      <p>The gym smells like floor wax and new shoes. The bleachers are filling up fast. You've got maybe ninety seconds before Coach Rivera starts talking again.</p>
+      <p class="or-prompt">Where do you go? <span class="or-key-hint">[ press 1 – 4 ]</span></p>
+    </div>
+    <div class="or-choices" id="or-choices-live">
+      <button class="or-choice-btn" data-choice="alone_back">
+        <span class="ocb-num">1</span>
+        <span class="ocb-label">ALONE IN THE BACK</span>
+        <span class="ocb-hint">Top row. Nobody bothers you. You can see everything from up here.</span>
+      </button>
+      <button class="or-choice-btn" data-choice="familiar_face">
+        <span class="ocb-num">2</span>
+        <span class="ocb-label">NEXT TO SOMEONE FAMILIAR</span>
+        <span class="ocb-hint">You recognize them from middle school. Small relief. Just barely.</span>
+      </button>
+      <button class="or-choice-btn" data-choice="front_row">
+        <span class="ocb-num">3</span>
+        <span class="ocb-label">FRONT ROW</span>
+        <span class="ocb-hint">Make an impression. Let Coach Rivera see your face first.</span>
+      </button>
+      <button class="or-choice-btn" data-choice="popular_kids">
+        <span class="ocb-num">4</span>
+        <span class="ocb-label">NEXT TO THE POPULAR KIDS</span>
+        <span class="ocb-hint">You spot them immediately. Everyone does. A few glance over.</span>
+      </button>
+    </div>
+  `;
+  G.from('.or-choice-btn', { opacity: 0, y: 10, stagger: 0.07, duration: 0.35, ease: 'power2.out' });
 
   document.querySelectorAll('.or-choice-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      resolveOrientationChoice(btn.dataset.choice);
-    }, { once: true });
+    btn.addEventListener('click', () => resolveOrientationChoice(btn.dataset.choice), { once: true });
   });
+
+  // Keyboard 1-4
+  const keyHandler = (e) => {
+    const map = { '1': 'alone_back', '2': 'familiar_face', '3': 'front_row', '4': 'popular_kids',
+                  'Digit1': 'alone_back', 'Digit2': 'familiar_face', 'Digit3': 'front_row', 'Digit4': 'popular_kids',
+                  'Numpad1': 'alone_back', 'Numpad2': 'familiar_face', 'Numpad3': 'front_row', 'Numpad4': 'popular_kids' };
+    const choice = map[e.key] || map[e.code];
+    if (choice) {
+      document.removeEventListener('keydown', keyHandler);
+      resolveOrientationChoice(choice);
+    }
+  };
+  document.addEventListener('keydown', keyHandler);
 }
 
 function resolveOrientationChoice(choice) {

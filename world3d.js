@@ -548,18 +548,15 @@ function initWorld3D(playerData) {
       }
     }
 
-    // DOOR (visual mesh, togglable)
+    // DOOR (visual mesh, togglable, with collision box)
     var dm = new THREE.Mesh(new THREE.BoxGeometry(2.7, 3.1, 0.1), MT.dr);
     dm.position.set(x, 1.55, z + d/2 - 0.05);
     dm.castShadow = true; SCN.add(dm);
-    DOORS.push({ mesh: dm, open: false, cx: x, cz: z + d/2 - 0.05 });
-
-    // ENTRANCE STEPS (solid + surface)
-    for (var s = 0; s < 4; s++) {
-      var sy = s * 0.25;
-      solidBox(5.5, 0.25, 0.88, MT.stt, x, sy, z + d/2 + 0.5 + s * 0.88);
-      addSurf(x, z + d/2 + 0.5 + s * 0.88, 5.5, 0.88, sy + 0.25);
-    }
+    var _dmMin = new THREE.Vector3(x - 1.35, 0, z + d/2 - 0.15);
+    var _dmMax = new THREE.Vector3(x + 1.35, 3.15, z + d/2 + 0.15);
+    var dmCol = new THREE.Box3(_dmMin.clone(), _dmMax.clone());
+    DOORS.push({ mesh: dm, open: false, cx: x, cz: z + d/2 - 0.05,
+                 col: dmCol, origMin: _dmMin.clone(), origMax: _dmMax.clone(), wallAxis: 'z' });
 
     // SIDE STAIRCASE (2-floor buildings)
     if (floors > 1) {
@@ -899,32 +896,42 @@ function initWorld3D(playerData) {
     var gw = 42, gd = 32, gh = 14;
 
     // -- EXTERIOR SHELL ------------------------------------------
-    // Walls
+    // West wall (solid)
     solidBox(0.5, gh, gd, MT.wG, gx - gw/2 + 0.25, 0, gz);
-    solidBox(0.5, gh, gd, MT.wG, gx + gw/2 - 0.25, 0, gz);
-    // North wall split by tunnel - built inside bleacher section above
-    // Front wall with door gap
-    solidBox((gw - 3.2)/2, gh, 0.5, MT.wG, gx - (gw/4 + 0.4), 0, gz + gd/2 - 0.25);
-    solidBox((gw - 3.2)/2, gh, 0.5, MT.wG, gx + (gw/4 + 0.4), 0, gz + gd/2 - 0.25);
-    solidBox(3.2, gh - 3.2, 0.5, MT.wG, gx, 3.2, gz + gd/2 - 0.25);
+    // East wall — split with door gap at center (z=gz), opening 3.2 wide
+    solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx + gw/2 - 0.25, 0, gz - (gd/4 + 0.8));
+    solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx + gw/2 - 0.25, 0, gz + (gd/4 + 0.8));
+    solidBox(0.5, gh - 3.2, 3.2, MT.wG, gx + gw/2 - 0.25, 3.2, gz);
+    // South wall — solid (no entrance here any more)
+    solidBox(gw, gh, 0.5, MT.wG, gx, 0, gz + gd/2 - 0.25);
+    // North wall split by tunnel - built inside bleacher section below
     // Roof
     solidBox(gw + 0.6, 0.8, gd + 0.6, MT.roofG, gx, gh, gz);
-    // Exterior steps
-    for (var gs = 0; gs < 3; gs++) {
-      solidBox(6, 0.28, 0.9, MT.stt, gx, gs*0.28, gz + gd/2 + 0.5 + gs*0.9);
-      addSurf(gx, gz + gd/2 + 0.5 + gs*0.9, 6, 0.9, gs*0.28+0.28);
-    }
-    // Door
-    var gymDoor = new THREE.Mesh(new THREE.BoxGeometry(2.8, 3.1, 0.1), MT.dr);
-    gymDoor.position.set(gx, 1.55, gz + gd/2 - 0.05);
+    // East entrance exterior ramp/curb (no stairs — just a single flat step)
+    solidBox(0.9, 0.18, 5.5, MT.stt, gx + gw/2 + 0.65, 0, gz);
+    addSurf(gx + gw/2 + 0.65, gz, 0.9, 5.5, 0.18);
+    // Door on east wall
+    var gymDoor = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.1, 2.8), MT.dr);
+    gymDoor.position.set(gx + gw/2 - 0.05, 1.55, gz);
     gymDoor.castShadow = true; SCN.add(gymDoor);
-    DOORS.push({ mesh: gymDoor, open: false, cx: gx, cz: gz + gd/2 - 0.05 });
+    var _gdMin = new THREE.Vector3(gx + gw/2 - 0.28, 0, gz - 1.4);
+    var _gdMax = new THREE.Vector3(gx + gw/2 + 0.28, 3.15, gz + 1.4);
+    var gymDoorCol = new THREE.Box3(_gdMin.clone(), _gdMax.clone());
+    DOORS.push({ mesh: gymDoor, open: false, cx: gx + gw/2 - 0.05, cz: gz,
+                 col: gymDoorCol, origMin: _gdMin.clone(), origMax: _gdMax.clone(), wallAxis: 'x' });
 
-    // High windows each side wall (visual)
+    // High windows on west wall
     for (var ww = gz - gd/2 + 3; ww < gz + gd/2 - 2; ww += 4.5) {
       visBox(0.12, 1.8, 2.2, MT.win, gx - gw/2 - 0.02, gh*0.6, ww);
-      visBox(0.12, 1.8, 2.2, MT.win, gx + gw/2 + 0.02, gh*0.6, ww);
     }
+    // High windows on east wall — skip area near door gap (gz ± 3.5)
+    for (var ww2 = gz - gd/2 + 3; ww2 < gz + gd/2 - 2; ww2 += 4.5) {
+      if (Math.abs(ww2 - gz) < 4.5) continue;
+      visBox(0.12, 1.8, 2.2, MT.win, gx + gw/2 + 0.02, gh*0.6, ww2);
+    }
+    // Sign above east entrance
+    var eastEntrSp = mkLabel('↑  ORIENTATION  ↑', 9);
+    eastEntrSp.position.set(gx + gw/2 + 0.5, gh * 0.55, gz);
 
     // -- GYM FLOOR ------------------------------------------------
     var gymFloorTex = makeTex(512, 512, function(c2, w2, h2) {
@@ -1058,7 +1065,7 @@ function initWorld3D(playerData) {
         if (leftW2 > 0.3) {
           solidBox(leftW2, 0.32, 0.88, blMats[br2%2], leftCX2, byN, bzN);
           addSurf(leftCX2, bzN, leftW2, 0.88, rowTop);
-          visBox(leftW2, rowTop, 0.12, mk(0x444444,0.9), leftCX2, rowTop/2, bzN-0.38);
+          visBox(leftW2, rowTop, 0.12, mk(0x444444,0.9), leftCX2, rowTop/2, bzN + 0.38);
         }
         // Split row: right piece
         var rightStart2 = tunnelCX + halfGap;
@@ -1067,13 +1074,13 @@ function initWorld3D(playerData) {
         if (rightW2 > 0.3) {
           solidBox(rightW2, 0.32, 0.88, blMats[br2%2], rightCX2, byN, bzN);
           addSurf(rightCX2, bzN, rightW2, 0.88, rowTop);
-          visBox(rightW2, rowTop, 0.12, mk(0x444444,0.9), rightCX2, rowTop/2, bzN-0.38);
+          visBox(rightW2, rowTop, 0.12, mk(0x444444,0.9), rightCX2, rowTop/2, bzN + 0.38);
         }
       } else {
         // Full width row (above tunnel clearance - becomes tunnel ceiling)
         solidBox(blW, 0.32, 0.88, blMats[br2%2], gx, byN, bzN);
         addSurf(gx, bzN, blW, 0.88, rowTop);
-        visBox(blW, rowTop, 0.12, mk(0x444444,0.9), gx, rowTop/2, bzN-0.38);
+        visBox(blW, rowTop, 0.12, mk(0x444444,0.9), gx, rowTop/2, bzN + 0.38);
       }
     }
 
@@ -1122,13 +1129,15 @@ function initWorld3D(playerData) {
     NPCS.push({x:tunnelCX, z:gz-gd/2+2, radius:5, label:'Gym Tunnel Entrance',
       msg:'Walk through the tunnel under the bleachers to exit the gym. Follow the lights!'});
 
-    // South bleachers — start 3.5 units back from door for clear entrance path
+    // South bleachers — front rows near court, back rows near south wall, all facing north
     for (var br3 = 0; br3 < blRows; br3++) {
       var byS = br3 * 0.62;
-      var bzS = gz + gd/2 - 3.5 - br3 * 0.85;
+      // Row 0 = front (lowest, most northerly); row blRows-1 = back (highest, near south wall)
+      var bzS = gz + gd/2 - 0.5 - (blRows - 1 - br3) * 0.85;
       solidBox(blW, 0.32, 0.88, blMats[br3%2], gx, byS, bzS);
       addSurf(gx, bzS, blW, 0.88, byS + 0.32);
-      visBox(blW, byS+0.32, 0.12, mk(0x444444,0.9), gx, (byS+0.32)/2, bzS+0.38);
+      // Riser on north side — faces toward court
+      visBox(blW, byS+0.32, 0.12, mk(0x444444,0.9), gx, (byS+0.32)/2, bzS - 0.38);
     }
 
     // -- PODIUM / SPEAKER AREA -----------------------------------
@@ -1415,10 +1424,11 @@ function initWorld3D(playerData) {
 
   // South bleachers (rows 0–6, starting at gz+gd/2-3.5 = -49.5, step -0.85)
   var xSpots = [-108, -104, -100, -96, -92, -88, -84, -80, -76];
-  for (var srN = 0; srN < 6; srN++) {
+  // South bleachers: row 0 = front (lowest, near court), row N = back (near south wall)
+  // bzS = gz+gd/2 - 0.5 - (blRows-1-br3)*0.85 = -46.5 - (7-br3)*0.85
+  for (var srN = 0; srN < 7; srN++) {
     var seatY = srN * 0.62 + 0.32;
-    var seatZ = -62 + 16 - 3.5 - srN * 0.85;
-    // Fill most spots, leave some gaps for realism
+    var seatZ = -46.5 - (7 - srN) * 0.85; // front(srN=0)=z≈-52.45, back(srN=6)=z≈-46.5
     for (var sx = 0; sx < xSpots.length; sx++) {
       if (srN === 0 && sx === 4) continue; // leave gap at center front
       rndNPC(xSpots[sx], seatZ - 0.2, seatY);
@@ -1438,81 +1448,81 @@ function initWorld3D(playerData) {
   npcBody(-92, -58, 0, 0x1a1a5a, 0xe8b880);  // dark navy jacket
 
   // ── STORY NPCs around gym entrance ─────────────────────────
-  // Alex — outside gym, east side
-  NPCS.push({x:-82, z:-44, radius:3.5, label:'Alex Chen',
-    msg:'"Hey — you\'re new too, right? First day. Yeah. I don\'t know anyone either. The gym is right here, orientation\'s about to start."'});
-  npcBody(-82, -44, 0, 0x4488cc, 0xf4c08a);
+  // Alex — right outside east gym entrance
+  NPCS.push({x:-64, z:-55, radius:3.5, label:'Alex Chen',
+    msg:'"Hey — you\'re new too, right? First day. Yeah. I don\'t know anyone either. The gym entrance is right there — orientation\'s about to start."'});
+  npcBody(-64, -55, 0, 0x4488cc, 0xf4c08a);
 
-  // Jordan — just inside the entrance path
-  NPCS.push({x:-92, z:-44, radius:3.5, label:'Jordan Park',
+  // Jordan — just inside east entrance (in gym)
+  NPCS.push({x:-74, z:-62, radius:3.5, label:'Jordan Park',
     msg:'"I heard the popular kids always claim the front bleachers on day one. No idea if that\'s true. Probably is."'});
-  npcBody(-92, -44, 0, 0xcc4422, 0xd08858);
+  npcBody(-74, -62, 0, 0xcc4422, 0xd08858);
 
-  // Maya — west side of gym entrance
-  NPCS.push({x:-101, z:-44, radius:3.5, label:'Maya Torres',
+  // Maya — south of east entrance, waiting
+  NPCS.push({x:-68, z:-68, radius:3.5, label:'Maya Torres',
     msg:'"My older sister said freshman orientation is basically just the principal telling you not to use your phone. Forty-five minutes."'});
-  npcBody(-101, -44, 0, 0xaa44aa, 0xe8a070);
+  npcBody(-68, -68, 0, 0xaa44aa, 0xe8a070);
 
-  // Upperclassman near parking lot (the cool gatekeeper type)
-  NPCS.push({x:-105, z:-38, radius:4, label:'Upperclassman',
+  // Upperclassman leaning on east wall
+  NPCS.push({x:-68, z:-54, radius:4, label:'Upperclassman',
     msg:'"Oh, freshmen. Every year." (He doesn\'t stop walking.)'});
-  npcBody(-105, -38, 0, 0x222222, 0xd4906a);
+  npcBody(-68, -54, 0, 0x222222, 0xd4906a);
 
-  // Coach Rivera NPC info point
-  NPCS.push({x:-92, z:-57, radius:5, label:'Coach Rivera',
+  // Coach Rivera NPC info point (at podium)
+  NPCS.push({x:-92, z:-58, radius:5, label:'Coach Rivera',
     msg:'Coach Rivera adjusts the mic. "Welcome to Westbrook High. Please find your seats — orientation begins in two minutes."'});
 
-  // Naomi — in bleachers, front row (labeled interaction)
-  NPCS.push({x:-84, z:-50, radius:3, label:'Naomi Walsh',
+  // Naomi — south bleachers, front row
+  NPCS.push({x:-84, z:-56, radius:3, label:'Naomi Walsh',
     msg:'"Front row. I know everyone thinks it\'s try-hard, but I actually want to hear what they\'re saying." She has a pen out already.'});
 
-  // Tyler — popular kids cluster
-  NPCS.push({x:-97, z:-50, radius:3, label:'Tyler Brooks',
+  // Tyler — south bleachers center
+  NPCS.push({x:-97, z:-55, radius:3, label:'Tyler Brooks',
     msg:'Tyler looks up from his phone. "You can sit here." A pause. "If you want." The offer doesn\'t last long.'});
 
-  // Devon — back row, north bleachers
+  // Devon — north bleachers, back row
   NPCS.push({x:-88, z:-76, radius:3, label:'Devon Clark',
     msg:'"Back row. You can see everything from up here and nobody bothers you. That\'s the whole thing."'});
 
-  // ── ORIENTATION SIGN outside gym ───────────────────────────
-  var orSign = mkLabel('↓  FRESHMAN ORIENTATION  ↓', 13);
-  orSign.position.set(-92, 6, -42);
-  var orSign2 = mkLabel('Walk into the gym to begin', 9);
-  orSign2.position.set(-92, 4.5, -42);
+  // ── ORIENTATION SIGN outside east gym entrance ──────────────
+  var orSign = mkLabel('← FRESHMAN ORIENTATION', 13);
+  orSign.position.set(-62, 5, -62);
+  var orSign2 = mkLabel('Enter gym for orientation', 9);
+  orSign2.position.set(-62, 3.5, -62);
 
   // ── ADDITIONAL STORY NPCs (freshman accessible zone) ────────
-  // Teacher directing students to orientation
-  NPCS.push({x:-92, z:-30, radius:4, label:'Ms. Patel',
-    msg:'Ms. Patel waves you back toward the gym. "Freshmen orientation is in the gym — up that path. You have about three minutes."'});
-  npcBody(-92, -30, 0, 0x2244aa, 0xf0c090);
+  // Teacher directing students east toward the gym
+  NPCS.push({x:-80, z:-40, radius:4, label:'Ms. Patel',
+    msg:'Ms. Patel waves you toward the gym. "Freshmen orientation is in the gym — east entrance, right over there. You have about three minutes."'});
+  npcBody(-80, -40, 0, 0x2244aa, 0xf0c090);
 
-  // Student sitting outside locker rooms, skipping
-  NPCS.push({x:-80, z:-32, radius:4, label:'Kid Skipping Orientation',
+  // Student sitting outside, skipping
+  NPCS.push({x:-100, z:-35, radius:4, label:'Kid Skipping Orientation',
     msg:'"I\'ve been to like four of these. New school, same speech. Coach says attendance mandatory though, so." He doesn\'t move.'});
-  npcBody(-80, -32, 0, 0x334433, 0xd4906a);
+  npcBody(-100, -35, 0, 0x334433, 0xd4906a);
 
-  // Nervous freshman near the gym entrance path
-  NPCS.push({x:-100, z:-36, radius:3.5, label:'Nervous Freshman',
+  // Nervous freshman near east entrance
+  NPCS.push({x:-65, z:-70, radius:3.5, label:'Nervous Freshman',
     msg:'"Is this where we go? For orientation? I\'ve walked past three times already trying to look like I know where I\'m going."'});
-  npcBody(-100, -36, 0, 0x7788bb, 0xfad4a0);
+  npcBody(-65, -70, 0, 0x7788bb, 0xfad4a0);
 
-  // Student group near the west parking lot
-  NPCS.push({x:-125, z:-30, radius:4, label:'Sakura Yamamoto',
+  // Student group on west side of restricted zone
+  NPCS.push({x:-125, z:-45, radius:4, label:'Sakura Yamamoto',
     msg:'"My brother warned me about freshman orientation. Said it\'s actually pretty important — first impressions and all that. Where you sit matters."'});
-  npcBody(-125, -30, 0, 0xcc4488, 0xe8b080);
+  npcBody(-125, -45, 0, 0xcc4488, 0xe8b080);
 
-  NPCS.push({x:-120, z:-38, radius:4, label:'Marcus Webb',
+  NPCS.push({x:-120, z:-55, radius:4, label:'Marcus Webb',
     msg:'"I heard there are already cliques forming. Like, people already know who\'s popular and who isn\'t. Day one. That\'s wild."'});
-  npcBody(-120, -38, 0, 0x336699, 0xba7248);
+  npcBody(-120, -55, 0, 0x336699, 0xba7248);
 
-  // After orientation — near gym door, someone who stayed outside
-  NPCS.push({x:-84, z:-48, radius:3.5, label:'Quiet Student',
+  // Near east entrance, quiet observer
+  NPCS.push({x:-70, z:-50, radius:3.5, label:'Quiet Student',
     msg:'She\'s writing something in a small notebook. She looks up briefly. "Sorry — just writing down first impressions. It\'s a thing I do."'});
-  npcBody(-84, -48, 0, 0x886699, 0xf0c090);
+  npcBody(-70, -50, 0, 0x886699, 0xf0c090);
 
-  // Campus boundary sign (invisible NPC info point)
-  NPCS.push({x:-65, z:-55, radius:5, label:'Campus Map',
-    msg:'WESTBROOK HIGH SCHOOL\nMain campus is straight ahead — Buildings A through F, Cafeteria, Library.\nFreshmen: please report to the gym for orientation first.'});
+  // Campus map sign near restriction boundary
+  NPCS.push({x:-100, z:-25, radius:5, label:'Campus Map',
+    msg:'WESTBROOK HIGH SCHOOL\nMain campus beyond the gates — Buildings A through F, Cafeteria, Library.\nFreshmen: report to the gym (east entrance) for orientation first.'});
 
   prog(54, 'Locker rooms and weight room...');
   building(-92,-32,28,15,6,mk(0xd0c8b8),mk(0x607080),'Locker Rooms',1,'cls');
@@ -1666,6 +1676,25 @@ function initWorld3D(playerData) {
   solidBox(0.5,3,250,mk(0x888888,0.9),-149,0,30); // west
   solidBox(0.5,3,250,mk(0x888888,0.9),149,0,30);  // east
 
+  // ── FRESHMAN ZONE BARRIERS ─────────────────────────────────
+  // Visual chain-link fence at east boundary (x=-64) — gap at gym east wall (z=-55 to -69)
+  fence(-64, -85, -64, -70, 2.5, 6);  // north segment
+  fence(-64, -54, -64, -22, 2.5, 10); // south segment
+  // South boundary fence (z=-23) — full width of restricted zone
+  fence(-138, -23, -64, -23, 2.5, 12);
+  // Corner post / restriction sign
+  var rSign1 = mkLabel('SENIORS & JUNIORS ONLY', 8);
+  rSign1.position.set(-64, 3.5, -55);
+  var rSign2 = mkLabel('— SENIORS & JUNIORS ONLY —', 8);
+  rSign2.position.set(-100, 3.5, -23);
+  // Orange traffic cones at boundary corners for visibility
+  function cone(cx, cz) {
+    visCyl(0, 0.15, 0.65, 8, mk(0xff6600, 0.6), cx, 0.325, cz);
+    visCyl(0.18, 0.05, 0.08, 8, mk(0xffffff, 0.7), cx, 0.7, cz);
+  }
+  cone(-64, -22); cone(-64, -40); cone(-64, -85);
+  cone(-138, -23); cone(-100, -23); cone(-80, -23);
+
   prog(100, 'Done!');
   setTimeout(function() { var l=document.getElementById('w3d-load'); if(l) l.style.display='none'; }, 280);
 
@@ -1675,20 +1704,28 @@ function initWorld3D(playerData) {
   var PH = 1.75; // player height (camera from ground)
   var PR = 0.32; // player radius
 
-  var px = -92, py = PH, pz = -38; // spawn just outside gym entrance
+  var px = -66, py = PH, pz = -62; // spawn just outside east gym entrance
   var velY = 0, onGnd = true;
-  var yaw = 0, pitch = 0;         // facing north toward gym door
+  var yaw = -Math.PI / 2, pitch = 0; // facing west toward gym east wall door
   var orientationTriggered = false;
   var jcd = 0;
   var keys = {};
 
   CAM.position.set(px, py, pz);
 
+  var mmLarge = false;
   window.addEventListener('keydown', function(e) {
     keys[e.code] = true;
     if (e.code === 'Space') e.preventDefault();
     if (e.code === 'KeyE') doInfo();
     if (e.code === 'KeyF') toggleDoor();
+    if (e.code === 'KeyM') {
+      mmLarge = !mmLarge;
+      var mmEl = document.getElementById('minimap');
+      if (mmEl) mmEl.classList.toggle('large', mmLarge);
+      var mmCv = document.getElementById('mm');
+      if (mmCv) { mmCv.width = mmLarge ? 340 : 170; mmCv.height = mmLarge ? 340 : 170; }
+    }
     if (e.code === 'KeyP') {
       var po = document.getElementById('pause-overlay');
       if (po) {
@@ -1751,15 +1788,24 @@ function initWorld3D(playerData) {
     if (best) {
       best.open = !best.open;
       if (best.open) {
-        best.mesh.position.x = best.cx - 1.5;
-        best.mesh.position.z = best.cz - 1.4;
-        best.mesh.rotation.y = -Math.PI / 2;
+        if (best.wallAxis === 'x') {
+          // East/west wall door — swing along wall (Z direction)
+          best.mesh.position.x = best.cx;
+          best.mesh.position.z = best.cz - 1.55;
+          best.mesh.rotation.y = Math.PI / 2;
+        } else {
+          best.mesh.position.x = best.cx - 1.5;
+          best.mesh.position.z = best.cz - 1.4;
+          best.mesh.rotation.y = -Math.PI / 2;
+        }
+        if (best.col) best.col.makeEmpty();
       } else {
         best.mesh.position.x = best.cx;
         best.mesh.position.z = best.cz;
         best.mesh.rotation.y = 0;
+        if (best.col && best.origMin) best.col.set(best.origMin, best.origMax);
       }
-      showN(best.open ? 'Door opened - walk inside!' : 'Door closed.');
+      showN(best.open ? 'Door opened — walk inside!' : 'Door closed.');
     } else {
       showN('No door nearby. Walk up to a building entrance and press F.');
     }
@@ -1793,8 +1839,15 @@ function initWorld3D(playerData) {
     var pMin = new THREE.Vector3(nx - halfW, ny - halfH, nz - halfW);
     var pMax = new THREE.Vector3(nx + halfW, ny + 0.1,   nz + halfW);
 
-    for (var i = 0; i < COLS.length; i++) {
-      var col = COLS[i];
+    var allCols = COLS.slice();
+    // Add closed door collision boxes
+    for (var j = 0; j < DOORS.length; j++) {
+      if (!DOORS[j].open && DOORS[j].col && !DOORS[j].col.isEmpty()) allCols.push(DOORS[j].col);
+    }
+
+    for (var i = 0; i < allCols.length; i++) {
+      var col = allCols[i];
+      if (col.isEmpty()) continue;
       // Quick overlap check
       if (pMax.x <= col.min.x || pMin.x >= col.max.x) continue;
       if (pMax.y <= col.min.y || pMin.y >= col.max.y) continue;
@@ -1805,21 +1858,16 @@ function initWorld3D(playerData) {
       var oy = Math.min(pMax.y - col.min.y, col.max.y - pMin.y);
       var oz = Math.min(pMax.z - col.min.z, col.max.z - pMin.z);
 
-      // Push out on smallest axis (but not Y - Y handled by surface system)
-      // Skip if oy is smallest (means we're standing on top or bumping head - handled elsewhere)
-      if (oy < ox && oy < oz) continue; // vertical collision, skip (handled by gravity)
+      if (oy < ox && oy < oz) continue;
 
       if (ox < oz) {
-        // Push on X axis
         if (nx < (col.min.x + col.max.x) / 2) nx -= ox + 0.001;
         else nx += ox + 0.001;
       } else {
-        // Push on Z axis
         if (nz < (col.min.z + col.max.z) / 2) nz -= oz + 0.001;
         else nz += oz + 0.001;
       }
 
-      // Rebuild player box after push
       pMin.set(nx - halfW, ny - halfH, nz - halfW);
       pMax.set(nx + halfW, ny + 0.1,   nz + halfW);
     }
@@ -1840,26 +1888,74 @@ function initWorld3D(playerData) {
 
   var mmCtx = document.getElementById('mm').getContext('2d');
   function drawMM() {
-    mmCtx.clearRect(0,0,170,170);
-    mmCtx.fillStyle='#050a18'; mmCtx.fillRect(0,0,170,170);
-    var sc=0.38, ox=85, oy=85;
-    function mr(x,z,w,d,col) { mmCtx.fillStyle=col; mmCtx.fillRect(ox+(x-px)*sc,oy+(z-pz)*sc,w*sc,d*sc); }
-    mr(-148,-90,296,246,'#3a7040');
-    mr(-138,-78,52,62,'#888'); mr(-138,-2,52,82,'#888'); mr(41,-93,82,42,'#888');
-    mmCtx.fillStyle='#b84040';
-    var bl=[[-47,-82,30,15],[-3,-82,26,15],[35,-82,26,15],[-45,-62,26,13],[-3,-62,24,13],
-            [-111,-76,38,28],[-20,-22,40,24],[30,-22,22,17],[64,-22,18,15],
-            [-43,-15,26,13],[-5,-15,22,13],[58,-65,24,17],[58,-40,24,15]];
-    for(var bi=0;bi<bl.length;bi++) mr(bl[bi][0],bl[bi][1],bl[bi][2],bl[bi][3],'#b84040');
-    mmCtx.strokeStyle='#c86050'; mmCtx.lineWidth=4*sc;
+    var mmSz = mmLarge ? 340 : 170;
+    mmCtx.clearRect(0,0,mmSz,mmSz);
+    mmCtx.fillStyle='#050a18'; mmCtx.fillRect(0,0,mmSz,mmSz);
+    var sc = mmLarge ? 0.76 : 0.38;
+    var ox = mmSz/2, oy = mmSz/2;
+    function mr(x,z,w,d,col) {
+      mmCtx.fillStyle=col;
+      mmCtx.fillRect(Math.round(ox+(x-px)*sc), Math.round(oy+(z-pz)*sc), Math.max(1,Math.round(w*sc)), Math.max(1,Math.round(d*sc)));
+    }
+    function ml(x1,z1,x2,z2,col,lw) {
+      mmCtx.strokeStyle=col; mmCtx.lineWidth=lw||1;
+      mmCtx.beginPath(); mmCtx.moveTo(ox+(x1-px)*sc,oy+(z1-pz)*sc); mmCtx.lineTo(ox+(x2-px)*sc,oy+(z2-pz)*sc); mmCtx.stroke();
+    }
+    // Grass base
+    mr(-148,-90,296,246,'#2e5c30');
+    // Paths / sidewalks
+    mr(-138,-78,52,62,'#7a7068'); mr(-138,-2,52,82,'#7a7068'); mr(41,-93,82,42,'#7a7068');
+    // Freshman zone highlight
+    if (window.MYTH_FRESHMAN_RESTRICTION) {
+      mmCtx.fillStyle='rgba(80,120,200,0.12)';
+      mmCtx.fillRect(ox+(-138-px)*sc, oy+(-85-pz)*sc, 73*sc, 63*sc);
+      mmCtx.strokeStyle='rgba(100,160,255,0.35)'; mmCtx.lineWidth=1.5;
+      mmCtx.strokeRect(ox+(-138-px)*sc, oy+(-85-pz)*sc, 73*sc, 63*sc);
+    }
+    // Buildings (accurate to buildX positions in code)
+    var bldgs = [
+      // A-row buildings (z≈-82, fbx=[-72,-44,-14,16,44])
+      [-81,-89,18,14],[-53,-89,18,14],[-23,-89,18,14],[7,-89,18,14],[35,-89,18,14],
+      // B buildings
+      [-58,-69,26,14],[-11,-69,24,14],
+      // C/D buildings
+      [-57,-30,28,16],[-11,-30,26,16],[21,-30,22,16],[55,-30,22,16],
+      // E-row buildings
+      [-81,-40,18,14],[-53,-40,18,14],[-23,-40,18,14],[7,-40,18,14],[35,-40,18,14],
+      // Library + Physics
+      [64,-65,24,17],[64,-39,24,15],
+    ];
+    for(var bi=0;bi<bldgs.length;bi++) mr(bldgs[bi][0],bldgs[bi][1],bldgs[bi][2],bldgs[bi][3],'#c05040');
+    // Gym (accurate: gx=-92,gz=-62,gw=42,gd=32 → left=-113,top=-78)
+    mr(-113,-78,42,32,'#c05040');
+    // Track/field oval
+    mmCtx.strokeStyle='#6aaa50'; mmCtx.lineWidth=Math.max(1,3*sc);
     mmCtx.beginPath(); mmCtx.ellipse(ox+(-82-px)*sc,oy+(102-pz)*sc,58*sc,64*sc,0,0,Math.PI*2); mmCtx.stroke();
+    // Sports fields
     mr(-138,66,92,92,'#3a8050'); mr(6,66,92,92,'#3a8050'); mr(79,56,66,92,'#3a8050');
-    mr(-128,26,42,52,'#267a48'); mr(24,-54,24,17,'#1a80c0');
-    mmCtx.fillStyle='#e8d070'; mmCtx.beginPath(); mmCtx.arc(ox,oy,5,0,Math.PI*2); mmCtx.fill();
-    mmCtx.strokeStyle='#e8d070'; mmCtx.lineWidth=2;
-    mmCtx.beginPath(); mmCtx.moveTo(ox,oy); mmCtx.lineTo(ox+Math.sin(-yaw)*14,oy+Math.cos(-yaw)*14); mmCtx.stroke();
-    mmCtx.fillStyle='#e8d070'; mmCtx.font='bold 9px sans-serif'; mmCtx.textAlign='center'; mmCtx.fillText('N',85,11);
-    mmCtx.strokeStyle='rgba(200,180,100,0.4)'; mmCtx.lineWidth=1.5; mmCtx.strokeRect(1,1,168,168);
+    // Trees/bushes
+    mr(-128,26,42,52,'#337a40');
+    // Pool
+    mr(24,-54,24,17,'#1a80c0');
+    // Barrier line (east boundary x=-64)
+    ml(-64,-85,-64,-22,'rgba(255,160,60,0.7)',Math.max(1,1.5*sc));
+    ml(-138,-22,-64,-22,'rgba(255,160,60,0.7)',Math.max(1,1.5*sc));
+    // Player dot
+    mmCtx.fillStyle='#e8d070';
+    mmCtx.beginPath(); mmCtx.arc(ox,oy,mmLarge?6:4,0,Math.PI*2); mmCtx.fill();
+    // Direction arrow
+    mmCtx.strokeStyle='#e8d070'; mmCtx.lineWidth=mmLarge?2.5:1.5;
+    var arLen = mmLarge ? 18 : 11;
+    mmCtx.beginPath(); mmCtx.moveTo(ox,oy); mmCtx.lineTo(ox+Math.sin(-yaw)*arLen,oy+Math.cos(-yaw)*arLen); mmCtx.stroke();
+    // North label
+    mmCtx.fillStyle='rgba(232,208,112,0.7)'; mmCtx.font='bold '+(mmLarge?10:8)+'px monospace';
+    mmCtx.textAlign='center'; mmCtx.fillText('N', mmSz/2, mmLarge?14:10);
+    // Key hint
+    mmCtx.fillStyle='rgba(200,180,100,0.45)'; mmCtx.font=(mmLarge?9:7)+'px monospace';
+    mmCtx.textAlign='center'; mmCtx.fillText('[M] toggle', mmSz/2, mmSz-4);
+    // Border
+    mmCtx.strokeStyle='rgba(200,180,100,0.35)'; mmCtx.lineWidth=1;
+    mmCtx.strokeRect(1,1,mmSz-2,mmSz-2);
   }
 
   // ============================================================
@@ -1982,9 +2078,9 @@ function initWorld3D(playerData) {
       }
     }
 
-    // Zone-entry orientation trigger
+    // Zone-entry orientation trigger — fires when player steps inside the gym
     if (!orientationTriggered && !window.MYTH_ORIENTATION_ACTIVE) {
-      if (px >= -113 && px <= -71 && pz >= -78 && pz <= -46) {
+      if (px >= -112 && px <= -72 && pz >= -77 && pz <= -47) {
         orientationTriggered = true;
         window.MYTH_ORIENTATION_ACTIVE = true;
         if (typeof showOrientationOverlay === 'function') showOrientationOverlay();
