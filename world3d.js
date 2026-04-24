@@ -1424,11 +1424,10 @@ function initWorld3D(playerData) {
 
   // South bleachers (rows 0–6, starting at gz+gd/2-3.5 = -49.5, step -0.85)
   var xSpots = [-108, -104, -100, -96, -92, -88, -84, -80, -76];
-  // South bleachers: row 0 = front (lowest, near court), row N = back (near south wall)
-  // bzS = gz+gd/2 - 0.5 - (blRows-1-br3)*0.85 = -46.5 - (7-br3)*0.85
-  for (var srN = 0; srN < 7; srN++) {
+  for (var srN = 0; srN < 6; srN++) {
     var seatY = srN * 0.62 + 0.32;
-    var seatZ = -46.5 - (7 - srN) * 0.85; // front(srN=0)=z≈-52.45, back(srN=6)=z≈-46.5
+    var seatZ = -62 + 16 - 3.5 - srN * 0.85;
+    // Fill most spots, leave some gaps for realism
     for (var sx = 0; sx < xSpots.length; sx++) {
       if (srN === 0 && sx === 4) continue; // leave gap at center front
       rndNPC(xSpots[sx], seatZ - 0.2, seatY);
