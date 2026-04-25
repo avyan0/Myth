@@ -714,6 +714,70 @@ function initWorld3D(playerData) {
   cone(-64,-22); cone(-64,-40); cone(-64,-85);
   cone(-138,-23); cone(-100,-23); cone(-80,-23);
 
+  // ============================================================
+  // CLUB FAIR BOOTHS  (within freshman zone: x -138→-65, z -85→-22)
+  // Located south of the gym so player has to explore to find them
+  // ============================================================
+  prog(78, 'Club fair...');
+
+  // Funnel signs near gym south exit, pointing south
+  (function(){
+    var s1=mkLabel('📋  CLUB FAIR TODAY — head south',9);
+    s1.position.set(-90,-1,-43); // just south of gym
+    var s2=mkLabel('CLUBS FORMING  ↓',8);
+    s2.position.set(-100,-1,-35);
+    // Sign posts with boards
+    function signPost(x,z,txt,col){
+      solidBox(0.12,2.8,0.12,mk(0x665533,0.9),x,0,z);
+      solidBox(3.6,0.7,0.12,mk(col,0.75),x,2.8,z);
+      var lbl=mkLabel(txt,8); lbl.position.set(x,3.5,z+0.2);
+    }
+    signPost(-90,-43,'CLUB FAIR ↓',0x1a3a6a);
+    signPost(-107,-36,'CLUBS AHEAD →',0x1a3a6a);
+  })();
+
+  // Three booths at z≈-27, spread along x
+  //  Robotics: x=-115   Football: x=-100   Solo: x=-85
+  (function(){
+    var boothMat=mk(0xd4c4a8,0.82);
+    var tableMat=mk(0x8a6a3a,0.75);
+
+    function booth(cx,cz,backdropCol,labelTxt,subTxt){
+      // Table
+      solidBox(3.4,0.95,1.0,tableMat,cx,0,cz);
+      // Legs
+      [[-1.4,0,-0.3],[1.4,0,-0.3],[-1.4,0,0.3],[1.4,0,0.3]].forEach(function(o){
+        solidBox(0.1,0.95,0.1,mk(0x664422,0.9),cx+o[0],0,cz+o[2]);
+      });
+      // Backdrop panel
+      solidBox(3.6,2.4,0.12,mk(backdropCol,0.8),cx,0.95,cz+0.55);
+      // Banner rail on top
+      solidBox(3.7,0.18,0.15,mk(0xf0f0f0,0.5),cx,3.35,cz+0.55);
+      // Label
+      var lbl=mkLabel(labelTxt,10); lbl.position.set(cx,4.2,cz+0.2);
+      var sub=mkLabel(subTxt,7);   sub.position.set(cx,3.55,cz+0.2);
+    }
+
+    booth(-115,-27, 0x1a3888, 'ROBOTICS CLUB',  'Walk up to sign up');
+    booth(-100,-27, 0x881a1a, 'FOOTBALL',        'Walk up to sign up');
+    booth(-85, -27, 0x1a7a3a, 'NO COMMITMENT',   'Walk up to choose');
+
+    // Small decorations at each booth
+    visCyl(0.08,0.08,1.8,6,mk(0x888888,0.5),-115,-27+0.7, 0); // robot arm mock
+    visSph(0.25,mk(0xff4400,0.4),-100,-27+1.1,0);               // football
+    visBox(0.6,0.5,0.08,mk(0x336633,0.7),-85,-27+1.15,0.1);    // book
+
+    // NPC info spots
+    NPCS.push({x:-115,z:-27,radius:5,label:'Robotics Booth',
+      msg:'ROBOTICS CLUB: Build & compete. Meets Tue/Thu. GPA dips but extracurriculars soar. Walk closer to join.'});
+    NPCS.push({x:-100,z:-27,radius:5,label:'Football Booth',
+      msg:'FOOTBALL TEAM: Three practices a week. Gets you known and fit. Walk closer to sign up.'});
+    NPCS.push({x:-85,z:-27,radius:5,label:'No Commitment',
+      msg:'Going solo: more study time, fewer connections. GPA gains, extracurriculars drop. Walk closer to choose.'});
+
+    ZONES.push({x1:-128,x2:-72,z1:-34,z2:-21,name:'Club Fair'});
+  })();
+
   prog(80, 'Environment...');
 
   // Sky (large sphere inside-out)
@@ -751,6 +815,12 @@ function initWorld3D(playerData) {
     if(notifEl){notifEl.textContent=msg;notifEl.style.display='block';}
     ntimer=4.5;
   }
+  // Expose so game.js can fire world notifications
+  window.MYTH_SHOW_NOTIF = showN;
+
+  // Club fair state
+  var clubMeetingTimer = 0;
+  var CLUB_MEETING_INTERVAL = 180; // 3 real-time seconds = one after-school "period"
 
   var iboxEl=document.getElementById('ibox');
   var itxtEl=document.getElementById('itxt');
@@ -952,10 +1022,47 @@ function initWorld3D(playerData) {
       if(p.x>=-112&&p.x<=-72&&p.z>=-77&&p.z<=-47){
         orientationTriggered=true;
         window.MYTH_ORIENTATION_ACTIVE=true;
-        // Release pointer lock so the overlay UI is clickable
         document.exitPointerLock();
         camera.detachControl(canvas);
         if(typeof showOrientationOverlay==='function') showOrientationOverlay();
+      }
+    }
+
+    // Club fair proximity triggers (only after orientation, only once per booth approach)
+    if(!window.MYTH_ORIENTATION_ACTIVE && Engine && Engine.hasFlag && Engine.hasFlag('orientation_complete') && !window.MYTH_CLUB_CHOICE){
+      if(!window.MYTH_CLUB_FAIR_TRIGGERED){
+        var _cfDist=function(cx,cz){var dx=p.x-cx,dz=p.z-cz;return Math.sqrt(dx*dx+dz*dz);};
+        var _triggerBooth=function(type){
+          window.MYTH_CLUB_FAIR_TRIGGERED=true;
+          window.MYTH_ORIENTATION_ACTIVE=true;
+          document.exitPointerLock();
+          camera.detachControl(canvas);
+          if(typeof showClubFairOverlay==='function') showClubFairOverlay(type);
+        };
+        if(_cfDist(-115,-27)<4.5)      _triggerBooth('robotics');
+        else if(_cfDist(-100,-27)<4.5) _triggerBooth('football');
+        else if(_cfDist(-85, -27)<4.5) _triggerBooth('none');
+      }
+    }
+
+    // Club commitment meeting timer — fires every CLUB_MEETING_INTERVAL seconds
+    if(window.MYTH_CLUB_CHOICE && window.MYTH_CLUB_CHOICE!=='none' && !window.MYTH_ORIENTATION_ACTIVE){
+      clubMeetingTimer+=dt;
+      if(clubMeetingTimer>=CLUB_MEETING_INTERVAL){
+        clubMeetingTimer=0;
+        var boothX=window.MYTH_CLUB_CHOICE==='robotics'?-115:-100;
+        var atBooth=Math.sqrt(Math.pow(p.x-boothX,2)+Math.pow(p.z-(-27),2))<6;
+        if(atBooth){
+          // Attended — small happiness tick
+          if(typeof Engine!=='undefined'&&Engine.modifyStat) Engine.modifyStat('happiness',0.2);
+          showN('✓ You made it to '+( window.MYTH_CLUB_CHOICE==='robotics'?'Robotics Club':'Football practice')+'.');
+        } else {
+          // Missed — show penalty overlay
+          window.MYTH_ORIENTATION_ACTIVE=true;
+          document.exitPointerLock();
+          camera.detachControl(canvas);
+          if(typeof showClubCommitmentMissed==='function') showClubCommitmentMissed();
+        }
       }
     }
 

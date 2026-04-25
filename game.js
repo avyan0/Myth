@@ -18,20 +18,13 @@ const player = {
   background: null,
   secret: null,
   stats: {
-    gpa:            5,
-    friendships:    3,
-    relationships:  2,
-    toxicity:       1,
-    looks:          5,
-    physique:       5,
-    athleticism:    4,
-    extracurriculars: 2,
-    culturality:    3,
-    integrity:      7,
-    stress:         3,
-    wealth:         5,
-    selfAwareness:  4,
-    sleep:          6,
+    gpa:              2.00,   // 0.00 – 4.00
+    friendships:      3.0,
+    relationships:    2.0,
+    sports:           2.0,
+    intelligence:     5.0,
+    extracurriculars: 2.0,
+    happiness:        5.0,
   }
 };
 
@@ -39,29 +32,24 @@ const STAT_LABELS = {
   gpa:              'GPA',
   friendships:      'FRIENDSHIPS',
   relationships:    'RELATIONSHIPS',
-  toxicity:         'TOXICITY',
-  looks:            'LOOKS',
-  physique:         'PHYSIQUE',
-  athleticism:      'ATHLETICISM',
+  sports:           'SPORTS',
+  intelligence:     'INTELLIGENCE',
   extracurriculars: 'EXTRACURRICULARS',
-  culturality:      'CULTURALITY',
-  integrity:        'INTEGRITY',
-  stress:           'STRESS',
-  wealth:           'WEALTH',
-  selfAwareness:    'SELF-AWARENESS',
-  sleep:            'SLEEP',
+  happiness:        'HAPPINESS',
 };
 
-// Stat bar colors: gold for high, white for mid, red for low / toxic
+// Stat bar colors — gold=high, green=mid, red=low
+// GPA is out of 4.00; all others out of 10.0
 function statColor(key, val) {
-  if (key === 'toxicity' || key === 'stress') {
-    if (val >= 7) return '#FC7B54';
-    if (val >= 4) return '#F7B731';
-    return '#6BCB77';
-  }
-  if (val >= 7) return '#F7B731';
-  if (val >= 4) return '#6BCB77';
+  const pct = key === 'gpa' ? val / 4 : val / 10;
+  if (pct >= 0.7) return '#F7B731';
+  if (pct >= 0.4) return '#6BCB77';
   return '#FC7B54';
+}
+
+// Stat-aware clamp (gpa caps at 4, rest at 10)
+function clampStat(key, val) {
+  return key === 'gpa' ? clamp(val, 0, 4) : clamp(val, 0, 10);
 }
 
 // ── Randomization pools ───────────────────────────────
@@ -105,19 +93,19 @@ const BACKGROUNDS = [
     id: 'new_kid',
     label: 'NEW KID',
     desc: 'Nobody knows your story yet.',
-    bonus: { integrity: +1, selfAwareness: +1, friendships: -1 },
+    bonus: { intelligence: +1, friendships: -1, happiness: -1 },
   },
   {
     id: 'legacy',
     label: 'LEGACY STUDENT',
     desc: "Your family's name opens doors here.",
-    bonus: { wealth: +2, friendships: +1, integrity: -1 },
+    bonus: { happiness: +2, friendships: +1, gpa: -0.2 },
   },
   {
     id: 'scholarship',
     label: 'SCHOLARSHIP KID',
     desc: 'You earned your place. Everyone knows it.',
-    bonus: { gpa: +1, athleticism: +1, stress: +1 },
+    bonus: { gpa: +0.3, sports: +1, happiness: -1 },
   },
   {
     id: 'transfer',
@@ -132,34 +120,46 @@ const BACKGROUNDS = [
     bonus: { friendships: +2, culturality: +1, selfAwareness: -1 },
   },
   {
+    id: 'transfer',
+    label: 'TRANSFER STUDENT',
+    desc: 'You chose to leave somewhere else. That choice follows you.',
+    bonus: { intelligence: +2, relationships: -1, friendships: -1 },
+  },
+  {
+    id: 'local_legend',
+    label: 'LOCAL KID',
+    desc: "You've been in this neighborhood forever. Half these people knew you in 4th grade.",
+    bonus: { friendships: +2, happiness: +1, intelligence: -1 },
+  },
+  {
     id: 'military',
     label: 'MILITARY KID',
     desc: "You've moved five times. This is just another school. You've gotten good at starting over.",
-    bonus: { selfAwareness: +2, stress: -1, relationships: -1 },
+    bonus: { intelligence: +2, happiness: -1, relationships: -1 },
   },
   {
     id: 'online_famous',
     label: 'QUIETLY INTERNET FAMOUS',
     desc: "You have a following. Most people here don't know it yet.",
-    bonus: { culturality: +2, wealth: +1, toxicity: +1 },
+    bonus: { intelligence: +2, happiness: +1, relationships: +1 },
   },
   {
     id: 'returnee',
     label: 'RETURNEE',
     desc: 'You went to middle school here, left for two years, and came back. Nobody knows why.',
-    bonus: { selfAwareness: +1, integrity: +1, friendships: -1, toxicity: +1 },
+    bonus: { intelligence: +1, friendships: -1, relationships: +1 },
   },
   {
     id: 'prodigy',
     label: 'SKIPPED A GRADE',
     desc: "You're younger than everyone. Some respect it. Others use it against you.",
-    bonus: { gpa: +2, selfAwareness: +1, stress: +1, looks: -1 },
+    bonus: { gpa: +0.6, intelligence: +1, happiness: -1, relationships: -1 },
   },
   {
     id: 'old_money',
     label: 'OLD MONEY',
     desc: "Your family has history at this school. Not all of it flattering.",
-    bonus: { wealth: +3, integrity: -1, stress: +1 },
+    bonus: { happiness: +3, gpa: -0.2, extracurriculars: +1 },
   },
 ];
 
@@ -294,20 +294,21 @@ function startGroupScene() {
 function applyGroupStats(g) {
   const s = player.stats;
   if (g === 'mob') {
-    s.friendships    = clamp(s.friendships    + 3, 0, 10);
-    s.toxicity       = clamp(s.toxicity       + 3, 0, 10);
-    s.gpa            = clamp(s.gpa            - 2, 0, 10);
-    s.integrity      = clamp(s.integrity      - 2, 0, 10);
+    s.friendships      = clampStat('friendships',      s.friendships    + 3   );
+    s.sports           = clampStat('sports',           s.sports         + 2   );
+    s.gpa              = clampStat('gpa',              s.gpa            - 0.5 );
+    s.intelligence     = clampStat('intelligence',     s.intelligence   - 2   );
+    s.happiness        = clampStat('happiness',        s.happiness      - 1   );
   } else if (g === 'balance') {
-    s.looks          = clamp(s.looks          + 2, 0, 10);
-    s.physique       = clamp(s.physique       + 2, 0, 10);
-    s.gpa            = clamp(s.gpa            + 1, 0, 10);
-    // −consistency is handled narratively, no direct stat
+    s.friendships      = clampStat('friendships',      s.friendships    + 2   );
+    s.happiness        = clampStat('happiness',        s.happiness      + 2   );
+    s.extracurriculars = clampStat('extracurriculars', s.extracurriculars + 1 );
+    s.gpa              = clampStat('gpa',              s.gpa            + 0.3 );
   } else if (g === 'grind') {
-    s.gpa            = clamp(s.gpa            + 3, 0, 10);
-    s.selfAwareness  = clamp(s.selfAwareness  + 2, 0, 10);
-    s.relationships  = clamp(s.relationships  - 2, 0, 10);
-    s.looks          = clamp(s.looks          - 1, 0, 10);
+    s.gpa              = clampStat('gpa',              s.gpa            + 0.8 );
+    s.intelligence     = clampStat('intelligence',     s.intelligence   + 3   );
+    s.relationships    = clampStat('relationships',    s.relationships  - 2   );
+    s.happiness        = clampStat('happiness',        s.happiness      - 1   );
   }
 }
 
@@ -332,41 +333,41 @@ function startPersonalityScene() {
 function applyPersonalityStats(p) {
   const s = player.stats;
   if (p === 'grinder') {
-    s.gpa             = clamp(s.gpa             + 2, 0, 10);
-    s.selfAwareness   = clamp(s.selfAwareness   + 2, 0, 10);
+    s.gpa              = clampStat('gpa',              s.gpa            + 0.6);
+    s.intelligence     = clampStat('intelligence',     s.intelligence   + 2  );
+    s.happiness        = clampStat('happiness',        s.happiness      - 1  );
   } else if (p === 'social') {
-    s.friendships     = clamp(s.friendships     + 2, 0, 10);
-    s.relationships   = clamp(s.relationships   + 2, 0, 10);
+    s.friendships      = clampStat('friendships',      s.friendships    + 3  );
+    s.relationships    = clampStat('relationships',    s.relationships  + 2  );
+    s.happiness        = clampStat('happiness',        s.happiness      + 1  );
   } else if (p === 'athlete') {
-    s.athleticism     = clamp(s.athleticism     + 3, 0, 10);
-    s.physique        = clamp(s.physique        + 2, 0, 10);
-    s.extracurriculars= clamp(s.extracurriculars+ 1, 0, 10);
-    s.sleep           = clamp(s.sleep           - 1, 0, 10);
+    s.sports           = clampStat('sports',           s.sports         + 3  );
+    s.friendships      = clampStat('friendships',      s.friendships    + 1  );
+    s.gpa              = clampStat('gpa',              s.gpa            - 0.3);
+    s.happiness        = clampStat('happiness',        s.happiness      + 1  );
   } else if (p === 'charmer') {
-    s.relationships   = clamp(s.relationships   + 2, 0, 10);
-    s.friendships     = clamp(s.friendships     + 1, 0, 10);
-    s.looks           = clamp(s.looks           + 1, 0, 10);
-    s.integrity       = clamp(s.integrity       - 1, 0, 10);
+    s.relationships    = clampStat('relationships',    s.relationships  + 3  );
+    s.friendships      = clampStat('friendships',      s.friendships    + 1  );
+    s.happiness        = clampStat('happiness',        s.happiness      + 1  );
   } else if (p === 'observer') {
-    s.selfAwareness   = clamp(s.selfAwareness   + 3, 0, 10);
-    s.culturality     = clamp(s.culturality     + 1, 0, 10);
-    s.friendships     = clamp(s.friendships     - 1, 0, 10);
+    s.intelligence     = clampStat('intelligence',     s.intelligence   + 2  );
+    s.happiness        = clampStat('happiness',        s.happiness      + 1  );
+    s.friendships      = clampStat('friendships',      s.friendships    - 1  );
   } else if (p === 'rebel') {
-    s.toxicity        = clamp(s.toxicity        + 2, 0, 10);
-    s.integrity       = clamp(s.integrity       - 1, 0, 10);
-    s.stress          = clamp(s.stress          - 1, 0, 10);
-    s.extracurriculars= clamp(s.extracurriculars+ 1, 0, 10);
+    s.happiness        = clampStat('happiness',        s.happiness      + 2  );
+    s.extracurriculars = clampStat('extracurriculars', s.extracurriculars + 1);
+    s.gpa              = clampStat('gpa',              s.gpa            - 0.3);
+    s.friendships      = clampStat('friendships',      s.friendships    - 1  );
   } else if (p === 'empath') {
-    s.relationships   = clamp(s.relationships   + 2, 0, 10);
-    s.selfAwareness   = clamp(s.selfAwareness   + 1, 0, 10);
-    s.stress          = clamp(s.stress          + 2, 0, 10);
-    s.sleep           = clamp(s.sleep           - 1, 0, 10);
+    s.relationships    = clampStat('relationships',    s.relationships  + 3  );
+    s.happiness        = clampStat('happiness',        s.happiness      - 1  );
+    s.intelligence     = clampStat('intelligence',     s.intelligence   + 1  );
   } else if (p === 'wildcard') {
-    const keys = Object.keys(s);
+    const keys = ['friendships','relationships','sports','intelligence','extracurriculars','happiness'];
     const picks = keys.sort(() => Math.random() - 0.5).slice(0, 3);
-    s[picks[0]] = clamp(s[picks[0]] + 2, 0, 10);
-    s[picks[1]] = clamp(s[picks[1]] + 2, 0, 10);
-    s[picks[2]] = clamp(s[picks[2]] - 1, 0, 10);
+    s[picks[0]] = clampStat(picks[0], s[picks[0]] + 2);
+    s[picks[1]] = clampStat(picks[1], s[picks[1]] + 2);
+    s[picks[2]] = clampStat(picks[2], s[picks[2]] - 1);
   }
 }
 
@@ -392,7 +393,7 @@ function startRandomizeScene() {
   player.background = bgData;
   Object.entries(bgData.bonus).forEach(([k, v]) => {
     if (player.stats[k] !== undefined)
-      player.stats[k] = clamp(player.stats[k] + v, 0, 10);
+      player.stats[k] = clampStat(k, player.stats[k] + v);
   });
 
   player.secret = rand(SECRETS);
@@ -491,17 +492,21 @@ function startCharCardScene() {
     </div>
   `).join('');
 
-  document.getElementById('cc-stats-bars').innerHTML = Object.entries(player.stats).map(([key, val]) => `
-    <div class="stat-row">
-      <div class="stat-row-top">
-        <span class="stat-name">${STAT_LABELS[key]}</span>
-        <span class="stat-val">${val.toFixed(1)}</span>
-      </div>
-      <div class="stat-bar-track">
-        <div class="stat-bar-fill" style="background:${statColor(key,val)};width:${val/10*100}%"></div>
-      </div>
-    </div>
-  `).join('');
+  document.getElementById('cc-stats-bars').innerHTML = Object.entries(player.stats).map(([key, val]) => {
+    const display  = key === 'gpa' ? val.toFixed(2) : val.toFixed(1);
+    const barPct   = key === 'gpa' ? val / 4 * 100   : val / 10 * 100;
+    const maxLabel = key === 'gpa' ? '/ 4.00' : '/ 10';
+    return `
+      <div class="stat-row">
+        <div class="stat-row-top">
+          <span class="stat-name">${STAT_LABELS[key]}</span>
+          <span class="stat-val">${display} <span class="stat-max">${maxLabel}</span></span>
+        </div>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill" style="background:${statColor(key,val)};width:${barPct}%"></div>
+        </div>
+      </div>`;
+  }).join('');
 
   showScene('scene-charcard', () => {
     G.to('#cc-wrap', { opacity: 1, scale: 1, y: 0, duration: 0.55, ease: 'back.out(1.3)' });
@@ -595,17 +600,24 @@ function _renderSpeechLine(inner) {
         ${_orSpeechIdx < OR_SPEECH.length - 1 ? 'NEXT →' : 'FIND YOUR SEAT →'}
       </button>
     </div>
+    <div class="or-key-hint" style="margin-top:8px;opacity:0.5;font-size:11px">[ ENTER ] to continue</div>
   `;
   G.from(inner.querySelector('.or-speech-text'), { opacity: 0, y: 8, duration: 0.35, ease: 'power2.out' });
-  document.getElementById('or-next-btn').addEventListener('click', () => {
+
+  function advance() {
+    document.removeEventListener('keydown', _orEnterHandler);
     _orSpeechIdx++;
     if (_orSpeechIdx >= OR_SPEECH.length) {
       _showSeatChoice(inner);
     } else {
       _renderSpeechLine(inner);
     }
-  }, { once: true });
+  }
+  _orEnterHandler = (e) => { if (e.key === 'Enter') advance(); };
+  document.addEventListener('keydown', _orEnterHandler);
+  document.getElementById('or-next-btn').addEventListener('click', advance, { once: true });
 }
+let _orEnterHandler = null;
 
 function _showSeatChoice(inner) {
   inner.innerHTML = `
@@ -661,28 +673,28 @@ function _showSeatChoice(inner) {
 function resolveOrientationChoice(choice) {
   const OUTCOMES = {
     alone_back: {
-      deltas: { selfAwareness: +2, stress: -1, friendships: -1 },
+      deltas: { intelligence: +1, happiness: -1, friendships: -1 },
       text: 'Top row. You climb past empty seats until there\'s nobody on either side. The gym fills up below you.',
       sub:  'Devon Clark sits two rows down. He nods once. Neither of you say anything. It\'s fine.',
-      statLine: 'Self-Awareness +2 · Stress -1 · Friendships -1',
+      statLine: 'Intelligence +1 · Happiness -1 · Friendships -1',
     },
     familiar_face: {
-      deltas: { friendships: +2, relationships: +1, stress: -1 },
+      deltas: { friendships: +2, relationships: +1, happiness: +1 },
       text: 'You recognize them from middle school — Jordan Park. Their face changes when they see you. Relief. Same as yours.',
       sub:  '"Thank god," Jordan says. "Sit down before someone worse does." You do.',
-      statLine: 'Friendships +2 · Relationships +1 · Stress -1',
+      statLine: 'Friendships +2 · Relationships +1 · Happiness +1',
     },
     front_row: {
-      deltas: { gpa: +1, extracurriculars: +1, stress: +2, friendships: -1 },
+      deltas: { gpa: +0.3, extracurriculars: +1, happiness: -1, friendships: -1 },
       text: 'The front row is mostly empty. You take the center seat. Coach Rivera makes eye contact immediately.',
       sub:  '"Good. A student who pays attention." Someone behind you laughs quietly. You pretend not to hear it.',
-      statLine: 'GPA +1 · Extracurriculars +1 · Stress +2 · Friendships -1',
+      statLine: 'GPA +0.3 · Extracurriculars +1 · Happiness -1 · Friendships -1',
     },
     popular_kids: {
-      deltas: { friendships: +2, toxicity: +2, integrity: -2, looks: +1 },
+      deltas: { friendships: +2, relationships: +1, happiness: +1, intelligence: -1 },
       text: 'Tyler Brooks is already holding court in the third row. You walk straight toward the group like you\'ve been there before.',
       sub:  'One of them — tall, red hoodie — slides over without being asked. Tyler watches you sit down. "You\'re new," he says. It\'s not a question.',
-      statLine: 'Friendships +2 · Looks +1 · Toxicity +2 · Integrity -2',
+      statLine: 'Friendships +2 · Relationships +1 · Happiness +1 · Intelligence -1',
     },
   };
 
@@ -701,11 +713,17 @@ function resolveOrientationChoice(choice) {
     <p class="or-result-sub">${outcome.sub}</p>
     <div class="or-stat-line">${outcome.statLine}</div>
     <button class="btn-primary" id="or-continue-btn" style="margin-top:28px;align-self:flex-start">BEGIN FRESHMAN YEAR →</button>
+    <div class="or-key-hint" style="margin-top:8px;opacity:0.5;font-size:11px">[ ENTER ] to continue</div>
   `;
 
   G.from(inner, { opacity: 0, duration: 0.35 });
 
-  document.getElementById('or-continue-btn').addEventListener('click', closeOrientationOverlay);
+  const _contEnter = (e) => { if (e.key === 'Enter') { document.removeEventListener('keydown', _contEnter); closeOrientationOverlay(); } };
+  document.addEventListener('keydown', _contEnter);
+  document.getElementById('or-continue-btn').addEventListener('click', () => {
+    document.removeEventListener('keydown', _contEnter);
+    closeOrientationOverlay();
+  });
 }
 
 function closeOrientationOverlay() {
@@ -726,8 +744,180 @@ function closeOrientationOverlay() {
         if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
       }, 100);
       setTimeout(safeEventCheck, 400);
+      // Hint about club fair (staggered so camera is fully locked first)
+      setTimeout(() => {
+        if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('CLUB FAIR is happening on campus today.');
+      }, 1200);
+      setTimeout(() => {
+        if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('Head south across campus to find the booths.');
+      }, 5500);
     },
   });
+}
+
+// ════════════════════════════════════════════════════════
+//  CLUB FAIR
+// ════════════════════════════════════════════════════════
+
+const CLUB_DATA = {
+  robotics: {
+    name:      'ROBOTICS CLUB',
+    icon:      '🤖',
+    desc:      'Build, code, and compete. Meets Tuesday & Thursday after school.',
+    flavor:    'A sophomore with a soldering iron nods at you. "We need people who show up."',
+    deltas:    { gpa: -0.2, friendships: +1.5, relationships: -1.3, extracurriculars: +2.0 },
+    missDeltas:{ gpa: -0.1, friendships: -0.5, extracurriculars: -0.5 },
+    statLine:  'GPA −0.2 · Friendships +1.5 · Relationships −1.3 · Extracurriculars +2.0',
+    missLine:  'GPA −0.1 · Friendships −0.5 · Extracurriculars −0.5',
+  },
+  football: {
+    name:      'FOOTBALL TEAM',
+    icon:      '🏈',
+    desc:      'Three practices a week. Games on Fridays. Commitment is non-negotiable.',
+    flavor:    'Coach Reyes looks you up and down. "You in? Because half the guys who said yes last week already quit."',
+    deltas:    { gpa: -0.5, friendships: +1.8, sports: +2.0, intelligence: -1.6, extracurriculars: +1.2 },
+    missDeltas:{ sports: -0.8, friendships: -0.6, happiness: -0.4 },
+    statLine:  'GPA −0.5 · Friendships +1.8 · Sports +2.0 · Intelligence −1.6 · Extracurriculars +1.2',
+    missLine:  'Sports −0.8 · Friendships −0.6 · Happiness −0.4',
+  },
+  none: {
+    name:      'NO COMMITMENT',
+    icon:      '📖',
+    desc:      'You keep the time. Study more. Stay under the radar.',
+    flavor:    'You walk past the booths. Nobody stops you. That\'s kind of the point.',
+    deltas:    { gpa: +0.5, friendships: -1.0, intelligence: +1.4, extracurriculars: -0.8 },
+    missDeltas:{},
+    statLine:  'GPA +0.5 · Friendships −1.0 · Intelligence +1.4 · Extracurriculars −0.8',
+    missLine:  '',
+  },
+};
+
+function showClubFairOverlay(boothType) {
+  const club = CLUB_DATA[boothType];
+  if (!club) return;
+  const overlay = document.getElementById('club-fair-overlay');
+  overlay.classList.add('open');
+  overlay.style.opacity = '1';
+
+  const inner = overlay.querySelector('.cf-inner');
+  inner.innerHTML = `
+    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; CLUB FAIR</div>
+    <div class="cf-icon">${club.icon}</div>
+    <h2 class="cf-title">${club.name}</h2>
+    <p class="cf-desc">${club.desc}</p>
+    <p class="cf-flavor">${club.flavor}</p>
+    <div class="or-stat-line">${club.statLine}</div>
+    ${boothType !== 'none'
+      ? `<p class="cf-warning">⚠️ This is a commitment — miss meetings and your stats will drop.<br><span style="opacity:0.6;font-size:11px">${club.missLine}</span></p>`
+      : `<p class="cf-info">No schedule. No pressure. Just you and your time.</p>`}
+    <div class="cf-buttons">
+      <button class="btn-primary"   id="cf-join-btn">JOIN →</button>
+      <button class="cf-cancel-btn" id="cf-cancel-btn">← KEEP LOOKING</button>
+    </div>
+    <div class="or-key-hint" style="margin-top:8px;opacity:0.5;font-size:11px">[ ENTER ] join &nbsp;·&nbsp; [ ESC ] cancel</div>
+  `;
+  G.from(inner, { opacity: 0, y: 20, duration: 0.4, ease: 'power2.out' });
+
+  function doJoin()   { removeCFKeys(); resolveClubChoice(boothType); }
+  function doCancel() { removeCFKeys(); _closeCFCancel(); }
+  function _cfKey(e) {
+    if (e.key === 'Enter')  doJoin();
+    if (e.key === 'Escape') doCancel();
+  }
+  function removeCFKeys() { document.removeEventListener('keydown', _cfKey); }
+  document.addEventListener('keydown', _cfKey);
+  document.getElementById('cf-join-btn').addEventListener('click', doJoin, { once: true });
+  document.getElementById('cf-cancel-btn').addEventListener('click', doCancel, { once: true });
+}
+
+function _closeCFCancel() {
+  // Player cancelled — re-open world without setting choice
+  const overlay = document.getElementById('club-fair-overlay');
+  G.to(overlay, { opacity: 0, duration: 0.3, onComplete: () => {
+    overlay.classList.remove('open');
+    overlay.style.opacity = '';
+    window.MYTH_ORIENTATION_ACTIVE = false;
+    window.MYTH_CLUB_FAIR_TRIGGERED = false; // allow re-approach
+    if (window.MYTH_BABYLON_CAMERA && window.MYTH_WORLD3D_CANVAS) {
+      window.MYTH_BABYLON_CAMERA.attachControl(window.MYTH_WORLD3D_CANVAS, true);
+    }
+    setTimeout(() => { if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock(); }, 100);
+  }});
+}
+
+function resolveClubChoice(boothType) {
+  const club = CLUB_DATA[boothType];
+  Object.entries(club.deltas).forEach(([k, v]) => Engine.modifyStat(k, v));
+  window.MYTH_CLUB_CHOICE     = boothType;
+  window.MYTH_CLUB_MISS_DELTAS = club.missDeltas;
+  Engine.setFlag('club_chosen_' + boothType);
+  refreshStatsSidebar();
+
+  const inner = document.querySelector('.cf-inner');
+  inner.innerHTML = `
+    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; CLUB FAIR</div>
+    <div class="cf-icon">${club.icon}</div>
+    <p class="or-result-text">You signed up for <strong>${club.name}</strong>.</p>
+    <p class="or-result-sub">${boothType !== 'none'
+      ? 'Your schedule is set. Show up — or fall behind.'
+      : 'No meetings. No drama. Stay sharp on your own.'}</p>
+    <div class="or-stat-line">${club.statLine}</div>
+    <button class="btn-primary" id="cf-done-btn" style="margin-top:24px">BACK TO CAMPUS →</button>
+    <div class="or-key-hint" style="margin-top:8px;opacity:0.5;font-size:11px">[ ENTER ] to continue</div>
+  `;
+  G.from(inner, { opacity: 0, duration: 0.3 });
+
+  function finish() { document.removeEventListener('keydown', _cfDoneKey); _closeCFDone(); }
+  function _cfDoneKey(e) { if (e.key === 'Enter') finish(); }
+  document.addEventListener('keydown', _cfDoneKey);
+  document.getElementById('cf-done-btn').addEventListener('click', finish, { once: true });
+}
+
+function _closeCFDone() {
+  const overlay = document.getElementById('club-fair-overlay');
+  G.to(overlay, { opacity: 0, duration: 0.4, ease: 'power2.in', onComplete: () => {
+    overlay.classList.remove('open');
+    overlay.style.opacity = '';
+    window.MYTH_ORIENTATION_ACTIVE = false;
+    if (window.MYTH_BABYLON_CAMERA && window.MYTH_WORLD3D_CANVAS) {
+      window.MYTH_BABYLON_CAMERA.attachControl(window.MYTH_WORLD3D_CANVAS, true);
+    }
+    setTimeout(() => { if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock(); }, 100);
+    if (window.MYTH_SHOW_NOTIF && window.MYTH_CLUB_CHOICE !== 'none') {
+      setTimeout(() => window.MYTH_SHOW_NOTIF('Remember: attend your club meetings or your stats will drop.'), 800);
+    }
+  }});
+}
+
+function showClubCommitmentMissed() {
+  const boothType = window.MYTH_CLUB_CHOICE;
+  const club = CLUB_DATA[boothType];
+  if (!club || !club.missDeltas || Object.keys(club.missDeltas).length === 0) {
+    window.MYTH_ORIENTATION_ACTIVE = false;
+    return;
+  }
+  Object.entries(club.missDeltas).forEach(([k, v]) => Engine.modifyStat(k, v));
+  refreshStatsSidebar();
+
+  const overlay = document.getElementById('club-fair-overlay');
+  overlay.classList.add('open');
+  overlay.style.opacity = '1';
+  const inner = overlay.querySelector('.cf-inner');
+  inner.innerHTML = `
+    <div class="or-badge" style="background:rgba(252,123,84,0.18);border-color:rgba(252,123,84,0.4)">MISSED MEETING — ${club.name.toUpperCase()}</div>
+    <div class="cf-icon">📉</div>
+    <p class="or-result-text">You missed the meeting. People noticed.</p>
+    <p class="or-result-sub">Showing up is half the job. You didn't show up.</p>
+    <div class="or-stat-line" style="color:#FC7B54">${club.missLine}</div>
+    <button class="btn-primary" id="cf-done-btn" style="margin-top:24px">GOT IT →</button>
+    <div class="or-key-hint" style="margin-top:8px;opacity:0.5;font-size:11px">[ ENTER ] to continue</div>
+  `;
+  G.from(inner, { opacity: 0, duration: 0.3 });
+
+  function finish() { document.removeEventListener('keydown', _missKey); _closeCFDone(); }
+  function _missKey(e) { if (e.key === 'Enter') finish(); }
+  document.addEventListener('keydown', _missKey);
+  document.getElementById('cf-done-btn').addEventListener('click', finish, { once: true });
 }
 
 // ── Campus map renderer (legacy — replaced by Phaser) ─
@@ -846,17 +1036,21 @@ function refreshStatsSidebar() {
   const s = Engine.getState();
   if (!s) return;
   const list = document.getElementById('ss-stats-list');
-  list.innerHTML = Object.entries(s.stats).map(([key, val]) => `
-    <div class="ss-stat-row">
-      <div class="ss-stat-top">
-        <span class="ss-stat-name">${STAT_LABELS[key]}</span>
-        <span class="ss-stat-val">${val.toFixed(1)}</span>
-      </div>
-      <div class="ss-bar-track">
-        <div class="ss-bar-fill" style="width:${val/10*100}%;background:${statColor(key,val)}"></div>
-      </div>
-    </div>
-  `).join('');
+  list.innerHTML = Object.entries(s.stats).map(([key, val]) => {
+    const display = key === 'gpa' ? val.toFixed(2) : val.toFixed(1);
+    const barPct  = key === 'gpa' ? val / 4 * 100   : val / 10 * 100;
+    const maxLbl  = key === 'gpa' ? '/ 4.00' : '/ 10';
+    return `
+      <div class="ss-stat-row">
+        <div class="ss-stat-top">
+          <span class="ss-stat-name">${STAT_LABELS[key] || key.toUpperCase()}</span>
+          <span class="ss-stat-val">${display} <span class="stat-max">${maxLbl}</span></span>
+        </div>
+        <div class="ss-bar-track">
+          <div class="ss-bar-fill" style="width:${barPct}%;background:${statColor(key,val)}"></div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 // ── Dialogue box ──────────────────────────────────────
