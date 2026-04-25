@@ -715,13 +715,16 @@ function closeOrientationOverlay() {
     onComplete: () => {
       overlay.classList.remove('open');
       overlay.style.opacity = '';
-      window.MYTH_ORIENTATION_ACTIVE   = false;
-      // Keep freshman restriction active — lifted only when freshman_year_complete
-      // Restriction remains as Set so world3d zone clamp stays live
+      window.MYTH_ORIENTATION_ACTIVE = false;
       Engine.setFlag('orientation_complete');
       refreshStatsSidebar();
-      // Request pointer lock so player can immediately start exploring
-      if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
+      // Re-attach Babylon camera controls then request pointer lock
+      if (window.MYTH_BABYLON_CAMERA && window.MYTH_WORLD3D_CANVAS) {
+        window.MYTH_BABYLON_CAMERA.attachControl(window.MYTH_WORLD3D_CANVAS, true);
+      }
+      setTimeout(() => {
+        if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
+      }, 100);
       setTimeout(safeEventCheck, 400);
     },
   });

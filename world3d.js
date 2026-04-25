@@ -28,9 +28,9 @@ function initWorld3D(playerData) {
     new BABYLON.Vector3(-66, 1.75, -62), scene);
   camera.setTarget(new BABYLON.Vector3(-71, 1.75, -62));
   camera.attachControl(canvas, true);
-  camera.speed            = 0.22;
-  camera.angularSensibility = 420;
-  camera.inertia          = 0.05;
+  camera.speed            = 0.55;
+  camera.angularSensibility = 380;
+  camera.inertia          = 0.04;
   camera.checkCollisions  = true;
   camera.applyGravity     = true;
   camera.ellipsoid        = new BABYLON.Vector3(0.32, 0.88, 0.32);
@@ -909,7 +909,9 @@ function initWorld3D(playerData) {
         if(nowOpen){
           populatePauseStats();
           document.exitPointerLock();
+          camera.detachControl(canvas);
         } else {
+          camera.attachControl(canvas,true);
           canvas.requestPointerLock();
         }
       }
@@ -920,6 +922,7 @@ function initWorld3D(playerData) {
   if(resumeBtn) resumeBtn.addEventListener('click',function(){
     var po=document.getElementById('pause-overlay');
     if(po) po.classList.remove('open');
+    camera.attachControl(canvas,true);
     canvas.requestPointerLock();
   });
 
@@ -929,14 +932,7 @@ function initWorld3D(playerData) {
   engine.runRenderLoop(function() {
     var dt=engine.getDeltaTime()/1000;
 
-    // Block camera movement during overlays
-    if(window.MYTH_ORIENTATION_ACTIVE||
-       (document.getElementById('pause-overlay')&&
-        document.getElementById('pause-overlay').classList.contains('open'))){
-      camera.speed=0;
-    } else {
-      camera.speed=0.22;
-    }
+    // Speed is managed via attachControl/detachControl — no per-frame clamping needed
 
     // Freshman zone restriction
     if(window.MYTH_FRESHMAN_RESTRICTION){
@@ -950,6 +946,9 @@ function initWorld3D(playerData) {
       if(p.x>=-112&&p.x<=-72&&p.z>=-77&&p.z<=-47){
         orientationTriggered=true;
         window.MYTH_ORIENTATION_ACTIVE=true;
+        // Release pointer lock so the overlay UI is clickable
+        document.exitPointerLock();
+        camera.detachControl(canvas);
         if(typeof showOrientationOverlay==='function') showOrientationOverlay();
       }
     }
