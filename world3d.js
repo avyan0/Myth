@@ -27,10 +27,10 @@ function initWorld3D(playerData) {
   // Eye height 1.72 above ground.  ellipsoidOffset shifts the capsule DOWN so
   // bottom of ellipsoid = camera.y + offset.y - ellipsoid.y = 1.72 - 0.87 - 0.85 ≈ 0
   var camera = new BABYLON.UniversalCamera('player',
-    new BABYLON.Vector3(-67, 1.72, -62), scene);
-  camera.setTarget(new BABYLON.Vector3(-72, 1.72, -62));
+    new BABYLON.Vector3(-67, 1.72, -66), scene);
+  camera.setTarget(new BABYLON.Vector3(-76, 1.72, -62));
   camera.attachControl(canvas, true);
-  camera.speed            = 0.55;
+  camera.speed            = 0.9;
   camera.angularSensibility = 380;
   camera.inertia          = 0.04;
   camera.checkCollisions  = true;
@@ -285,7 +285,7 @@ function initWorld3D(playerData) {
     building(fbx[fi], -32, 18, 13, 8, MT.wA, MT.roof1, 'Bldg A' + (fi+1), 1, 'cls');
 
   prog(18, 'B + C Row...');
-  building(-58, -55, 24, 14, 9,  MT.wA, MT.roof2,  'Bldg B1', 1, 'cls');
+  building(-45, -55, 24, 14, 9,  MT.wA, MT.roof2,  'Bldg B1', 1, 'cls');
   building(-11, -55, 22, 14, 9,  MT.wA, MT.roof2,  'Bldg B2', 1, 'cls');
   building(-58, -18, 26, 14, 9,  MT.wB, MT.roof1,  'Bldg C1', 1, 'cls');
   building(-11, -18, 24, 14, 9,  MT.wB, MT.roof1,  'Bldg C2', 1, 'cls');
@@ -847,7 +847,7 @@ function initWorld3D(playerData) {
       mmCtx.strokeRect(ox+(-138-pos.x)*sc,oy+(-85-pos.z)*sc,73*sc,63*sc);
     }
     var bldgs=[[-81,-89,18,14],[-53,-89,18,14],[-23,-89,18,14],[7,-89,18,14],[35,-89,18,14],
-               [-67,-62,24,14],[-20,-62,22,14],[-67,-25,26,14],[-20,-25,24,14],[18,-25,22,14],[54,-25,20,14],
+               [-57,-62,24,14],[-20,-62,22,14],[-67,-25,26,14],[-20,-25,24,14],[18,-25,22,14],[54,-25,20,14],
                [-81,-45,18,14],[-53,-45,18,14],[-23,-45,18,14],[7,-45,18,14],[35,-45,18,14],
                [-67,3,26,15],[-20,3,24,15],[18,3,22,14],[64,-65,24,17],[64,-39,24,15],
                [-29,-19,40,24],[21,-19,22,17]];
