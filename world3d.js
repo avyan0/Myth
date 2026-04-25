@@ -24,17 +24,19 @@ function initWorld3D(playerData) {
   // ============================================================
   // CAMERA  (first-person)
   // ============================================================
+  // Eye height 1.72 above ground.  ellipsoidOffset shifts the capsule DOWN so
+  // bottom of ellipsoid = camera.y + offset.y - ellipsoid.y = 1.72 - 0.87 - 0.85 ≈ 0
   var camera = new BABYLON.UniversalCamera('player',
-    new BABYLON.Vector3(-66, 1.75, -62), scene);
-  camera.setTarget(new BABYLON.Vector3(-71, 1.75, -62));
+    new BABYLON.Vector3(-67, 1.72, -62), scene);
+  camera.setTarget(new BABYLON.Vector3(-72, 1.72, -62));
   camera.attachControl(canvas, true);
   camera.speed            = 0.55;
   camera.angularSensibility = 380;
   camera.inertia          = 0.04;
   camera.checkCollisions  = true;
   camera.applyGravity     = true;
-  camera.ellipsoid        = new BABYLON.Vector3(0.32, 0.88, 0.32);
-  camera.ellipsoidOffset  = new BABYLON.Vector3(0, 0.88, 0);
+  camera.ellipsoid        = new BABYLON.Vector3(0.38, 0.85, 0.38);
+  camera.ellipsoidOffset  = new BABYLON.Vector3(0, -0.87, 0);
   camera.minZ             = 0.05;
   camera.fov              = 1.2;
   camera.keysUp    = [87]; // W
@@ -198,11 +200,12 @@ function initWorld3D(playerData) {
     return m;
   }
 
-  // Ground
-  var ground = BABYLON.MeshBuilder.CreateGround('gnd', {width: 400, height: 400}, scene);
+  // Ground plane — single flat collision surface at y=0
+  var ground = BABYLON.MeshBuilder.CreateGround('gnd', {width: 600, height: 600, subdivisions: 1}, scene);
   ground.material = MT.grass;
   ground.checkCollisions = true;
   ground.position.y = 0;
+  ground.receiveShadows = true;
 
   // Loading progress
   function prog(pct, msg) {
@@ -216,8 +219,8 @@ function initWorld3D(playerData) {
   // CAMPUS GROUND SURFACE
   // ============================================================
   prog(5, 'Ground...');
-  // Main concrete areas
-  solidBox(296, 0.1, 246, MT.grass, 0, -0.05, 33);
+  // Sidewalk/concrete zones (visual only — collision from ground plane)
+  visBox(296, 0.04, 246, MT.grass, 0, 0.02, 33);
   // Sidewalk network
   solidBox(52, 0.12, 62,  MT.conc, -112, 0, -47);
   solidBox(52, 0.12, 82,  MT.conc, -112, 0, 41);
@@ -412,10 +415,13 @@ function initWorld3D(playerData) {
       {width: 0.1, height: 3.1, depth: 2.8}, scene);
     gymDoor.position.set(gx + gw/2 - 0.05, 1.55, gz);
     gymDoor.material = MT.dr;
-    gymDoor.checkCollisions = true;
-    DOORS.push({ mesh: gymDoor, open: false, wallAxis: 'x',
-                 origPos: gymDoor.position.clone(),
-                 origRot: gymDoor.rotation.clone() });
+    // Start open (swung out) so player can walk in freely for orientation
+    gymDoor.rotation.y = Math.PI / 2;
+    gymDoor.position.z = gz - 1.55;
+    gymDoor.checkCollisions = false;
+    DOORS.push({ mesh: gymDoor, open: true, wallAxis: 'x',
+                 origPos: new BABYLON.Vector3(gx + gw/2 - 0.05, 1.55, gz),
+                 origRot: BABYLON.Vector3.Zero() });
 
     // -- NORTH WALL (split by tunnel) --
     var tunnelCX = gx - 8, tunnelW = 4.2, tunnelH = 2.3;
