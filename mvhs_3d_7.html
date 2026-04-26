@@ -1,10 +1,106 @@
-function initWorld3D(playerData) {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MVHS 3D Campus</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#000;overflow:hidden;font-family:sans-serif;}
+canvas{display:block;width:100vw;height:100vh;}
+#ui{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:12px 16px;pointer-events:none;z-index:10;}
+#title{background:rgba(8,16,38,0.88);border:1px solid rgba(200,180,100,0.45);border-radius:10px;padding:8px 14px;}
+#title h1{color:#e8d080;font-size:13px;font-weight:700;letter-spacing:.04em;}
+#title p{color:#7a9cbc;font-size:10px;margin-top:2px;}
+#ctrl{background:rgba(8,16,38,0.88);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:8px 12px;text-align:right;}
+#ctrl div{color:#9ac0dc;font-size:10px;line-height:2.1;}
+.k{display:inline-block;background:rgba(255,255,255,0.15);border-radius:3px;padding:0 5px;font-size:9px;color:#e0d8b0;margin:0 1px;font-family:monospace;}
+#cross{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:16px;height:16px;pointer-events:none;z-index:10;}
+#cross::before,#cross::after{content:'';position:absolute;background:rgba(255,255,255,0.85);}
+#cross::before{width:1px;height:100%;left:50%;top:0;}
+#cross::after{height:1px;width:100%;top:50%;left:0;}
+#stamwrap{position:fixed;bottom:16px;left:16px;background:rgba(8,16,38,0.85);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 10px;z-index:10;pointer-events:none;}
+#stamwrap p{color:#7a9cbc;font-size:9px;margin-bottom:3px;letter-spacing:.08em;}
+#sbg{width:100px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;}
+#sbar{width:100%;height:100%;background:#e8d080;border-radius:3px;}
+#minimap{position:fixed;bottom:16px;right:16px;width:170px;height:170px;z-index:10;background:rgba(8,16,38,0.9);border:1px solid rgba(200,180,100,0.3);border-radius:8px;overflow:hidden;}
+#minimap canvas{width:100%;height:100%;}
+#locbox{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(8,16,38,0.82);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:5px 14px;color:#9ac0dc;font-size:10px;pointer-events:none;z-index:10;letter-spacing:.06em;text-transform:uppercase;}
+#ibox{position:fixed;bottom:75px;left:50%;transform:translateX(-50%);background:rgba(8,16,38,0.92);border:1px solid rgba(200,180,100,0.6);border-radius:9px;padding:8px 20px;color:#e8d080;font-size:12px;font-weight:600;pointer-events:none;z-index:10;display:none;text-align:center;}
+#ibox small{display:block;color:#6a8aaa;font-size:10px;font-weight:400;margin-top:2px;}
+#notif{position:fixed;top:75px;left:50%;transform:translateX(-50%);background:rgba(8,16,38,0.95);border:1px solid rgba(200,180,100,0.5);border-radius:9px;padding:10px 22px;color:#e8d080;font-size:12px;font-weight:600;z-index:50;pointer-events:none;display:none;text-align:center;max-width:440px;line-height:1.6;}
+#load{position:fixed;inset:0;background:#04090f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;color:#e8d080;}
+#load h2{font-size:22px;font-weight:700;margin-bottom:6px;}
+#load .sub{color:#5a7a9a;font-size:12px;margin-bottom:24px;}
+#lbg{width:260px;height:5px;background:rgba(255,255,255,0.07);border-radius:3px;}
+#lbar{height:100%;background:#e8d080;border-radius:3px;width:0%;transition:width .12s;}
+#lmsg{color:#3a5a7a;font-size:10px;margin-top:8px;min-height:14px;}
+#overlay{position:fixed;inset:0;background:rgba(4,9,15,0.88);display:flex;align-items:center;justify-content:center;z-index:100;cursor:pointer;}
+#card{background:rgba(8,16,38,0.97);border:1px solid rgba(200,180,100,0.5);border-radius:14px;padding:26px 44px;text-align:center;color:#e8d080;max-width:400px;}
+#card h2{font-size:22px;margin-bottom:10px;}
+#card p{color:#7a9cbc;font-size:12px;line-height:1.9;}
+#card .go{display:inline-block;margin-top:16px;background:#e8d080;color:#0a1428;font-weight:700;padding:10px 28px;border-radius:8px;font-size:14px;}
+#err{position:fixed;inset:0;background:#080003;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:300;padding:20px;}
+#err h3{color:#ff5555;font-size:18px;margin-bottom:12px;}
+#err pre{background:#1a000a;border:1px solid #cc2222;border-radius:8px;padding:16px;color:#ff9999;font-size:11px;max-width:600px;white-space:pre-wrap;word-break:break-all;}
+</style>
+</head>
+<body>
+<div id="load">
+  <h2>Monta Vista High School</h2>
+  <div class="sub">Building interactive 3D campus...</div>
+  <div id="lbg"><div id="lbar"></div></div>
+  <div id="lmsg">Initializing...</div>
+</div>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div id="title">
+    <h1>Monta Vista High School</h1>
+    <p>21840 McClellan Rd - Cupertino CA - Interactive 3D</p>
+  </div>
+  <div id="ctrl">
+    <div><span class="k">W</span><span class="k">A</span><span class="k">S</span><span class="k">D</span> Move</div>
+    <div><span class="k">Mouse</span> Look around</div>
+    
+    <div><span class="k">Space</span> Jump</div>
+    <div><span class="k">E</span> Info &nbsp;<span class="k">F</span> Door</div>
+    <div><span class="k">Click</span> Lock cursor</div>
+  </div>
+</div>
+<div id="cross"></div>
+
+<div id="minimap"><canvas id="mm" width="170" height="170"></canvas></div>
+<div id="locbox">MVHS Campus</div>
+<div id="ibox"><span id="itxt">Object</span><small id="ihelp">Press E for info - F for door</small></div>
+<div id="notif"></div>
+<div id="overlay">
+  <div id="card">
+    <h2>MVHS 3D Campus</h2>
+    <p>Explore Monta Vista in full 3D.<br>
+    Real collision - walk INTO buildings, sit on bleachers,<br>
+    climb stairs, open doors, explore every room.<br><br>
+    <b style="color:#e8d080">WASD</b> move &nbsp; <b style="color:#e8d080">Mouse</b> look<br>
+    <b style="color:#e8d080">Space</b> jump<br>
+    <b style="color:#e8d080">E</b> get info &nbsp; <b style="color:#e8d080">F</b> open/close doors</p>
+    <div class="go">Click to Start</div>
+  </div>
+</div>
+<div id="err" style="display:none;"><h3>Error</h3><pre id="errtxt"></pre></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+window.onerror = function(msg, src, line, col, e) {
+  document.getElementById('load').style.display = 'none';
+  var el = document.getElementById('err');
+  el.style.display = 'flex';
+  document.getElementById('errtxt').textContent = msg + '\nLine: ' + line + '\n' + (e ? e.stack : '');
+};
+(function() {
   'use strict';
 
   // ============================================================
   // RENDERER + SCENE + CAMERA
   // ============================================================
-  var canvas = document.getElementById('world3d-c');
+  var canvas = document.getElementById('c');
   var REN = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: 'high-performance' });
   REN.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   REN.setSize(window.innerWidth, window.innerHeight);
@@ -548,15 +644,18 @@ function initWorld3D(playerData) {
       }
     }
 
-    // DOOR (visual mesh, togglable, with collision box)
+    // DOOR (visual mesh, togglable)
     var dm = new THREE.Mesh(new THREE.BoxGeometry(2.7, 3.1, 0.1), MT.dr);
     dm.position.set(x, 1.55, z + d/2 - 0.05);
     dm.castShadow = true; SCN.add(dm);
-    var _dmMin = new THREE.Vector3(x - 1.35, 0, z + d/2 - 0.15);
-    var _dmMax = new THREE.Vector3(x + 1.35, 3.15, z + d/2 + 0.15);
-    var dmCol = new THREE.Box3(_dmMin.clone(), _dmMax.clone());
-    DOORS.push({ mesh: dm, open: false, cx: x, cz: z + d/2 - 0.05,
-                 col: dmCol, origMin: _dmMin.clone(), origMax: _dmMax.clone(), wallAxis: 'z' });
+    DOORS.push({ mesh: dm, open: false, cx: x, cz: z + d/2 - 0.05 });
+
+    // ENTRANCE STEPS (solid + surface)
+    for (var s = 0; s < 4; s++) {
+      var sy = s * 0.25;
+      solidBox(5.5, 0.25, 0.88, MT.stt, x, sy, z + d/2 + 0.5 + s * 0.88);
+      addSurf(x, z + d/2 + 0.5 + s * 0.88, 5.5, 0.88, sy + 0.25);
+    }
 
     // SIDE STAIRCASE (2-floor buildings)
     if (floors > 1) {
@@ -896,42 +995,32 @@ function initWorld3D(playerData) {
     var gw = 42, gd = 32, gh = 14;
 
     // -- EXTERIOR SHELL ------------------------------------------
-    // West wall (solid)
+    // Walls
     solidBox(0.5, gh, gd, MT.wG, gx - gw/2 + 0.25, 0, gz);
-    // East wall — split with door gap at center (z=gz), opening 3.2 wide
-    solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx + gw/2 - 0.25, 0, gz - (gd/4 + 0.8));
-    solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx + gw/2 - 0.25, 0, gz + (gd/4 + 0.8));
-    solidBox(0.5, gh - 3.2, 3.2, MT.wG, gx + gw/2 - 0.25, 3.2, gz);
-    // South wall — solid (no entrance here any more)
-    solidBox(gw, gh, 0.5, MT.wG, gx, 0, gz + gd/2 - 0.25);
-    // North wall split by tunnel - built inside bleacher section below
+    solidBox(0.5, gh, gd, MT.wG, gx + gw/2 - 0.25, 0, gz);
+    // North wall split by tunnel - built inside bleacher section above
+    // Front wall with door gap
+    solidBox((gw - 3.2)/2, gh, 0.5, MT.wG, gx - (gw/4 + 0.4), 0, gz + gd/2 - 0.25);
+    solidBox((gw - 3.2)/2, gh, 0.5, MT.wG, gx + (gw/4 + 0.4), 0, gz + gd/2 - 0.25);
+    solidBox(3.2, gh - 3.2, 0.5, MT.wG, gx, 3.2, gz + gd/2 - 0.25);
     // Roof
     solidBox(gw + 0.6, 0.8, gd + 0.6, MT.roofG, gx, gh, gz);
-    // East entrance exterior ramp/curb (no stairs — just a single flat step)
-    solidBox(0.9, 0.18, 5.5, MT.stt, gx + gw/2 + 0.65, 0, gz);
-    addSurf(gx + gw/2 + 0.65, gz, 0.9, 5.5, 0.18);
-    // Door on east wall
-    var gymDoor = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.1, 2.8), MT.dr);
-    gymDoor.position.set(gx + gw/2 - 0.05, 1.55, gz);
+    // Exterior steps
+    for (var gs = 0; gs < 3; gs++) {
+      solidBox(6, 0.28, 0.9, MT.stt, gx, gs*0.28, gz + gd/2 + 0.5 + gs*0.9);
+      addSurf(gx, gz + gd/2 + 0.5 + gs*0.9, 6, 0.9, gs*0.28+0.28);
+    }
+    // Door
+    var gymDoor = new THREE.Mesh(new THREE.BoxGeometry(2.8, 3.1, 0.1), MT.dr);
+    gymDoor.position.set(gx, 1.55, gz + gd/2 - 0.05);
     gymDoor.castShadow = true; SCN.add(gymDoor);
-    var _gdMin = new THREE.Vector3(gx + gw/2 - 0.28, 0, gz - 1.4);
-    var _gdMax = new THREE.Vector3(gx + gw/2 + 0.28, 3.15, gz + 1.4);
-    var gymDoorCol = new THREE.Box3(_gdMin.clone(), _gdMax.clone());
-    DOORS.push({ mesh: gymDoor, open: false, cx: gx + gw/2 - 0.05, cz: gz,
-                 col: gymDoorCol, origMin: _gdMin.clone(), origMax: _gdMax.clone(), wallAxis: 'x' });
+    DOORS.push({ mesh: gymDoor, open: false, cx: gx, cz: gz + gd/2 - 0.05 });
 
-    // High windows on west wall
+    // High windows each side wall (visual)
     for (var ww = gz - gd/2 + 3; ww < gz + gd/2 - 2; ww += 4.5) {
       visBox(0.12, 1.8, 2.2, MT.win, gx - gw/2 - 0.02, gh*0.6, ww);
+      visBox(0.12, 1.8, 2.2, MT.win, gx + gw/2 + 0.02, gh*0.6, ww);
     }
-    // High windows on east wall — skip area near door gap (gz ± 3.5)
-    for (var ww2 = gz - gd/2 + 3; ww2 < gz + gd/2 - 2; ww2 += 4.5) {
-      if (Math.abs(ww2 - gz) < 4.5) continue;
-      visBox(0.12, 1.8, 2.2, MT.win, gx + gw/2 + 0.02, gh*0.6, ww2);
-    }
-    // Sign above east entrance
-    var eastEntrSp = mkLabel('↑  ORIENTATION  ↑', 9);
-    eastEntrSp.position.set(gx + gw/2 + 0.5, gh * 0.55, gz);
 
     // -- GYM FLOOR ------------------------------------------------
     var gymFloorTex = makeTex(512, 512, function(c2, w2, h2) {
@@ -1065,7 +1154,7 @@ function initWorld3D(playerData) {
         if (leftW2 > 0.3) {
           solidBox(leftW2, 0.32, 0.88, blMats[br2%2], leftCX2, byN, bzN);
           addSurf(leftCX2, bzN, leftW2, 0.88, rowTop);
-          visBox(leftW2, rowTop, 0.12, mk(0x444444,0.9), leftCX2, rowTop/2, bzN + 0.38);
+          visBox(leftW2, rowTop, 0.12, mk(0x444444,0.9), leftCX2, rowTop/2, bzN-0.38);
         }
         // Split row: right piece
         var rightStart2 = tunnelCX + halfGap;
@@ -1074,13 +1163,13 @@ function initWorld3D(playerData) {
         if (rightW2 > 0.3) {
           solidBox(rightW2, 0.32, 0.88, blMats[br2%2], rightCX2, byN, bzN);
           addSurf(rightCX2, bzN, rightW2, 0.88, rowTop);
-          visBox(rightW2, rowTop, 0.12, mk(0x444444,0.9), rightCX2, rowTop/2, bzN + 0.38);
+          visBox(rightW2, rowTop, 0.12, mk(0x444444,0.9), rightCX2, rowTop/2, bzN-0.38);
         }
       } else {
         // Full width row (above tunnel clearance - becomes tunnel ceiling)
         solidBox(blW, 0.32, 0.88, blMats[br2%2], gx, byN, bzN);
         addSurf(gx, bzN, blW, 0.88, rowTop);
-        visBox(blW, rowTop, 0.12, mk(0x444444,0.9), gx, rowTop/2, bzN + 0.38);
+        visBox(blW, rowTop, 0.12, mk(0x444444,0.9), gx, rowTop/2, bzN-0.38);
       }
     }
 
@@ -1129,24 +1218,14 @@ function initWorld3D(playerData) {
     NPCS.push({x:tunnelCX, z:gz-gd/2+2, radius:5, label:'Gym Tunnel Entrance',
       msg:'Walk through the tunnel under the bleachers to exit the gym. Follow the lights!'});
 
-    // South bleachers — front rows near court, back rows near south wall, all facing north
+    // South bleachers (gz + gd/2 side, face inward)
     for (var br3 = 0; br3 < blRows; br3++) {
       var byS = br3 * 0.62;
-      // Row 0 = front (lowest, most northerly); row blRows-1 = back (highest, near south wall)
-      var bzS = gz + gd/2 - 0.5 - (blRows - 1 - br3) * 0.85;
+      var bzS = gz + gd/2 - 0.8 - br3 * 0.85;
       solidBox(blW, 0.32, 0.88, blMats[br3%2], gx, byS, bzS);
       addSurf(gx, bzS, blW, 0.88, byS + 0.32);
-      // Riser on north side — faces toward court
-      visBox(blW, byS+0.32, 0.12, mk(0x444444,0.9), gx, (byS+0.32)/2, bzS - 0.38);
+      visBox(blW, byS+0.32, 0.12, mk(0x444444,0.9), gx, (byS+0.32)/2, bzS+0.38);
     }
-
-    // -- PODIUM / SPEAKER AREA -----------------------------------
-    // Podium near center-south for speaker facing students
-    solidBox(1.4, 1.1, 0.8, mk(0x5a3010, 0.7), gx, 0, gz + 4);
-    visBox(1.45, 0.08, 0.82, mk(0x3a1a00, 0.5), gx, 1.1, gz + 4, true);
-    // Mic stand
-    visCyl(0.04, 0.04, 1.2, 6, mk(0x888888, 0.3, 0.7), gx, 0.6, gz + 3.4);
-    visCyl(0.1, 0.04, 0.02, 6, mk(0x333333, 0.5), gx, 1.22, gz + 3.4);
 
     // -- SCOREBOARDS on end walls ---------------------------------
     solidBox(10, 3.2, 0.25, MT.scr, gx, gh - 2.2, gz - gd/2 + 0.35);
@@ -1279,9 +1358,9 @@ function initWorld3D(playerData) {
   // ============================================================
   // PROGRESS BAR
   // ============================================================
-  var lbar = document.getElementById('w3d-lbar');
-  var lmsg = document.getElementById('w3d-lmsg');
-  function prog(p, m) { if(lbar) lbar.style.width = p + '%'; if(lmsg) lmsg.textContent = m; }
+  var lbar = document.getElementById('lbar');
+  var lmsg = document.getElementById('lmsg');
+  function prog(p, m) { lbar.style.width = p + '%'; lmsg.textContent = m; }
 
   // ============================================================
   // BUILD THE WORLD
@@ -1398,184 +1477,10 @@ function initWorld3D(playerData) {
   prog(50, 'Gymnasium...');
   buildGym(-92, -62);
 
-  // ── ORIENTATION NPC BODIES ──────────────────────────────────
-  // Helper: place a simple character mesh (cylinder body + sphere head)
-  function npcBody(x, z, y, shirtHex, skinHex) {
-    var sm = mk(shirtHex||0x3355aa, 0.7);
-    var hm = mk(skinHex||0xf4c08a, 0.5);
-    visCyl(0.18, 0.22, 0.9, 8, sm, x, y + 0.45, z);   // torso
-    visSph(0.19, hm, x, y + 1.12, z);                  // head
-  }
-
-  // Shirt color palette for crowd variety
-  var shirtCols = [0x3355cc, 0xcc3322, 0x228833, 0xcc8800, 0x882299,
-                   0x117788, 0xcc4422, 0x336688, 0xee6644, 0x3399aa,
-                   0xaa2244, 0x668833, 0x4455bb, 0xcc7700, 0x559944];
-  var skinCols  = [0xf4c08a, 0xe8a070, 0xd08858, 0xc07040, 0xfad4a0,
-                   0xe8b880, 0xd4906a, 0xba7248];
-
-  var npcIdx = 0;
-  function rndNPC(x, z, rowY) {
-    var sc = shirtCols[npcIdx % shirtCols.length];
-    var hc = skinCols[Math.floor(npcIdx / 2) % skinCols.length];
-    npcBody(x, z, rowY, sc, hc);
-    npcIdx++;
-  }
-
-  // South bleachers (rows 0–6, starting at gz+gd/2-3.5 = -49.5, step -0.85)
-  var xSpots = [-108, -104, -100, -96, -92, -88, -84, -80, -76];
-  for (var srN = 0; srN < 6; srN++) {
-    var seatY = srN * 0.62 + 0.32;
-    var seatZ = -62 + 16 - 3.5 - srN * 0.85;
-    // Fill most spots, leave some gaps for realism
-    for (var sx = 0; sx < xSpots.length; sx++) {
-      if (srN === 0 && sx === 4) continue; // leave gap at center front
-      rndNPC(xSpots[sx], seatZ - 0.2, seatY);
-    }
-  }
-  // North bleachers (rows 0–5, inside near north wall)
-  for (var nrN = 0; nrN < 5; nrN++) {
-    var nseatY = nrN * 0.62 + 0.32;
-    var nseatZ = -62 - 16 + 0.8 + nrN * 0.85 + 0.2;
-    for (var nx2 = 0; nx2 < xSpots.length; nx2++) {
-      if (nrN < 2 && (nx2 < 2 || nx2 > 6)) continue; // sparse outer rows
-      rndNPC(xSpots[nx2], nseatZ, nseatY);
-    }
-  }
-
-  // Coach Rivera at the podium — distinctive outfit
-  npcBody(-92, -58, 0, 0x1a1a5a, 0xe8b880);  // dark navy jacket
-
-  // ── STORY NPCs around gym entrance ─────────────────────────
-  // Alex — right outside east gym entrance
-  NPCS.push({x:-64, z:-55, radius:3.5, label:'Alex Chen',
-    msg:'"Hey — you\'re new too, right? First day. Yeah. I don\'t know anyone either. The gym entrance is right there — orientation\'s about to start."'});
-  npcBody(-64, -55, 0, 0x4488cc, 0xf4c08a);
-
-  // Jordan — just inside east entrance (in gym)
-  NPCS.push({x:-74, z:-62, radius:3.5, label:'Jordan Park',
-    msg:'"I heard the popular kids always claim the front bleachers on day one. No idea if that\'s true. Probably is."'});
-  npcBody(-74, -62, 0, 0xcc4422, 0xd08858);
-
-  // Maya — south of east entrance, waiting
-  NPCS.push({x:-68, z:-68, radius:3.5, label:'Maya Torres',
-    msg:'"My older sister said freshman orientation is basically just the principal telling you not to use your phone. Forty-five minutes."'});
-  npcBody(-68, -68, 0, 0xaa44aa, 0xe8a070);
-
-  // Upperclassman leaning on east wall
-  NPCS.push({x:-68, z:-54, radius:4, label:'Upperclassman',
-    msg:'"Oh, freshmen. Every year." (He doesn\'t stop walking.)'});
-  npcBody(-68, -54, 0, 0x222222, 0xd4906a);
-
-  // Coach Rivera NPC info point (at podium)
-  NPCS.push({x:-92, z:-58, radius:5, label:'Coach Rivera',
-    msg:'Coach Rivera adjusts the mic. "Welcome to Westbrook High. Please find your seats — orientation begins in two minutes."'});
-
-  // Naomi — south bleachers, front row
-  NPCS.push({x:-84, z:-56, radius:3, label:'Naomi Walsh',
-    msg:'"Front row. I know everyone thinks it\'s try-hard, but I actually want to hear what they\'re saying." She has a pen out already.'});
-
-  // Tyler — south bleachers center
-  NPCS.push({x:-97, z:-55, radius:3, label:'Tyler Brooks',
-    msg:'Tyler looks up from his phone. "You can sit here." A pause. "If you want." The offer doesn\'t last long.'});
-
-  // Devon — north bleachers, back row
-  NPCS.push({x:-88, z:-76, radius:3, label:'Devon Clark',
-    msg:'"Back row. You can see everything from up here and nobody bothers you. That\'s the whole thing."'});
-
-  // ── ORIENTATION SIGN outside east gym entrance ──────────────
-  var orSign = mkLabel('← FRESHMAN ORIENTATION', 13);
-  orSign.position.set(-62, 5, -62);
-  var orSign2 = mkLabel('Enter gym for orientation', 9);
-  orSign2.position.set(-62, 3.5, -62);
-
-  // ── ADDITIONAL STORY NPCs (freshman accessible zone) ────────
-  // Teacher directing students east toward the gym
-  NPCS.push({x:-80, z:-40, radius:4, label:'Ms. Patel',
-    msg:'Ms. Patel waves you toward the gym. "Freshmen orientation is in the gym — east entrance, right over there. You have about three minutes."'});
-  npcBody(-80, -40, 0, 0x2244aa, 0xf0c090);
-
-  // Student sitting outside, skipping
-  NPCS.push({x:-100, z:-35, radius:4, label:'Kid Skipping Orientation',
-    msg:'"I\'ve been to like four of these. New school, same speech. Coach says attendance mandatory though, so." He doesn\'t move.'});
-  npcBody(-100, -35, 0, 0x334433, 0xd4906a);
-
-  // Nervous freshman near east entrance
-  NPCS.push({x:-65, z:-70, radius:3.5, label:'Nervous Freshman',
-    msg:'"Is this where we go? For orientation? I\'ve walked past three times already trying to look like I know where I\'m going."'});
-  npcBody(-65, -70, 0, 0x7788bb, 0xfad4a0);
-
-  // Student group on west side of restricted zone
-  NPCS.push({x:-125, z:-45, radius:4, label:'Sakura Yamamoto',
-    msg:'"My brother warned me about freshman orientation. Said it\'s actually pretty important — first impressions and all that. Where you sit matters."'});
-  npcBody(-125, -45, 0, 0xcc4488, 0xe8b080);
-
-  NPCS.push({x:-120, z:-55, radius:4, label:'Marcus Webb',
-    msg:'"I heard there are already cliques forming. Like, people already know who\'s popular and who isn\'t. Day one. That\'s wild."'});
-  npcBody(-120, -55, 0, 0x336699, 0xba7248);
-
-  // Near east entrance, quiet observer
-  NPCS.push({x:-70, z:-50, radius:3.5, label:'Quiet Student',
-    msg:'She\'s writing something in a small notebook. She looks up briefly. "Sorry — just writing down first impressions. It\'s a thing I do."'});
-  npcBody(-70, -50, 0, 0x886699, 0xf0c090);
-
-  // Campus map sign near restriction boundary
-  NPCS.push({x:-100, z:-25, radius:5, label:'Campus Map',
-    msg:'WESTBROOK HIGH SCHOOL\nMain campus beyond the gates — Buildings A through F, Cafeteria, Library.\nFreshmen: report to the gym (east entrance) for orientation first.'});
-
   prog(54, 'Locker rooms and weight room...');
   building(-92,-32,28,15,6,mk(0xd0c8b8),mk(0x607080),'Locker Rooms',1,'cls');
   building(-92,-12,22,13,6,mk(0xd0c8b8),mk(0x506070),'Weight Room',1,'wgt');
   NPCS.push({x:-92,z:-12,radius:6,label:'Weight Room',msg:'Weight Room - Bench press, squat racks, free weights. Open 6am-8pm.'});
-
-  // ============================================================
-  // CLUB FAIR — west of locker rooms, within freshman zone
-  // Booths at z=-34, x=-115/-125/-135 (requires exploration to find)
-  // Funnel signs guide players south from the gym
-  // ============================================================
-  prog(56, 'Club fair...');
-
-  // ── Funnel signs pointing south from gym ──
-  var _cfS1 = mkLabel('↓  CLUB FAIR TODAY  ↓', 10);
-  _cfS1.position.set(-80, 4.0, -52);
-
-  var _cfS2 = mkLabel('↓  CLUB FAIR  ↓', 9);
-  _cfS2.position.set(-92, 3.5, -43);
-
-  // ── Large overhead banner above the booths ──
-  var _cfBanner = mkLabel('— WESTBROOK CLUB FAIR —', 16);
-  _cfBanner.position.set(-125, 7.0, -34);
-
-  // ── Single booth builder ──
-  function _clubBooth(cx, cz, col, labelTxt) {
-    // Tabletop (solid – blocks the player when walking into it)
-    solidBox(3.6, 0.12, 1.8, mk(col, 0.72), cx, 0.9, cz);
-    // Legs (visual only)
-    var legM = mk(0x888888, 0.5, 0.3);
-    visBox(0.1, 0.9, 0.1, legM, cx-1.6, 0.45, cz-0.8);
-    visBox(0.1, 0.9, 0.1, legM, cx+1.6, 0.45, cz-0.8);
-    visBox(0.1, 0.9, 0.1, legM, cx-1.6, 0.45, cz+0.8);
-    visBox(0.1, 0.9, 0.1, legM, cx+1.6, 0.45, cz+0.8);
-    // Backdrop banner panel (solid)
-    solidBox(3.8, 3.2, 0.12, mk(col, 0.78), cx, 2.5, cz - 1.3);
-    // Vertical banner poles
-    solidBox(0.1, 4.6, 0.1, MT.pol, cx - 1.85, 0, cz - 1.3);
-    solidBox(0.1, 4.6, 0.1, MT.pol, cx + 1.85, 0, cz - 1.3);
-    // Horizontal top rail
-    visBox(3.8, 0.1, 0.1, MT.pol, cx, 4.55, cz - 1.3);
-    // Floating label above booth
-    var sp = mkLabel(labelTxt, 9);
-    sp.position.set(cx, 5.6, cz);
-    // NPC info point
-    NPCS.push({ x: cx, z: cz, radius: 5, label: labelTxt,
-      msg: 'Walk up to this booth to make your choice. Press E for info.' });
-  }
-
-  _clubBooth(-115, -34, 0x1a3a70, 'ROBOTICS CLUB');   // dark blue
-  _clubBooth(-125, -34, 0x701a1a, 'FOOTBALL TEAM');   // dark red
-  _clubBooth(-135, -34, 0x2a4a2a, 'NO COMMITMENT');   // dark green
-
-  ZONES.push({ x1: -140, x2: -108, z1: -42, z2: -26, name: 'Club Fair' });
 
   prog(58, 'Cafeteria and Student Union...');
   building(0,-10,40,24,10,MT.wC,MT.roofC,'Cafeteria + Student Union',2,'caf');
@@ -1724,27 +1629,8 @@ function initWorld3D(playerData) {
   solidBox(0.5,3,250,mk(0x888888,0.9),-149,0,30); // west
   solidBox(0.5,3,250,mk(0x888888,0.9),149,0,30);  // east
 
-  // ── FRESHMAN ZONE BARRIERS ─────────────────────────────────
-  // Visual chain-link fence at east boundary (x=-64) — gap at gym east wall (z=-55 to -69)
-  fence(-64, -85, -64, -70, 2.5, 6);  // north segment
-  fence(-64, -54, -64, -22, 2.5, 10); // south segment
-  // South boundary fence (z=-23) — full width of restricted zone
-  fence(-138, -23, -64, -23, 2.5, 12);
-  // Corner post / restriction sign
-  var rSign1 = mkLabel('SENIORS & JUNIORS ONLY', 8);
-  rSign1.position.set(-64, 3.5, -55);
-  var rSign2 = mkLabel('— SENIORS & JUNIORS ONLY —', 8);
-  rSign2.position.set(-100, 3.5, -23);
-  // Orange traffic cones at boundary corners for visibility
-  function cone(cx, cz) {
-    visCyl(0, 0.15, 0.65, 8, mk(0xff6600, 0.6), cx, 0.325, cz);
-    visCyl(0.18, 0.05, 0.08, 8, mk(0xffffff, 0.7), cx, 0.7, cz);
-  }
-  cone(-64, -22); cone(-64, -40); cone(-64, -85);
-  cone(-138, -23); cone(-100, -23); cone(-80, -23);
-
   prog(100, 'Done!');
-  setTimeout(function() { var l=document.getElementById('w3d-load'); if(l) l.style.display='none'; }, 280);
+  setTimeout(function() { document.getElementById('load').style.display = 'none'; }, 280);
 
   // ============================================================
   // PLAYER STATE
@@ -1752,79 +1638,32 @@ function initWorld3D(playerData) {
   var PH = 1.75; // player height (camera from ground)
   var PR = 0.32; // player radius
 
-  var px = -66, py = PH, pz = -62; // spawn just outside east gym entrance
+  var px = -5, py = PH, pz = -78; // starting position
   var velY = 0, onGnd = true;
-  var yaw = -Math.PI / 2, pitch = 0; // facing west toward gym east wall door
-  var orientationTriggered = false;
+  var yaw = Math.PI, pitch = 0;
   var jcd = 0;
   var keys = {};
 
-  // Club fair / commitment system
-  var clubMeetingTimer    = 0;
-  var CLUB_MEETING_INTERVAL = 180; // 3 real-time minutes per "period"
-
-  // ── Schedule system ──────────────────────────────────────────────────────
-  // Real-time period durations (seconds). At midpoint, attendance is checked.
-  var SCHED_PERIODS = [
-    { id:'before_school', name:'Before School',   dur:60,  free:true,  zx:null,  zz:null, zr:0  },
-    { id:'bio',           name:'Period 1 · Bio',  dur:150, free:false, zx:-23,   zz:-89,  zr:22 },
-    { id:'lit',           name:'Period 2 · Lit',  dur:150, free:false, zx: 7,    zz:-30,  zr:22 },
-    { id:'math',          name:'Period 3 · Math', dur:150, free:false, zx:-11,   zz:-89,  zr:22 },
-    { id:'pe',            name:'Period 4 · PE',   dur:150, free:false, zx:-92,   zz:-62,  zr:28 },
-    { id:'lunch',         name:'Lunch',           dur:90,  free:true,  zx:null,  zz:null, zr:0  },
-    { id:'ec',            name:'EC / Study Hall', dur:150, free:null,  zx:null,  zz:null, zr:0  },
-    { id:'after_school',  name:'After School',    dur:60,  free:true,  zx:null,  zz:null, zr:0  },
-  ];
-  var schedPeriodIdx   = 0;          // index into SCHED_PERIODS
-  var schedPeriodTimer = 0;          // elapsed seconds in current period
-  var schedAttendChecked = false;    // did we already check attendance this period?
-  var schedAbsences    = { bio:0, lit:0, math:0, pe:0, ec:0 }; // absence counters
-  var schedRunning     = false;      // starts when orientation completes
-  var fullMapOpen      = false;
-
   CAM.position.set(px, py, pz);
+
   window.addEventListener('keydown', function(e) {
     keys[e.code] = true;
     if (e.code === 'Space') e.preventDefault();
     if (e.code === 'KeyE') doInfo();
     if (e.code === 'KeyF') toggleDoor();
-    if (e.code === 'KeyM') {
-      fullMapOpen = !fullMapOpen;
-      var fmEl = document.getElementById('fullmap-overlay');
-      if (fmEl) {
-        if (fullMapOpen) {
-          fmEl.style.display = 'flex';
-          requestAnimationFrame(drawFullMap);
-        } else {
-          fmEl.style.display = 'none';
-          if (document.pointerLockElement !== canvas) canvas.requestPointerLock();
-        }
-      }
-    }
-    if (e.code === 'KeyP') {
-      var po = document.getElementById('pause-overlay');
-      if (po) {
-        var nowOpen = po.classList.toggle('open');
-        if (nowOpen) populatePauseStats();
-        else if (locked) canvas.requestPointerLock();
-      }
-    }
-    if (e.code === 'Escape' && fullMapOpen) {
-      fullMapOpen = false;
-      var fmEl2 = document.getElementById('fullmap-overlay');
-      if (fmEl2) fmEl2.style.display = 'none';
-      if (document.pointerLockElement !== canvas) canvas.requestPointerLock();
-    }
   });
   window.addEventListener('keyup', function(e) { keys[e.code] = false; });
 
   // Pointer lock
   var locked = false;
+  document.getElementById('overlay').addEventListener('click', function() {
+    document.getElementById('overlay').style.display = 'none';
+    canvas.requestPointerLock();
+  });
   canvas.addEventListener('click', function() { if (!locked) canvas.requestPointerLock(); });
   document.addEventListener('pointerlockchange', function() {
     locked = document.pointerLockElement === canvas;
-    var hint = document.getElementById('lock-hint');
-    if (hint) hint.style.display = locked ? 'none' : 'block';
+    if (!locked) document.getElementById('overlay').style.display = 'flex';
   });
   document.addEventListener('mousemove', function(e) {
     if (!locked) return;
@@ -1843,8 +1682,6 @@ function initWorld3D(playerData) {
     el.style.display = 'block';
     ntimer = 4.5;
   }
-  // Expose for cross-file use (game.js club fair hints, etc.)
-  window.MYTH_SHOW_NOTIF = showN;
 
   function doInfo() {
     var best = null, bestD = Infinity;
@@ -1871,24 +1708,15 @@ function initWorld3D(playerData) {
     if (best) {
       best.open = !best.open;
       if (best.open) {
-        if (best.wallAxis === 'x') {
-          // East/west wall door — swing along wall (Z direction)
-          best.mesh.position.x = best.cx;
-          best.mesh.position.z = best.cz - 1.55;
-          best.mesh.rotation.y = Math.PI / 2;
-        } else {
-          best.mesh.position.x = best.cx - 1.5;
-          best.mesh.position.z = best.cz - 1.4;
-          best.mesh.rotation.y = -Math.PI / 2;
-        }
-        if (best.col) best.col.makeEmpty();
+        best.mesh.position.x = best.cx - 1.5;
+        best.mesh.position.z = best.cz - 1.4;
+        best.mesh.rotation.y = -Math.PI / 2;
       } else {
         best.mesh.position.x = best.cx;
         best.mesh.position.z = best.cz;
         best.mesh.rotation.y = 0;
-        if (best.col && best.origMin) best.col.set(best.origMin, best.origMax);
       }
-      showN(best.open ? 'Door opened — walk inside!' : 'Door closed.');
+      showN(best.open ? 'Door opened - walk inside!' : 'Door closed.');
     } else {
       showN('No door nearby. Walk up to a building entrance and press F.');
     }
@@ -1922,15 +1750,8 @@ function initWorld3D(playerData) {
     var pMin = new THREE.Vector3(nx - halfW, ny - halfH, nz - halfW);
     var pMax = new THREE.Vector3(nx + halfW, ny + 0.1,   nz + halfW);
 
-    var allCols = COLS.slice();
-    // Add closed door collision boxes
-    for (var j = 0; j < DOORS.length; j++) {
-      if (!DOORS[j].open && DOORS[j].col && !DOORS[j].col.isEmpty()) allCols.push(DOORS[j].col);
-    }
-
-    for (var i = 0; i < allCols.length; i++) {
-      var col = allCols[i];
-      if (col.isEmpty()) continue;
+    for (var i = 0; i < COLS.length; i++) {
+      var col = COLS[i];
       // Quick overlap check
       if (pMax.x <= col.min.x || pMin.x >= col.max.x) continue;
       if (pMax.y <= col.min.y || pMin.y >= col.max.y) continue;
@@ -1941,16 +1762,21 @@ function initWorld3D(playerData) {
       var oy = Math.min(pMax.y - col.min.y, col.max.y - pMin.y);
       var oz = Math.min(pMax.z - col.min.z, col.max.z - pMin.z);
 
-      if (oy < ox && oy < oz) continue;
+      // Push out on smallest axis (but not Y - Y handled by surface system)
+      // Skip if oy is smallest (means we're standing on top or bumping head - handled elsewhere)
+      if (oy < ox && oy < oz) continue; // vertical collision, skip (handled by gravity)
 
       if (ox < oz) {
+        // Push on X axis
         if (nx < (col.min.x + col.max.x) / 2) nx -= ox + 0.001;
         else nx += ox + 0.001;
       } else {
+        // Push on Z axis
         if (nz < (col.min.z + col.max.z) / 2) nz -= oz + 0.001;
         else nz += oz + 0.001;
       }
 
+      // Rebuild player box after push
       pMin.set(nx - halfW, ny - halfH, nz - halfW);
       pMax.set(nx + halfW, ny + 0.1,   nz + halfW);
     }
@@ -1970,309 +1796,27 @@ function initWorld3D(playerData) {
   }
 
   var mmCtx = document.getElementById('mm').getContext('2d');
-
-  // ── Shared map drawing helper — used by both minimap and full-screen map ──
-  // drawMapScene(ctx, canvasW, canvasH, centerX, centerZ, scale)
-  // scale: world-units per pixel (larger = zoomed out)
-  function _drawMapScene(ctx, cW, cH, cX, cZ, sc, showLabels) {
-    var ox = cW / 2 - (cX) * sc;
-    var oz = cH / 2 - (cZ) * sc;
-    function wx(worldX) { return Math.round(ox + worldX * sc); }
-    function wz(worldZ) { return Math.round(oz + worldZ * sc); }
-    function wr(x, z, w, d, col) {
-      ctx.fillStyle = col;
-      ctx.fillRect(wx(x), wz(z), Math.max(1, Math.round(w * sc)), Math.max(1, Math.round(d * sc)));
-    }
-    function wl(x1, z1, x2, z2, col, lw) {
-      ctx.strokeStyle = col; ctx.lineWidth = lw || 1;
-      ctx.beginPath(); ctx.moveTo(wx(x1), wz(z1)); ctx.lineTo(wx(x2), wz(z2)); ctx.stroke();
-    }
-    function wlabel(txt, x, z, col, sz) {
-      if (!showLabels) return;
-      ctx.fillStyle = col || 'rgba(255,240,180,0.9)';
-      ctx.font = 'bold ' + (sz || 10) + 'px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(txt, wx(x), wz(z));
-    }
-
-    // Grass base
-    wr(-148, -95, 296, 260, '#1e3d20');
-    // Courtyards / paved areas
-    wr(-138, -85, 74, 90, '#3a352e');
-    wr(-64,  -85, 210, 250, '#2e2a24');
-    // Paths
-    wr(-138, -2,  74,  80, '#4a453e');
-    wr(-64, -93, 210, 42, '#4a453e');
-
-    // Sports fields (green)
-    wr(-138, 66, 92, 92, '#2a6038'); wr(6, 66, 92, 92, '#2a6038'); wr(79, 56, 66, 92, '#2a6038');
-    wlabel('SOCCER FIELD', -92, 112, '#6edd80', 9);
-    wlabel('BASEBALL',      52, 112, '#6edd80', 9);
-    wlabel('TENNIS',       112,  88, '#6edd80', 9);
-
-    // Track oval
-    ctx.strokeStyle = '#4caa60'; ctx.lineWidth = Math.max(2, 4 * sc);
-    ctx.beginPath();
-    ctx.ellipse(wx(-82), wz(102), Math.max(3, 58 * sc), Math.max(3, 64 * sc), 0, 0, Math.PI * 2);
-    ctx.stroke();
-    wlabel('TRACK', -82, 102, '#6edd80', 10);
-
-    // Trees
-    wr(-128, 26, 42, 52, '#2d6635');
-
-    // Pool
-    wr(24, -54, 24, 17, '#1864a8');
-    wlabel('POOL', 36, -46, '#62c4f0', 9);
-
-    // ── Buildings ──
-    // Gym
-    wr(-113, -78, 42, 32, '#8a3030');
-    wlabel('GYM', -92, -62, '#ffaaaa', 10);
-    // Locker rooms
-    wr(-106, -39, 28, 15, '#6a4040');
-    wlabel('LOCKER', -92, -32, '#e0aaaa', 8);
-    // Weight room
-    wr(-103, -18, 22, 13, '#604040');
-    wlabel('WEIGHTS', -92, -12, '#e0aaaa', 8);
-
-    // Academic buildings: color by type
-    // Bldg A row (Bio lab here)
-    var aRow = [[-81,-89,18,14],[-53,-89,18,14],[-23,-89,18,14],[7,-89,18,14],[35,-89,18,14]];
-    var aLabels = ['BLDG A', 'BLDG B', 'BIO', 'BLDG D', 'BLDG E'];
-    var aCols   = ['#3a6090','#3a6090','#2a5a8a','#3a6090','#3a6090'];
-    for (var ai = 0; ai < aRow.length; ai++) {
-      wr(aRow[ai][0], aRow[ai][1], aRow[ai][2], aRow[ai][3], aCols[ai]);
-      wlabel(aLabels[ai], aRow[ai][0]+9, aRow[ai][1]+7, '#a0c8ff', 8);
-    }
-    // B row
-    wr(-58,-69,26,14,'#3a6090'); wlabel('BLDG F', -45,-62,'#a0c8ff',8);
-    wr(-11,-69,24,14,'#3a6090'); wlabel('BLDG G',  1,-62,'#a0c8ff',8);
-    // C/D row (Lit class in first)
-    var cRow = [[-57,-30,28,16],[-11,-30,26,16],[21,-30,22,16],[55,-30,22,16]];
-    var cLabels = ['LIT','MATH','BLDG J','BLDG K'];
-    var cCols   = ['#4a3080','#3a4a90','#3a6090','#3a6090'];
-    for (var ci = 0; ci < cRow.length; ci++) {
-      wr(cRow[ci][0],cRow[ci][1],cRow[ci][2],cRow[ci][3],cCols[ci]);
-      wlabel(cLabels[ci], cRow[ci][0]+cRow[ci][2]/2, cRow[ci][1]+8, '#c0a8ff', 8);
-    }
-    // E row
-    var eRow = [[-81,-40,18,14],[-53,-40,18,14],[-23,-40,18,14],[7,-40,18,14],[35,-40,18,14]];
-    var eLabels = ['BLDG L','BLDG M','BLDG N','BLDG O','BLDG P'];
-    for (var ei = 0; ei < eRow.length; ei++) {
-      wr(eRow[ei][0],eRow[ei][1],eRow[ei][2],eRow[ei][3],'#3a6090');
-      wlabel(eLabels[ei], eRow[ei][0]+9, eRow[ei][1]+7, '#a0c8ff', 8);
-    }
-    // Library + Physics
-    wr(64,-65,24,17,'#806020'); wlabel('LIBRARY',76,-57,'#f0d070',9);
-    wr(64,-39,24,15,'#806020'); wlabel('PHYSICS',76,-32,'#f0d070',9);
-    // Cafeteria
-    wr(-20,-22,40,24,'#704a20'); wlabel('CAFETERIA',0,-10,'#f0c070',10);
-    // Theater
-    wr(41,-18,22,17,'#504020'); wlabel('THEATER',52,-10,'#f0d080',9);
-
-    // Club fair marker
-    if (!window.MYTH_CLUB_CHOICE && Engine && Engine.hasFlag && Engine.hasFlag('orientation_complete')) {
-      ctx.fillStyle = 'rgba(255,220,50,0.4)';
-      ctx.fillRect(wx(-140), wz(-42), Math.round(32 * sc), Math.round(16 * sc));
-      ctx.strokeStyle = 'rgba(255,220,50,0.8)'; ctx.lineWidth = 1;
-      ctx.strokeRect(wx(-140), wz(-42), Math.round(32 * sc), Math.round(16 * sc));
-      wlabel('CLUB FAIR ★', -124, -34, '#ffd030', 9);
-    }
-
-    // Player dot + direction arrow
-    var pdx = wx(px), pdz = wz(pz);
-    // Glow
-    ctx.fillStyle = 'rgba(255,220,80,0.25)';
-    ctx.beginPath(); ctx.arc(pdx, pdz, Math.max(6, 12 * sc), 0, Math.PI * 2); ctx.fill();
-    // Dot
-    ctx.fillStyle = '#ffe040';
-    ctx.beginPath(); ctx.arc(pdx, pdz, Math.max(3, 5 * sc), 0, Math.PI * 2); ctx.fill();
-    // Direction arrow
-    var arLen = Math.max(10, 18 * sc);
-    ctx.strokeStyle = '#ffe040'; ctx.lineWidth = Math.max(1.5, 2.5 * sc);
-    ctx.beginPath();
-    ctx.moveTo(pdx, pdz);
-    ctx.lineTo(pdx + Math.sin(-yaw) * arLen, pdz + Math.cos(-yaw) * arLen);
-    ctx.stroke();
-    // Arrow head
-    ctx.fillStyle = '#ffe040';
-    ctx.beginPath();
-    var ahx = pdx + Math.sin(-yaw) * arLen;
-    var ahz = pdz + Math.cos(-yaw) * arLen;
-    ctx.moveTo(ahx, ahz);
-    ctx.lineTo(ahx + Math.sin(-yaw + 2.4) * arLen * 0.3, ahz + Math.cos(-yaw + 2.4) * arLen * 0.3);
-    ctx.lineTo(ahx + Math.sin(-yaw - 2.4) * arLen * 0.3, ahz + Math.cos(-yaw - 2.4) * arLen * 0.3);
-    ctx.closePath(); ctx.fill();
-
-    // Highlight current schedule destination
-    if (schedRunning && SCHED_PERIODS[schedPeriodIdx]) {
-      var sp = SCHED_PERIODS[schedPeriodIdx];
-      // Override EC zone based on club choice
-      var destX = sp.zx, destZ = sp.zz, destR = sp.zr;
-      if (sp.id === 'ec' && window.MYTH_CLUB_CHOICE) {
-        if (window.MYTH_CLUB_CHOICE === 'robotics') { destX=-92; destZ=-62; destR=28; }
-        else if (window.MYTH_CLUB_CHOICE === 'football') { destX=-82; destZ=102; destR=30; }
-      }
-      if (!sp.free && destX !== null) {
-        ctx.strokeStyle = 'rgba(100,255,120,0.7)'; ctx.lineWidth = Math.max(1.5, 2 * sc);
-        ctx.beginPath();
-        ctx.arc(wx(destX), wz(destZ), Math.max(5, destR * sc), 0, Math.PI * 2);
-        ctx.stroke();
-        // Pulsing fill
-        ctx.fillStyle = 'rgba(100,255,120,0.12)';
-        ctx.beginPath();
-        ctx.arc(wx(destX), wz(destZ), Math.max(5, destR * sc), 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  }
-
   function drawMM() {
-    var mmSz = 170;
-    var mmCv = document.getElementById('mm');
-    if (mmCv.width !== mmSz || mmCv.height !== mmSz) { mmCv.width = mmSz; mmCv.height = mmSz; }
-    mmCtx.clearRect(0, 0, mmSz, mmSz);
-    // Circular clip
-    mmCtx.save();
-    mmCtx.beginPath(); mmCtx.arc(mmSz/2, mmSz/2, mmSz/2 - 1, 0, Math.PI*2); mmCtx.clip();
-    mmCtx.fillStyle = '#0a1520'; mmCtx.fillRect(0, 0, mmSz, mmSz);
-    // Draw map centered on player; scale = 0.4 px per world unit (tight radius)
-    _drawMapScene(mmCtx, mmSz, mmSz, px, pz, 0.4, false);
-    mmCtx.restore();
-    // North label
-    mmCtx.fillStyle = 'rgba(232,208,112,0.8)'; mmCtx.font = 'bold 8px monospace';
-    mmCtx.textAlign = 'center'; mmCtx.fillText('N', mmSz/2, 11);
-    // Map key hint
-    mmCtx.fillStyle = 'rgba(200,180,100,0.5)'; mmCtx.font = '7px monospace';
-    mmCtx.textAlign = 'center'; mmCtx.fillText('[M] MAP', mmSz/2, mmSz - 4);
-    // Border ring
-    mmCtx.strokeStyle = 'rgba(200,180,100,0.4)'; mmCtx.lineWidth = 1.5;
-    mmCtx.beginPath(); mmCtx.arc(mmSz/2, mmSz/2, mmSz/2 - 1, 0, Math.PI*2); mmCtx.stroke();
-  }
-
-  // ── Full-screen map (M key) ──────────────────────────────────────────────
-  function drawFullMap() {
-    if (!fullMapOpen) return;
-    var fmCv = document.getElementById('fullmap-canvas');
-    if (!fmCv) return;
-    // Match canvas resolution to actual display pixels
-    if (fmCv.width !== window.innerWidth || fmCv.height !== window.innerHeight) {
-      fmCv.width  = window.innerWidth;
-      fmCv.height = window.innerHeight;
-    }
-    var W = fmCv.width, H = fmCv.height;
-    var ctx = fmCv.getContext('2d');
-
-    // Background
-    ctx.fillStyle = '#080e1a';
-    ctx.fillRect(0, 0, W, H);
-
-    // Campus title
-    ctx.fillStyle = 'rgba(232,208,112,0.9)';
-    ctx.font = 'bold 22px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('WESTBROOK HIGH SCHOOL — CAMPUS MAP', W/2, 36);
-    ctx.fillStyle = 'rgba(180,160,90,0.5)';
-    ctx.font = '11px monospace';
-    ctx.fillText('CUPERTINO, CA  ·  Press M or ESC to close', W/2, 54);
-
-    // Grid lines (subtle)
-    ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
-    for (var gx = 0; gx < W; gx += 40) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
-    for (var gz = 0; gz < H; gz += 40) { ctx.beginPath(); ctx.moveTo(0,gz); ctx.lineTo(W,gz); ctx.stroke(); }
-
-    // Map area: world bounds -148..145 (X) and -95..165 (Z)
-    var mapPad = 80;
-    var mapW = W - mapPad * 2;
-    var mapH = H - mapPad * 2 - 100; // leave bottom for legend
-    // Scale to fit world
-    var worldW = 293, worldH = 260;
-    var scX = mapW / worldW, scZ = mapH / worldH;
-    var sc  = Math.min(scX, scZ);
-    // Center in available area
-    var mapOX = mapPad + (mapW - worldW * sc) / 2;
-    var mapOZ = mapPad + 60 + (mapH - worldH * sc) / 2;
-
-    // Campus border
-    ctx.strokeStyle = 'rgba(200,180,100,0.3)'; ctx.lineWidth = 1.5;
-    ctx.strokeRect(mapOX, mapOZ, worldW * sc, worldH * sc);
-
-    // Draw map scene centered at world origin (-148, -95) → (0, 0) on canvas
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(mapOX - 2, mapOZ - 2, worldW * sc + 4, worldH * sc + 4);
-    ctx.clip();
-    // Transform: world pos (wx, wz) → canvas (mapOX + (wx - (-148)) * sc, mapOZ + (wz - (-95)) * sc)
-    // = mapOX + (wx + 148) * sc, mapOZ + (wz + 95) * sc
-    // We use _drawMapScene with cX=-148+W_logical/2, cZ=-95+H_logical/2 so the world origin maps right
-    // Easier: just shift context
-    ctx.translate(mapOX + 148 * sc, mapOZ + 95 * sc);
-    _drawMapScene(ctx, 0, 0, 0, 0, sc, true);
-    ctx.restore();
-
-    // ── Legend ──
-    var lgX = mapPad, lgY = H - 50;
-    ctx.font = '10px monospace'; ctx.textAlign = 'left';
-    var legend = [
-      ['#8a3030','Gym / PE'],
-      ['#3a6090','Academic Buildings'],
-      ['#4a3080','Lit Class'],
-      ['#2a5a8a','Bio Lab'],
-      ['#3a4a90','Math'],
-      ['#806020','Library'],
-      ['#704a20','Cafeteria'],
-      ['#2a6038','Sports Fields'],
-      ['#1864a8','Pool'],
-    ];
-    for (var li = 0; li < legend.length; li++) {
-      var lx = lgX + li * 140;
-      ctx.fillStyle = legend[li][0];
-      ctx.fillRect(lx, lgY, 12, 12);
-      ctx.fillStyle = 'rgba(220,200,140,0.8)';
-      ctx.fillText(legend[li][1], lx + 16, lgY + 11);
-    }
-
-    // ── Schedule panel (bottom right) ──
-    if (schedRunning && SCHED_PERIODS[schedPeriodIdx]) {
-      var sp2 = SCHED_PERIODS[schedPeriodIdx];
-      var timeLeft = Math.max(0, sp2.dur - schedPeriodTimer);
-      var mins = Math.floor(timeLeft / 60), secs = Math.floor(timeLeft % 60);
-      var schedTxt = sp2.name + '  (' + mins + ':' + (secs < 10 ? '0' : '') + secs + ')';
-      ctx.fillStyle = 'rgba(8,14,26,0.8)';
-      ctx.fillRect(W - 320, H - 70, 300, 50);
-      ctx.strokeStyle = 'rgba(200,180,100,0.4)'; ctx.lineWidth = 1;
-      ctx.strokeRect(W - 320, H - 70, 300, 50);
-      ctx.fillStyle = 'rgba(200,180,100,0.9)'; ctx.font = 'bold 13px monospace'; ctx.textAlign = 'center';
-      ctx.fillText('CURRENT PERIOD', W - 170, H - 51);
-      ctx.fillStyle = '#ffe040'; ctx.font = '12px monospace';
-      ctx.fillText(schedTxt, W - 170, H - 33);
-      if (!sp2.free) {
-        ctx.fillStyle = 'rgba(100,255,120,0.8)'; ctx.font = '10px monospace';
-        ctx.fillText('▶ Go to highlighted zone', W - 170, H - 17);
-      }
-    }
-
-    // Compass rose (top-right)
-    var crX = W - 50, crY = 50, crR = 22;
-    ctx.strokeStyle = 'rgba(232,208,112,0.6)'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(crX, crY, crR, 0, Math.PI*2); ctx.stroke();
-    ctx.fillStyle = 'rgba(232,208,112,0.9)'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
-    ctx.fillText('N', crX, crY - crR + 10);
-    ctx.fillStyle = 'rgba(180,160,80,0.7)'; ctx.font = '9px monospace';
-    ctx.fillText('S', crX, crY + crR - 2);
-    ctx.fillText('W', crX - crR + 4, crY + 4);
-    ctx.fillText('E', crX + crR - 4, crY + 4);
-    // North arrow
-    ctx.fillStyle = 'rgba(255,60,60,0.9)';
-    ctx.beginPath(); ctx.moveTo(crX, crY - crR + 3); ctx.lineTo(crX - 5, crY); ctx.lineTo(crX + 5, crY); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = 'rgba(232,208,112,0.5)';
-    ctx.beginPath(); ctx.moveTo(crX, crY + crR - 3); ctx.lineTo(crX - 5, crY); ctx.lineTo(crX + 5, crY); ctx.closePath(); ctx.fill();
-
-    // Close hint
-    ctx.fillStyle = 'rgba(200,180,100,0.45)'; ctx.font = '10px monospace'; ctx.textAlign = 'left';
-    ctx.fillText('[M] or [ESC] to close', mapPad, H - 14);
-
-    if (fullMapOpen) requestAnimationFrame(drawFullMap);
+    mmCtx.clearRect(0,0,170,170);
+    mmCtx.fillStyle='#050a18'; mmCtx.fillRect(0,0,170,170);
+    var sc=0.38, ox=85, oy=85;
+    function mr(x,z,w,d,col) { mmCtx.fillStyle=col; mmCtx.fillRect(ox+(x-px)*sc,oy+(z-pz)*sc,w*sc,d*sc); }
+    mr(-148,-90,296,246,'#3a7040');
+    mr(-138,-78,52,62,'#888'); mr(-138,-2,52,82,'#888'); mr(41,-93,82,42,'#888');
+    mmCtx.fillStyle='#b84040';
+    var bl=[[-47,-82,30,15],[-3,-82,26,15],[35,-82,26,15],[-45,-62,26,13],[-3,-62,24,13],
+            [-111,-76,38,28],[-20,-22,40,24],[30,-22,22,17],[64,-22,18,15],
+            [-43,-15,26,13],[-5,-15,22,13],[58,-65,24,17],[58,-40,24,15]];
+    for(var bi=0;bi<bl.length;bi++) mr(bl[bi][0],bl[bi][1],bl[bi][2],bl[bi][3],'#b84040');
+    mmCtx.strokeStyle='#c86050'; mmCtx.lineWidth=4*sc;
+    mmCtx.beginPath(); mmCtx.ellipse(ox+(-82-px)*sc,oy+(102-pz)*sc,58*sc,64*sc,0,0,Math.PI*2); mmCtx.stroke();
+    mr(-138,66,92,92,'#3a8050'); mr(6,66,92,92,'#3a8050'); mr(79,56,66,92,'#3a8050');
+    mr(-128,26,42,52,'#267a48'); mr(24,-54,24,17,'#1a80c0');
+    mmCtx.fillStyle='#e8d070'; mmCtx.beginPath(); mmCtx.arc(ox,oy,5,0,Math.PI*2); mmCtx.fill();
+    mmCtx.strokeStyle='#e8d070'; mmCtx.lineWidth=2;
+    mmCtx.beginPath(); mmCtx.moveTo(ox,oy); mmCtx.lineTo(ox+Math.sin(-yaw)*14,oy+Math.cos(-yaw)*14); mmCtx.stroke();
+    mmCtx.fillStyle='#e8d070'; mmCtx.font='bold 9px sans-serif'; mmCtx.textAlign='center'; mmCtx.fillText('N',85,11);
+    mmCtx.strokeStyle='rgba(200,180,100,0.4)'; mmCtx.lineWidth=1.5; mmCtx.strokeRect(1,1,168,168);
   }
 
   // ============================================================
@@ -2299,7 +1843,7 @@ function initWorld3D(playerData) {
   // ============================================================
   // MAIN GAME LOOP
   // ============================================================
-  var locEl = { textContent: '' }; // replaced by hud-zone update in animate
+  var locEl    = document.getElementById('locbox');
   var notifEl  = document.getElementById('notif');
   var clock    = new THREE.Clock();
 
@@ -2327,10 +1871,6 @@ function initWorld3D(playerData) {
     if (ml > 0) { mvx /= ml; mvz /= ml; }
 
     // Proposed XZ position
-    // Block movement during overlay/pause
-    if (window.MYTH_ORIENTATION_ACTIVE) { mvx = 0; mvz = 0; }
-    var poPause = document.getElementById('pause-overlay');
-    if (poPause && poPause.classList.contains('open')) { mvx = 0; mvz = 0; }
     var npx = px + mvx * spd * dt;
     var npz = pz + mvz * spd * dt;
 
@@ -2361,11 +1901,6 @@ function initWorld3D(playerData) {
     px = result.x;
     py = result.y;
     pz = result.z;
-    // Freshman zone restriction — gym + locker room area only
-    if (window.MYTH_FRESHMAN_RESTRICTION) {
-      px = Math.max(-138, Math.min(-65, px));
-      pz = Math.max(-85, Math.min(-22, pz));
-    }
 
     // Camera
     CAM.position.set(px, py, pz);
@@ -2395,140 +1930,10 @@ function initWorld3D(playerData) {
       }
     }
 
-    // Zone-entry orientation trigger — fires when player steps inside the gym
-    if (!orientationTriggered && !window.MYTH_ORIENTATION_ACTIVE) {
-      if (px >= -112 && px <= -72 && pz >= -77 && pz <= -47) {
-        orientationTriggered = true;
-        window.MYTH_ORIENTATION_ACTIVE = true;
-        if (typeof showOrientationOverlay === 'function') showOrientationOverlay();
-      }
-    }
-
-    // ── Club fair booth proximity (after orientation, before club chosen) ──
-    if (!window.MYTH_ORIENTATION_ACTIVE &&
-        typeof Engine !== 'undefined' && Engine.hasFlag &&
-        Engine.hasFlag('orientation_complete') &&
-        !window.MYTH_CLUB_CHOICE &&
-        !window.MYTH_CLUB_FAIR_TRIGGERED) {
-      var _cfD = function(cx, cz) {
-        var dx = px - cx, dz = pz - cz;
-        return Math.sqrt(dx*dx + dz*dz);
-      };
-      var _trigCF = function(type) {
-        window.MYTH_CLUB_FAIR_TRIGGERED = true;
-        window.MYTH_ORIENTATION_ACTIVE  = true;
-        if (document.pointerLockElement === canvas) document.exitPointerLock();
-        if (typeof showClubFairOverlay === 'function') showClubFairOverlay(type);
-      };
-      if      (_cfD(-115, -34) < 4.5) _trigCF('robotics');
-      else if (_cfD(-125, -34) < 4.5) _trigCF('football');
-      else if (_cfD(-135, -34) < 4.5) _trigCF('none');
-    }
-
-    // ── Club commitment meeting timer ──
-    if (window.MYTH_CLUB_CHOICE && window.MYTH_CLUB_CHOICE !== 'none' &&
-        !window.MYTH_ORIENTATION_ACTIVE) {
-      clubMeetingTimer += dt;
-      if (clubMeetingTimer >= CLUB_MEETING_INTERVAL) {
-        clubMeetingTimer = 0;
-        // Robotics → gym (-92, -62, r=22); Football → football field (-82, 102, r=30)
-        var _ecX = window.MYTH_CLUB_CHOICE === 'robotics' ? -92 : -82;
-        var _ecZ = window.MYTH_CLUB_CHOICE === 'robotics' ? -62 : 102;
-        var _ecR = window.MYTH_CLUB_CHOICE === 'robotics' ? 22  : 30;
-        var _atEC = Math.sqrt(Math.pow(px - _ecX, 2) + Math.pow(pz - _ecZ, 2)) < _ecR;
-        if (_atEC) {
-          if (typeof Engine !== 'undefined' && Engine.modifyStat)
-            Engine.modifyStat('happiness', 0.2);
-          showN('✓ You made it to ' +
-            (window.MYTH_CLUB_CHOICE === 'robotics' ? 'Robotics Club' : 'Football practice') + '.');
-        } else {
-          window.MYTH_ORIENTATION_ACTIVE = true;
-          if (document.pointerLockElement === canvas) document.exitPointerLock();
-          if (typeof showClubMissedOverlay === 'function') showClubMissedOverlay();
-        }
-      }
-    }
-
-    // ── Schedule system ──────────────────────────────────────────────────────
-    // Starts running once orientation is complete and no overlay is active
-    if (!schedRunning && Engine && Engine.hasFlag && Engine.hasFlag('orientation_complete')) {
-      schedRunning = true;
-      schedPeriodIdx = 0;
-      schedPeriodTimer = 0;
-      schedAttendChecked = false;
-    }
-    if (schedRunning && !window.MYTH_ORIENTATION_ACTIVE) {
-      schedPeriodTimer += dt;
-      var sp = SCHED_PERIODS[schedPeriodIdx];
-
-      // Determine EC zone (depends on club choice)
-      var spZx = sp.zx, spZz = sp.zz, spZr = sp.zr;
-      if (sp.id === 'ec') {
-        if (window.MYTH_CLUB_CHOICE === 'robotics') { spZx = -92; spZz = -62; spZr = 28; }
-        else if (window.MYTH_CLUB_CHOICE === 'football') { spZx = -82; spZz = 102; spZr = 30; }
-        else { sp = Object.assign({}, sp, { free: true }); } // no commitment = free
-      }
-
-      // Attendance check fires at halfway through non-free periods
-      if (!sp.free && !schedAttendChecked && schedPeriodTimer >= sp.dur * 0.5) {
-        schedAttendChecked = true;
-        var playerInZone = spZx !== null && Math.sqrt(Math.pow(px - spZx, 2) + Math.pow(pz - spZz, 2)) < spZr;
-        if (!playerInZone) {
-          // Mark absent
-          if (schedAbsences[sp.id] !== undefined) {
-            schedAbsences[sp.id]++;
-            var absCount = schedAbsences[sp.id];
-            if (absCount >= 3) {
-              // Major penalty for chronic absence
-              if (Engine && Engine.modifyStats) {
-                Engine.modifyStats({ gpa: -0.3, happiness: -0.5, intelligence: -0.4 });
-              }
-              showN('⚠ You\'ve missed ' + sp.name + ' 3 times. Consequences.');
-            } else if (absCount === 2) {
-              if (Engine && Engine.modifyStats) Engine.modifyStats({ gpa: -0.15, happiness: -0.3 });
-              showN('⚠ Second absence from ' + sp.name + '.');
-            } else {
-              if (Engine && Engine.modifyStats) Engine.modifyStats({ gpa: -0.05, happiness: -0.1 });
-              showN('You skipped ' + sp.name + '.');
-            }
-          }
-        } else {
-          // Attended — small positive
-          if (Engine && Engine.modifyStats) {
-            Engine.modifyStats({ intelligence: 0.05, happiness: 0.05 });
-          }
-          showN('✓ Attended ' + sp.name + '.');
-        }
-      }
-
-      // Advance to next period
-      if (schedPeriodTimer >= sp.dur) {
-        schedPeriodTimer = 0;
-        schedAttendChecked = false;
-        schedPeriodIdx = (schedPeriodIdx + 1) % SCHED_PERIODS.length;
-        var nextSp = SCHED_PERIODS[schedPeriodIdx];
-        // Show next period notification
-        if (!nextSp.free) {
-          showN('Next: ' + nextSp.name + ' — head to class!');
-        } else {
-          showN(nextSp.name + ' — free time.');
-        }
-      }
-
-      // Update HUD period display
-      var hudPeriod = document.getElementById('hud-period');
-      if (hudPeriod) {
-        var curSp = SCHED_PERIODS[schedPeriodIdx];
-        var timeLeft2 = Math.max(0, curSp.dur - schedPeriodTimer);
-        var m2 = Math.floor(timeLeft2 / 60), s2 = Math.floor(timeLeft2 % 60);
-        hudPeriod.textContent = curSp.name + '  ' + m2 + ':' + (s2 < 10 ? '0' : '') + s2;
-      }
-    }
-
     // UI updates
-    var hz=document.getElementById('hud-zone'); if(hz) hz.textContent=getZone();
+    locEl.textContent = getZone();
     updatePrompt();
-    if (!fullMapOpen) drawMM();
+    drawMM();
     REN.render(SCN, CAM);
   }
 
@@ -2538,43 +1943,8 @@ function initWorld3D(playerData) {
     REN.setSize(window.innerWidth, window.innerHeight);
   });
 
-
-  // Populate pause overlay with current Engine stats
-  function populatePauseStats() {
-    if (typeof Engine === 'undefined') return;
-    var s = Engine.getState();
-    if (!s) return;
-    var pi = document.getElementById('po-player-info');
-    if (pi) pi.innerHTML = '<div class="po-pname">' + (s.player.name || '') + '</div>' +
-      '<div class="po-pdetail">Grade ' + s.grade + ' &nbsp;�&nbsp; ' + (s.day || '') + '</div>';
-    var ps = document.getElementById('po-stats');
-    if (!ps) return;
-    ps.innerHTML = Object.entries(s.stats).map(function(e) {
-      var k = e[0], v = e[1];
-      var isGpa = k === 'gpa';
-      var pct   = isGpa ? v / 4 * 100 : v / 10 * 100;
-      var norm  = isGpa ? v / 4 : v / 10;
-      var col   = norm >= 0.7 ? '#F7B731' : norm >= 0.4 ? '#6BCB77' : '#FC7B54';
-      var disp  = isGpa ? v.toFixed(2) : v.toFixed(1);
-      return '<div class="po-stat-row"><span class="po-stat-name">' + k.toUpperCase() + '</span>' +
-        '<div class="po-stat-bar"><div class="po-stat-fill" style="width:' + pct + '%;background:' + col + '"></div></div>' +
-        '<span class="po-stat-val">' + disp + '</span></div>';
-    }).join('');
-  }
-
-  // Wire pause resume button
-  var resumeBtn = document.getElementById('po-resume-btn');
-  if (resumeBtn) resumeBtn.addEventListener('click', function() {
-    var po = document.getElementById('pause-overlay');
-    if (po) po.classList.remove('open');
-    canvas.requestPointerLock();
-  });
-
-  // Request pointer lock on canvas click (handles post-orientation re-lock)
-  canvas.addEventListener('click', function() { if (!locked) canvas.requestPointerLock(); });
-
-  // Expose canvas for external pointer lock requests
-  window.MYTH_WORLD3D_CANVAS = canvas;
-
   animate();
-}
+})();
+</script>
+</body>
+</html>

@@ -721,7 +721,8 @@ function closeOrientationOverlay() {
     onComplete: () => {
       overlay.classList.remove('open');
       overlay.style.opacity = '';
-      window.MYTH_ORIENTATION_ACTIVE = false;
+      window.MYTH_ORIENTATION_ACTIVE   = false;
+      window.MYTH_FRESHMAN_RESTRICTION = false;  // full campus unlocked after orientation
       Engine.setFlag('orientation_complete');
       refreshStatsSidebar();
       if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
@@ -1004,6 +1005,9 @@ function resolveClubChoice(boothType, joined) {
     window.MYTH_CLUB_CHOICE      = boothType;
     window.MYTH_CLUB_MISS_DELTAS = data.missDeltas;
     Object.entries(data.joinDeltas).forEach(([k, v]) => Engine.modifyStat(k, v));
+  } else {
+    // Reset trigger so the player can walk up to a different booth
+    window.MYTH_CLUB_FAIR_TRIGGERED = false;
   }
 
   const inner = overlay.querySelector('.cf-inner');

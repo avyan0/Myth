@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "myth-static",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3333", "C:\\Users\\avyan\\Myth\\.claude\\worktrees\\youthful-gagarin-926c91"],
+      "port": 3333
+    }
+  ]
+}
