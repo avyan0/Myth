@@ -1884,95 +1884,72 @@ html, body {
 /* ══════════════════════════════════════════════════════
    CLUB FAIR OVERLAY
 ══════════════════════════════════════════════════════ */
-#club-fair-overlay { z-index: 810; } /* above orientation */
+#club-fair-overlay {
+  z-index: 810; /* above orientation overlay (800) */
+}
 
 .cf-inner {
-  /* inherits .or-inner layout — just override specifics */
-  max-height: 88vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .cf-icon {
-  font-size: 40px;
-  margin-bottom: 4px;
-  text-align: center;
+  font-size: 2.8rem;
+  line-height: 1;
+  margin-bottom: 2px;
 }
 
 .cf-title {
-  font-family: var(--font-b);
-  font-size: clamp(20px, 3.5vw, 28px);
-  color: var(--text-head);
-  margin: 0 0 8px;
-  letter-spacing: 1px;
+  font-family: var(--font-h);
+  font-size: 2.2rem;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  line-height: 1;
 }
 
 .cf-desc {
-  font-size: 14px;
-  color: var(--text-mid);
-  margin-bottom: 6px;
-  line-height: 1.5;
+  font-size: 1rem;
+  color: var(--text);
+  line-height: 1.6;
+  max-width: 440px;
 }
 
 .cf-flavor {
-  font-family: var(--font-s);
-  font-style: italic;
-  font-size: 13px;
+  font-family: var(--font-m);
+  font-size: 0.78rem;
   color: var(--text-mid);
-  opacity: 0.75;
-  margin-bottom: 12px;
-  border-left: 2px solid var(--border-light);
-  padding-left: 10px;
+  letter-spacing: 0.02em;
 }
 
 .cf-warning {
-  margin-top: 10px;
-  padding: 10px 12px;
-  background: rgba(252,123,84,0.08);
-  border: 1px solid rgba(252,123,84,0.3);
-  border-radius: 6px;
-  font-size: 12px;
-  color: #FC7B54;
-  line-height: 1.6;
-}
-
-.cf-info {
-  margin-top: 10px;
-  padding: 10px 12px;
-  background: rgba(107,203,119,0.08);
-  border: 1px solid rgba(107,203,119,0.3);
-  border-radius: 6px;
-  font-size: 12px;
-  color: #6BCB77;
+  font-family: var(--font-m);
+  font-size: 0.76rem;
+  color: #C4613A;
+  letter-spacing: 0.02em;
 }
 
 .cf-buttons {
   display: flex;
-  gap: 12px;
-  margin-top: 20px;
+  gap: 14px;
+  margin-top: 6px;
   align-items: center;
-  flex-wrap: wrap;
 }
 
-.cf-cancel-btn {
+.cf-pass-btn {
   background: transparent;
-  border: 1px solid var(--border-light);
+  border: 1.5px solid var(--border);
   color: var(--text-mid);
-  font-family: var(--font-m);
-  font-size: 10px;
-  letter-spacing: 1.5px;
-  padding: 10px 18px;
-  border-radius: 4px;
+  padding: 10px 26px;
+  font-family: var(--font-h);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s, color 0.2s;
 }
-.cf-cancel-btn:hover {
-  border-color: var(--text-mid);
-  color: var(--text-head);
-}
-
-/* stat-max label (/ 4.00, / 10) */
-.stat-max {
-  opacity: 0.45;
-  font-size: 0.8em;
-  margin-left: 2px;
+.cf-pass-btn:hover {
+  background: var(--bg-surface);
+  color: var(--text);
 }

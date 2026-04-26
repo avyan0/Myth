@@ -38,8 +38,7 @@ const STAT_LABELS = {
   happiness:        'HAPPINESS',
 };
 
-// Stat bar colors — gold=high, green=mid, red=low
-// GPA is out of 4.00; all others out of 10.0
+// Stat bar colors — percentage-based so GPA (0–4) and others (0–10) use same thresholds
 function statColor(key, val) {
   const pct = key === 'gpa' ? val / 4 : val / 10;
   if (pct >= 0.7) return '#F7B731';
@@ -47,7 +46,7 @@ function statColor(key, val) {
   return '#FC7B54';
 }
 
-// Stat-aware clamp (gpa caps at 4, rest at 10)
+// Clamp helper that respects GPA's 0–4 scale
 function clampStat(key, val) {
   return key === 'gpa' ? clamp(val, 0, 4) : clamp(val, 0, 10);
 }
@@ -93,73 +92,61 @@ const BACKGROUNDS = [
     id: 'new_kid',
     label: 'NEW KID',
     desc: 'Nobody knows your story yet.',
-    bonus: { intelligence: +1, friendships: -1, happiness: -1 },
+    bonus: { intelligence: +1, friendships: -1 },
   },
   {
     id: 'legacy',
     label: 'LEGACY STUDENT',
     desc: "Your family's name opens doors here.",
-    bonus: { happiness: +2, friendships: +1, gpa: -0.2 },
+    bonus: { friendships: +2, gpa: -0.2, happiness: +1 },
   },
   {
     id: 'scholarship',
     label: 'SCHOLARSHIP KID',
     desc: 'You earned your place. Everyone knows it.',
-    bonus: { gpa: +0.3, sports: +1, happiness: -1 },
+    bonus: { gpa: +0.5, intelligence: +1, extracurriculars: +1 },
   },
   {
     id: 'transfer',
     label: 'TRANSFER STUDENT',
     desc: 'You chose to leave somewhere else. That choice follows you.',
-    bonus: { selfAwareness: +2, toxicity: +1, friendships: -1 },
+    bonus: { intelligence: +1, relationships: -1, happiness: -1 },
   },
   {
     id: 'local_legend',
     label: 'LOCAL KID',
     desc: "You've been in this neighborhood forever. Half these people knew you in 4th grade.",
-    bonus: { friendships: +2, culturality: +1, selfAwareness: -1 },
-  },
-  {
-    id: 'transfer',
-    label: 'TRANSFER STUDENT',
-    desc: 'You chose to leave somewhere else. That choice follows you.',
-    bonus: { intelligence: +2, relationships: -1, friendships: -1 },
-  },
-  {
-    id: 'local_legend',
-    label: 'LOCAL KID',
-    desc: "You've been in this neighborhood forever. Half these people knew you in 4th grade.",
-    bonus: { friendships: +2, happiness: +1, intelligence: -1 },
+    bonus: { friendships: +2, happiness: +2 },
   },
   {
     id: 'military',
     label: 'MILITARY KID',
     desc: "You've moved five times. This is just another school. You've gotten good at starting over.",
-    bonus: { intelligence: +2, happiness: -1, relationships: -1 },
+    bonus: { intelligence: +1, friendships: -1, happiness: -1 },
   },
   {
     id: 'online_famous',
     label: 'QUIETLY INTERNET FAMOUS',
     desc: "You have a following. Most people here don't know it yet.",
-    bonus: { intelligence: +2, happiness: +1, relationships: +1 },
+    bonus: { friendships: +1, extracurriculars: +2, happiness: +1 },
   },
   {
     id: 'returnee',
     label: 'RETURNEE',
     desc: 'You went to middle school here, left for two years, and came back. Nobody knows why.',
-    bonus: { intelligence: +1, friendships: -1, relationships: +1 },
+    bonus: { intelligence: +1, friendships: -1 },
   },
   {
     id: 'prodigy',
     label: 'SKIPPED A GRADE',
     desc: "You're younger than everyone. Some respect it. Others use it against you.",
-    bonus: { gpa: +0.6, intelligence: +1, happiness: -1, relationships: -1 },
+    bonus: { gpa: +0.8, intelligence: +2, friendships: -2 },
   },
   {
     id: 'old_money',
     label: 'OLD MONEY',
     desc: "Your family has history at this school. Not all of it flattering.",
-    bonus: { happiness: +3, gpa: -0.2, extracurriculars: +1 },
+    bonus: { friendships: +1, happiness: +2, gpa: -0.2 },
   },
 ];
 
@@ -294,21 +281,21 @@ function startGroupScene() {
 function applyGroupStats(g) {
   const s = player.stats;
   if (g === 'mob') {
-    s.friendships      = clampStat('friendships',      s.friendships    + 3   );
-    s.sports           = clampStat('sports',           s.sports         + 2   );
-    s.gpa              = clampStat('gpa',              s.gpa            - 0.5 );
-    s.intelligence     = clampStat('intelligence',     s.intelligence   - 2   );
-    s.happiness        = clampStat('happiness',        s.happiness      - 1   );
+    s.friendships    = clamp(s.friendships    + 3,   0, 10);
+    s.sports         = clamp(s.sports         + 1,   0, 10);
+    s.gpa            = clamp(s.gpa            - 0.5, 0, 4);
+    s.intelligence   = clamp(s.intelligence   - 2,   0, 10);
+    s.happiness      = clamp(s.happiness      - 1,   0, 10);
   } else if (g === 'balance') {
-    s.friendships      = clampStat('friendships',      s.friendships    + 2   );
-    s.happiness        = clampStat('happiness',        s.happiness      + 2   );
-    s.extracurriculars = clampStat('extracurriculars', s.extracurriculars + 1 );
-    s.gpa              = clampStat('gpa',              s.gpa            + 0.3 );
+    s.friendships      = clamp(s.friendships      + 2,   0, 10);
+    s.happiness        = clamp(s.happiness        + 2,   0, 10);
+    s.extracurriculars = clamp(s.extracurriculars + 1,   0, 10);
+    s.gpa              = clamp(s.gpa              + 0.3, 0, 4);
   } else if (g === 'grind') {
-    s.gpa              = clampStat('gpa',              s.gpa            + 0.8 );
-    s.intelligence     = clampStat('intelligence',     s.intelligence   + 3   );
-    s.relationships    = clampStat('relationships',    s.relationships  - 2   );
-    s.happiness        = clampStat('happiness',        s.happiness      - 1   );
+    s.gpa            = clamp(s.gpa            + 0.8, 0, 4);
+    s.intelligence   = clamp(s.intelligence   + 3,   0, 10);
+    s.relationships  = clamp(s.relationships  - 2,   0, 10);
+    s.happiness      = clamp(s.happiness      - 1,   0, 10);
   }
 }
 
@@ -333,37 +320,35 @@ function startPersonalityScene() {
 function applyPersonalityStats(p) {
   const s = player.stats;
   if (p === 'grinder') {
-    s.gpa              = clampStat('gpa',              s.gpa            + 0.6);
-    s.intelligence     = clampStat('intelligence',     s.intelligence   + 2  );
-    s.happiness        = clampStat('happiness',        s.happiness      - 1  );
+    s.gpa              = clampStat('gpa',          s.gpa          + 0.6);
+    s.intelligence     = clampStat('intelligence',  s.intelligence  + 2);
+    s.happiness        = clampStat('happiness',     s.happiness     - 1);
   } else if (p === 'social') {
-    s.friendships      = clampStat('friendships',      s.friendships    + 3  );
-    s.relationships    = clampStat('relationships',    s.relationships  + 2  );
-    s.happiness        = clampStat('happiness',        s.happiness      + 1  );
+    s.friendships      = clampStat('friendships',   s.friendships   + 3);
+    s.relationships    = clampStat('relationships', s.relationships + 2);
+    s.happiness        = clampStat('happiness',     s.happiness     + 1);
   } else if (p === 'athlete') {
-    s.sports           = clampStat('sports',           s.sports         + 3  );
-    s.friendships      = clampStat('friendships',      s.friendships    + 1  );
-    s.gpa              = clampStat('gpa',              s.gpa            - 0.3);
-    s.happiness        = clampStat('happiness',        s.happiness      + 1  );
-  } else if (p === 'charmer') {
-    s.relationships    = clampStat('relationships',    s.relationships  + 3  );
-    s.friendships      = clampStat('friendships',      s.friendships    + 1  );
-    s.happiness        = clampStat('happiness',        s.happiness      + 1  );
-  } else if (p === 'observer') {
-    s.intelligence     = clampStat('intelligence',     s.intelligence   + 2  );
-    s.happiness        = clampStat('happiness',        s.happiness      + 1  );
-    s.friendships      = clampStat('friendships',      s.friendships    - 1  );
-  } else if (p === 'rebel') {
-    s.happiness        = clampStat('happiness',        s.happiness      + 2  );
+    s.sports           = clampStat('sports',           s.sports           + 3);
     s.extracurriculars = clampStat('extracurriculars', s.extracurriculars + 1);
-    s.gpa              = clampStat('gpa',              s.gpa            - 0.3);
-    s.friendships      = clampStat('friendships',      s.friendships    - 1  );
+    s.intelligence     = clampStat('intelligence',     s.intelligence     - 1);
+  } else if (p === 'charmer') {
+    s.relationships    = clampStat('relationships',    s.relationships + 3);
+    s.friendships      = clampStat('friendships',      s.friendships   + 1);
+    s.happiness        = clampStat('happiness',        s.happiness     + 1);
+  } else if (p === 'observer') {
+    s.intelligence     = clampStat('intelligence',  s.intelligence  + 2);
+    s.happiness        = clampStat('happiness',     s.happiness     - 1);
+    s.friendships      = clampStat('friendships',   s.friendships   - 1);
+  } else if (p === 'rebel') {
+    s.happiness        = clampStat('happiness',        s.happiness        + 1);
+    s.gpa              = clampStat('gpa',              s.gpa              - 0.3);
+    s.extracurriculars = clampStat('extracurriculars', s.extracurriculars + 1);
   } else if (p === 'empath') {
-    s.relationships    = clampStat('relationships',    s.relationships  + 3  );
-    s.happiness        = clampStat('happiness',        s.happiness      - 1  );
-    s.intelligence     = clampStat('intelligence',     s.intelligence   + 1  );
+    s.relationships    = clampStat('relationships', s.relationships + 2);
+    s.happiness        = clampStat('happiness',     s.happiness     + 1);
+    s.intelligence     = clampStat('intelligence',  s.intelligence  + 1);
   } else if (p === 'wildcard') {
-    const keys = ['friendships','relationships','sports','intelligence','extracurriculars','happiness'];
+    const keys = Object.keys(s);
     const picks = keys.sort(() => Math.random() - 0.5).slice(0, 3);
     s[picks[0]] = clampStat(picks[0], s[picks[0]] + 2);
     s[picks[1]] = clampStat(picks[1], s[picks[1]] + 2);
@@ -387,7 +372,10 @@ function startRandomizeScene() {
 
   const rumorData = rand(RUMORS);
   player.rumor = rumorData.text;
-  player.stats.toxicity = clamp(player.stats.toxicity + rumorData.tox, 0, 10);
+  // Heavier rumors quietly dent happiness
+  if (rumorData.tox > 0) {
+    player.stats.happiness = clamp(player.stats.happiness - rumorData.tox * 0.3, 0, 10);
+  }
 
   const bgData = rand(BACKGROUNDS);
   player.background = bgData;
@@ -493,19 +481,20 @@ function startCharCardScene() {
   `).join('');
 
   document.getElementById('cc-stats-bars').innerHTML = Object.entries(player.stats).map(([key, val]) => {
-    const display  = key === 'gpa' ? val.toFixed(2) : val.toFixed(1);
-    const barPct   = key === 'gpa' ? val / 4 * 100   : val / 10 * 100;
-    const maxLabel = key === 'gpa' ? '/ 4.00' : '/ 10';
+    const isGpa = key === 'gpa';
+    const pct   = isGpa ? val / 4 * 100 : val / 10 * 100;
+    const disp  = isGpa ? val.toFixed(2) : val.toFixed(1);
     return `
       <div class="stat-row">
         <div class="stat-row-top">
           <span class="stat-name">${STAT_LABELS[key]}</span>
-          <span class="stat-val">${display} <span class="stat-max">${maxLabel}</span></span>
+          <span class="stat-val">${disp}</span>
         </div>
         <div class="stat-bar-track">
-          <div class="stat-bar-fill" style="background:${statColor(key,val)};width:${barPct}%"></div>
+          <div class="stat-bar-fill" style="background:${statColor(key,val)};width:${pct}%"></div>
         </div>
-      </div>`;
+      </div>
+    `;
   }).join('');
 
   showScene('scene-charcard', () => {
@@ -537,8 +526,11 @@ function launchGame() {
   Engine.init(player);
 
   // Freshman restrictions — orientation handled by zone-entry in world3d.js
-  window.MYTH_ORIENTATION_ACTIVE   = false;
-  window.MYTH_FRESHMAN_RESTRICTION = true; // Three.js uses this as a boolean flag for clamp
+  window.MYTH_ORIENTATION_ACTIVE    = false;
+  window.MYTH_FRESHMAN_RESTRICTION  = true;
+  window.MYTH_CLUB_FAIR_TRIGGERED   = false;
+  window.MYTH_CLUB_CHOICE           = null;
+  window.MYTH_CLUB_MISS_DELTAS      = {};
 
   const transEl = document.getElementById('scene-transition');
   transEl.classList.remove('active');
@@ -600,24 +592,22 @@ function _renderSpeechLine(inner) {
         ${_orSpeechIdx < OR_SPEECH.length - 1 ? 'NEXT →' : 'FIND YOUR SEAT →'}
       </button>
     </div>
-    <div class="or-key-hint" style="margin-top:8px;opacity:0.5;font-size:11px">[ ENTER ] to continue</div>
+    <div class="or-key-hint" style="margin-top:6px;font-size:0.72rem;opacity:0.5">[ ENTER ] to continue</div>
   `;
   G.from(inner.querySelector('.or-speech-text'), { opacity: 0, y: 8, duration: 0.35, ease: 'power2.out' });
 
-  function advance() {
-    document.removeEventListener('keydown', _orEnterHandler);
+  let _fired = false;
+  function _advance() {
+    if (_fired) return; _fired = true;
+    document.removeEventListener('keydown', _orEnterKH);
     _orSpeechIdx++;
-    if (_orSpeechIdx >= OR_SPEECH.length) {
-      _showSeatChoice(inner);
-    } else {
-      _renderSpeechLine(inner);
-    }
+    if (_orSpeechIdx >= OR_SPEECH.length) { _showSeatChoice(inner); }
+    else { _renderSpeechLine(inner); }
   }
-  _orEnterHandler = (e) => { if (e.key === 'Enter') advance(); };
-  document.addEventListener('keydown', _orEnterHandler);
-  document.getElementById('or-next-btn').addEventListener('click', advance, { once: true });
+  function _orEnterKH(e) { if (e.key === 'Enter') _advance(); }
+  document.addEventListener('keydown', _orEnterKH);
+  document.getElementById('or-next-btn').addEventListener('click', _advance, { once: true });
 }
-let _orEnterHandler = null;
 
 function _showSeatChoice(inner) {
   inner.innerHTML = `
@@ -676,25 +666,21 @@ function resolveOrientationChoice(choice) {
       deltas: { intelligence: +1, happiness: -1, friendships: -1 },
       text: 'Top row. You climb past empty seats until there\'s nobody on either side. The gym fills up below you.',
       sub:  'Devon Clark sits two rows down. He nods once. Neither of you say anything. It\'s fine.',
-      statLine: 'Intelligence +1 · Happiness -1 · Friendships -1',
     },
     familiar_face: {
       deltas: { friendships: +2, relationships: +1, happiness: +1 },
       text: 'You recognize them from middle school — Jordan Park. Their face changes when they see you. Relief. Same as yours.',
       sub:  '"Thank god," Jordan says. "Sit down before someone worse does." You do.',
-      statLine: 'Friendships +2 · Relationships +1 · Happiness +1',
     },
     front_row: {
       deltas: { gpa: +0.3, extracurriculars: +1, happiness: -1, friendships: -1 },
       text: 'The front row is mostly empty. You take the center seat. Coach Rivera makes eye contact immediately.',
       sub:  '"Good. A student who pays attention." Someone behind you laughs quietly. You pretend not to hear it.',
-      statLine: 'GPA +0.3 · Extracurriculars +1 · Happiness -1 · Friendships -1',
     },
     popular_kids: {
       deltas: { friendships: +2, relationships: +1, happiness: +1, intelligence: -1 },
       text: 'Tyler Brooks is already holding court in the third row. You walk straight toward the group like you\'ve been there before.',
       sub:  'One of them — tall, red hoodie — slides over without being asked. Tyler watches you sit down. "You\'re new," he says. It\'s not a question.',
-      statLine: 'Friendships +2 · Relationships +1 · Happiness +1 · Intelligence -1',
     },
   };
 
@@ -705,25 +691,27 @@ function resolveOrientationChoice(choice) {
     Engine.modifyStat(stat, delta);
   });
 
-  // Swap inner content to result screen
+  // Swap inner content to result screen — no stat line shown
   const inner = document.querySelector('.or-inner');
   inner.innerHTML = `
     <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN ORIENTATION</div>
     <p class="or-result-text">${outcome.text}</p>
     <p class="or-result-sub">${outcome.sub}</p>
-    <div class="or-stat-line">${outcome.statLine}</div>
     <button class="btn-primary" id="or-continue-btn" style="margin-top:28px;align-self:flex-start">BEGIN FRESHMAN YEAR →</button>
-    <div class="or-key-hint" style="margin-top:8px;opacity:0.5;font-size:11px">[ ENTER ] to continue</div>
+    <div class="or-key-hint" style="margin-top:6px;font-size:0.72rem;opacity:0.5">[ ENTER ] to continue</div>
   `;
 
   G.from(inner, { opacity: 0, duration: 0.35 });
 
-  const _contEnter = (e) => { if (e.key === 'Enter') { document.removeEventListener('keydown', _contEnter); closeOrientationOverlay(); } };
-  document.addEventListener('keydown', _contEnter);
-  document.getElementById('or-continue-btn').addEventListener('click', () => {
-    document.removeEventListener('keydown', _contEnter);
+  let _fired = false;
+  function _doClose() {
+    if (_fired) return; _fired = true;
+    document.removeEventListener('keydown', _resultEnterKH);
     closeOrientationOverlay();
-  });
+  }
+  function _resultEnterKH(e) { if (e.key === 'Enter') _doClose(); }
+  document.addEventListener('keydown', _resultEnterKH);
+  document.getElementById('or-continue-btn').addEventListener('click', _doClose, { once: true });
 }
 
 function closeOrientationOverlay() {
@@ -736,188 +724,17 @@ function closeOrientationOverlay() {
       window.MYTH_ORIENTATION_ACTIVE = false;
       Engine.setFlag('orientation_complete');
       refreshStatsSidebar();
-      // Re-attach Babylon camera controls then request pointer lock
-      if (window.MYTH_BABYLON_CAMERA && window.MYTH_WORLD3D_CANVAS) {
-        window.MYTH_BABYLON_CAMERA.attachControl(window.MYTH_WORLD3D_CANVAS, true);
-      }
-      setTimeout(() => {
-        if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
-      }, 100);
+      if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
       setTimeout(safeEventCheck, 400);
-      // Hint about club fair (staggered so camera is fully locked first)
+      // Staggered hints nudging player to find the club fair
       setTimeout(() => {
-        if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('CLUB FAIR is happening on campus today.');
-      }, 1200);
+        if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('Overheard: "There\'s a club fair somewhere on campus today..."');
+      }, 3500);
       setTimeout(() => {
-        if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('Head south across campus to find the booths.');
-      }, 5500);
+        if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('Someone mentions seeing signs posted south of the gym.');
+      }, 9000);
     },
   });
-}
-
-// ════════════════════════════════════════════════════════
-//  CLUB FAIR
-// ════════════════════════════════════════════════════════
-
-const CLUB_DATA = {
-  robotics: {
-    name:      'ROBOTICS CLUB',
-    icon:      '🤖',
-    desc:      'Build, code, and compete. Meets Tuesday & Thursday after school.',
-    flavor:    'A sophomore with a soldering iron nods at you. "We need people who show up."',
-    deltas:    { gpa: -0.2, friendships: +1.5, relationships: -1.3, extracurriculars: +2.0 },
-    missDeltas:{ gpa: -0.1, friendships: -0.5, extracurriculars: -0.5 },
-    statLine:  'GPA −0.2 · Friendships +1.5 · Relationships −1.3 · Extracurriculars +2.0',
-    missLine:  'GPA −0.1 · Friendships −0.5 · Extracurriculars −0.5',
-  },
-  football: {
-    name:      'FOOTBALL TEAM',
-    icon:      '🏈',
-    desc:      'Three practices a week. Games on Fridays. Commitment is non-negotiable.',
-    flavor:    'Coach Reyes looks you up and down. "You in? Because half the guys who said yes last week already quit."',
-    deltas:    { gpa: -0.5, friendships: +1.8, sports: +2.0, intelligence: -1.6, extracurriculars: +1.2 },
-    missDeltas:{ sports: -0.8, friendships: -0.6, happiness: -0.4 },
-    statLine:  'GPA −0.5 · Friendships +1.8 · Sports +2.0 · Intelligence −1.6 · Extracurriculars +1.2',
-    missLine:  'Sports −0.8 · Friendships −0.6 · Happiness −0.4',
-  },
-  none: {
-    name:      'NO COMMITMENT',
-    icon:      '📖',
-    desc:      'You keep the time. Study more. Stay under the radar.',
-    flavor:    'You walk past the booths. Nobody stops you. That\'s kind of the point.',
-    deltas:    { gpa: +0.5, friendships: -1.0, intelligence: +1.4, extracurriculars: -0.8 },
-    missDeltas:{},
-    statLine:  'GPA +0.5 · Friendships −1.0 · Intelligence +1.4 · Extracurriculars −0.8',
-    missLine:  '',
-  },
-};
-
-function showClubFairOverlay(boothType) {
-  const club = CLUB_DATA[boothType];
-  if (!club) return;
-  const overlay = document.getElementById('club-fair-overlay');
-  overlay.classList.add('open');
-  overlay.style.opacity = '1';
-
-  const inner = overlay.querySelector('.cf-inner');
-  inner.innerHTML = `
-    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; CLUB FAIR</div>
-    <div class="cf-icon">${club.icon}</div>
-    <h2 class="cf-title">${club.name}</h2>
-    <p class="cf-desc">${club.desc}</p>
-    <p class="cf-flavor">${club.flavor}</p>
-    <div class="or-stat-line">${club.statLine}</div>
-    ${boothType !== 'none'
-      ? `<p class="cf-warning">⚠️ This is a commitment — miss meetings and your stats will drop.<br><span style="opacity:0.6;font-size:11px">${club.missLine}</span></p>`
-      : `<p class="cf-info">No schedule. No pressure. Just you and your time.</p>`}
-    <div class="cf-buttons">
-      <button class="btn-primary"   id="cf-join-btn">JOIN →</button>
-      <button class="cf-cancel-btn" id="cf-cancel-btn">← KEEP LOOKING</button>
-    </div>
-    <div class="or-key-hint" style="margin-top:8px;opacity:0.5;font-size:11px">[ ENTER ] join &nbsp;·&nbsp; [ ESC ] cancel</div>
-  `;
-  G.from(inner, { opacity: 0, y: 20, duration: 0.4, ease: 'power2.out' });
-
-  function doJoin()   { removeCFKeys(); resolveClubChoice(boothType); }
-  function doCancel() { removeCFKeys(); _closeCFCancel(); }
-  function _cfKey(e) {
-    if (e.key === 'Enter')  doJoin();
-    if (e.key === 'Escape') doCancel();
-  }
-  function removeCFKeys() { document.removeEventListener('keydown', _cfKey); }
-  document.addEventListener('keydown', _cfKey);
-  document.getElementById('cf-join-btn').addEventListener('click', doJoin, { once: true });
-  document.getElementById('cf-cancel-btn').addEventListener('click', doCancel, { once: true });
-}
-
-function _closeCFCancel() {
-  // Player cancelled — re-open world without setting choice
-  const overlay = document.getElementById('club-fair-overlay');
-  G.to(overlay, { opacity: 0, duration: 0.3, onComplete: () => {
-    overlay.classList.remove('open');
-    overlay.style.opacity = '';
-    window.MYTH_ORIENTATION_ACTIVE = false;
-    window.MYTH_CLUB_FAIR_TRIGGERED = false; // allow re-approach
-    if (window.MYTH_BABYLON_CAMERA && window.MYTH_WORLD3D_CANVAS) {
-      window.MYTH_BABYLON_CAMERA.attachControl(window.MYTH_WORLD3D_CANVAS, true);
-    }
-    setTimeout(() => { if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock(); }, 100);
-  }});
-}
-
-function resolveClubChoice(boothType) {
-  const club = CLUB_DATA[boothType];
-  Object.entries(club.deltas).forEach(([k, v]) => Engine.modifyStat(k, v));
-  window.MYTH_CLUB_CHOICE     = boothType;
-  window.MYTH_CLUB_MISS_DELTAS = club.missDeltas;
-  Engine.setFlag('club_chosen_' + boothType);
-  refreshStatsSidebar();
-
-  const inner = document.querySelector('.cf-inner');
-  inner.innerHTML = `
-    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; CLUB FAIR</div>
-    <div class="cf-icon">${club.icon}</div>
-    <p class="or-result-text">You signed up for <strong>${club.name}</strong>.</p>
-    <p class="or-result-sub">${boothType !== 'none'
-      ? 'Your schedule is set. Show up — or fall behind.'
-      : 'No meetings. No drama. Stay sharp on your own.'}</p>
-    <div class="or-stat-line">${club.statLine}</div>
-    <button class="btn-primary" id="cf-done-btn" style="margin-top:24px">BACK TO CAMPUS →</button>
-    <div class="or-key-hint" style="margin-top:8px;opacity:0.5;font-size:11px">[ ENTER ] to continue</div>
-  `;
-  G.from(inner, { opacity: 0, duration: 0.3 });
-
-  function finish() { document.removeEventListener('keydown', _cfDoneKey); _closeCFDone(); }
-  function _cfDoneKey(e) { if (e.key === 'Enter') finish(); }
-  document.addEventListener('keydown', _cfDoneKey);
-  document.getElementById('cf-done-btn').addEventListener('click', finish, { once: true });
-}
-
-function _closeCFDone() {
-  const overlay = document.getElementById('club-fair-overlay');
-  G.to(overlay, { opacity: 0, duration: 0.4, ease: 'power2.in', onComplete: () => {
-    overlay.classList.remove('open');
-    overlay.style.opacity = '';
-    window.MYTH_ORIENTATION_ACTIVE = false;
-    if (window.MYTH_BABYLON_CAMERA && window.MYTH_WORLD3D_CANVAS) {
-      window.MYTH_BABYLON_CAMERA.attachControl(window.MYTH_WORLD3D_CANVAS, true);
-    }
-    setTimeout(() => { if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock(); }, 100);
-    if (window.MYTH_SHOW_NOTIF && window.MYTH_CLUB_CHOICE !== 'none') {
-      setTimeout(() => window.MYTH_SHOW_NOTIF('Remember: attend your club meetings or your stats will drop.'), 800);
-    }
-  }});
-}
-
-function showClubCommitmentMissed() {
-  const boothType = window.MYTH_CLUB_CHOICE;
-  const club = CLUB_DATA[boothType];
-  if (!club || !club.missDeltas || Object.keys(club.missDeltas).length === 0) {
-    window.MYTH_ORIENTATION_ACTIVE = false;
-    return;
-  }
-  Object.entries(club.missDeltas).forEach(([k, v]) => Engine.modifyStat(k, v));
-  refreshStatsSidebar();
-
-  const overlay = document.getElementById('club-fair-overlay');
-  overlay.classList.add('open');
-  overlay.style.opacity = '1';
-  const inner = overlay.querySelector('.cf-inner');
-  inner.innerHTML = `
-    <div class="or-badge" style="background:rgba(252,123,84,0.18);border-color:rgba(252,123,84,0.4)">MISSED MEETING — ${club.name.toUpperCase()}</div>
-    <div class="cf-icon">📉</div>
-    <p class="or-result-text">You missed the meeting. People noticed.</p>
-    <p class="or-result-sub">Showing up is half the job. You didn't show up.</p>
-    <div class="or-stat-line" style="color:#FC7B54">${club.missLine}</div>
-    <button class="btn-primary" id="cf-done-btn" style="margin-top:24px">GOT IT →</button>
-    <div class="or-key-hint" style="margin-top:8px;opacity:0.5;font-size:11px">[ ENTER ] to continue</div>
-  `;
-  G.from(inner, { opacity: 0, duration: 0.3 });
-
-  function finish() { document.removeEventListener('keydown', _missKey); _closeCFDone(); }
-  function _missKey(e) { if (e.key === 'Enter') finish(); }
-  document.addEventListener('keydown', _missKey);
-  document.getElementById('cf-done-btn').addEventListener('click', finish, { once: true });
 }
 
 // ── Campus map renderer (legacy — replaced by Phaser) ─
@@ -1037,19 +854,20 @@ function refreshStatsSidebar() {
   if (!s) return;
   const list = document.getElementById('ss-stats-list');
   list.innerHTML = Object.entries(s.stats).map(([key, val]) => {
-    const display = key === 'gpa' ? val.toFixed(2) : val.toFixed(1);
-    const barPct  = key === 'gpa' ? val / 4 * 100   : val / 10 * 100;
-    const maxLbl  = key === 'gpa' ? '/ 4.00' : '/ 10';
+    const isGpa = key === 'gpa';
+    const pct   = isGpa ? val / 4 * 100 : val / 10 * 100;
+    const disp  = isGpa ? val.toFixed(2) : val.toFixed(1);
     return `
       <div class="ss-stat-row">
         <div class="ss-stat-top">
           <span class="ss-stat-name">${STAT_LABELS[key] || key.toUpperCase()}</span>
-          <span class="ss-stat-val">${display} <span class="stat-max">${maxLbl}</span></span>
+          <span class="ss-stat-val">${disp}</span>
         </div>
         <div class="ss-bar-track">
-          <div class="ss-bar-fill" style="width:${barPct}%;background:${statColor(key,val)}"></div>
+          <div class="ss-bar-fill" style="width:${pct}%;background:${statColor(key,val)}"></div>
         </div>
-      </div>`;
+      </div>
+    `;
   }).join('');
 }
 
@@ -1105,6 +923,157 @@ function wireGameButtons() {
     document.getElementById('stats-sidebar').classList.remove('open');
   });
   document.getElementById('db-close').addEventListener('click', closeDialogueBox);
+}
+
+// ════════════════════════════════════════════════════════
+//  CLUB FAIR OVERLAY
+// ════════════════════════════════════════════════════════
+
+const CLUB_DATA = {
+  robotics: {
+    name:       'ROBOTICS CLUB',
+    icon:       '🤖',
+    desc:       'Build robots, write code that moves metal, compete nationally.',
+    flavor:     'Meetings every Tuesday and Thursday in Room F3.',
+    joinDeltas: { gpa: -0.2, friendships: 1.5, relationships: -1.3, extracurriculars: 2.0 },
+    missDeltas: { gpa: -0.1, friendships: -0.5, extracurriculars: -0.5 },
+  },
+  football: {
+    name:       'FOOTBALL TEAM',
+    icon:       '🏈',
+    desc:       'Practice every day after school. Friday night lights. The whole school watches.',
+    flavor:     'Tryouts this week. Practice on the field.',
+    joinDeltas: { gpa: -0.5, friendships: 1.8, sports: 2.0, intelligence: -1.6, extracurriculars: 1.2 },
+    missDeltas: { sports: -0.8, friendships: -0.6, happiness: -0.4 },
+  },
+  none: {
+    name:       'NO COMMITMENT',
+    icon:       '📚',
+    desc:       'Focus on your studies. Keep your schedule open. Your time is yours.',
+    flavor:     'No meetings. No obligations.',
+    joinDeltas: { gpa: 0.5, friendships: -1.0, intelligence: 1.4, extracurriculars: -0.8 },
+    missDeltas: {},
+  },
+};
+
+function showClubFairOverlay(boothType) {
+  const data = CLUB_DATA[boothType];
+  if (!data) return;
+  const overlay = document.getElementById('club-fair-overlay');
+  if (!overlay) return;
+  const inner = overlay.querySelector('.cf-inner');
+  inner.innerHTML = `
+    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; CLUB FAIR</div>
+    <div class="cf-icon">${data.icon}</div>
+    <div class="cf-title">${data.name}</div>
+    <p class="cf-desc">${data.desc}</p>
+    <p class="cf-flavor">${data.flavor}</p>
+    ${boothType !== 'none' ? '<p class="cf-warning">This is a commitment. Missing meetings has consequences.</p>' : ''}
+    <div class="cf-buttons">
+      <button class="btn-primary" id="cf-join-btn">JOIN →</button>
+      <button class="cf-pass-btn" id="cf-pass-btn">PASS</button>
+    </div>
+    <div class="or-key-hint" style="margin-top:6px;font-size:0.72rem;opacity:0.5">[ ENTER ] to join</div>
+  `;
+  overlay.classList.add('open');
+  G.from(inner, { opacity: 0, y: 20, duration: 0.45, ease: 'power2.out' });
+
+  let _fired = false;
+  function _doJoin() {
+    if (_fired) return; _fired = true;
+    document.removeEventListener('keydown', _cfEnterKH);
+    resolveClubChoice(boothType, true);
+  }
+  function _doPass() {
+    if (_fired) return; _fired = true;
+    document.removeEventListener('keydown', _cfEnterKH);
+    resolveClubChoice(boothType, false);
+  }
+  function _cfEnterKH(e) { if (e.key === 'Enter') _doJoin(); }
+  document.addEventListener('keydown', _cfEnterKH);
+  document.getElementById('cf-join-btn').addEventListener('click', _doJoin, { once: true });
+  document.getElementById('cf-pass-btn').addEventListener('click', _doPass, { once: true });
+}
+
+function resolveClubChoice(boothType, joined) {
+  const overlay = document.getElementById('club-fair-overlay');
+  const data    = CLUB_DATA[boothType];
+  if (!data || !overlay) return;
+
+  if (joined) {
+    window.MYTH_CLUB_CHOICE      = boothType;
+    window.MYTH_CLUB_MISS_DELTAS = data.missDeltas;
+    Object.entries(data.joinDeltas).forEach(([k, v]) => Engine.modifyStat(k, v));
+  }
+
+  const inner = overlay.querySelector('.cf-inner');
+  inner.innerHTML = `
+    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; CLUB FAIR</div>
+    <div class="cf-icon">${joined ? '✓' : '—'}</div>
+    <div class="cf-title">${joined ? 'COMMITTED.' : 'YOUR CALL.'}</div>
+    <p class="cf-desc">${joined
+      ? 'You\'re in. Show up when it counts.'
+      : 'You walk past the booth. The recruiter doesn\'t say anything.'}</p>
+    <button class="btn-primary" id="cf-done-btn" style="margin-top:28px">CONTINUE →</button>
+    <div class="or-key-hint" style="margin-top:6px;font-size:0.72rem;opacity:0.5">[ ENTER ] to continue</div>
+  `;
+
+  let _fired = false;
+  function _doDone() {
+    if (_fired) return; _fired = true;
+    document.removeEventListener('keydown', _cfDoneKH);
+    G.to(overlay, {
+      opacity: 0, duration: 0.4, ease: 'power2.in',
+      onComplete: () => {
+        overlay.classList.remove('open');
+        overlay.style.opacity = '';
+        window.MYTH_ORIENTATION_ACTIVE = false;
+        refreshStatsSidebar();
+        if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
+      },
+    });
+  }
+  function _cfDoneKH(e) { if (e.key === 'Enter') _doDone(); }
+  document.addEventListener('keydown', _cfDoneKH);
+  document.getElementById('cf-done-btn').addEventListener('click', _doDone, { once: true });
+}
+
+function showClubMissedOverlay() {
+  const overlay   = document.getElementById('club-fair-overlay');
+  if (!overlay) return;
+  const clubName  = window.MYTH_CLUB_CHOICE === 'robotics' ? 'Robotics Club' : 'Football Practice';
+  const missDeltas = window.MYTH_CLUB_MISS_DELTAS || {};
+  // Apply penalties silently
+  Object.entries(missDeltas).forEach(([k, v]) => Engine.modifyStat(k, v));
+
+  const inner = overlay.querySelector('.cf-inner');
+  inner.innerHTML = `
+    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; COMMITMENT</div>
+    <div class="cf-title">YOU MISSED ${clubName.toUpperCase()}.</div>
+    <p class="cf-desc">You didn't show up. People noticed.</p>
+    <button class="btn-primary" id="cf-done-btn" style="margin-top:28px">OK</button>
+    <div class="or-key-hint" style="margin-top:6px;font-size:0.72rem;opacity:0.5">[ ENTER ] to continue</div>
+  `;
+  overlay.classList.add('open');
+  G.from(inner, { opacity: 0, duration: 0.35 });
+
+  let _fired = false;
+  function _doDone() {
+    if (_fired) return; _fired = true;
+    document.removeEventListener('keydown', _missKH);
+    G.to(overlay, {
+      opacity: 0, duration: 0.4, ease: 'power2.in',
+      onComplete: () => {
+        overlay.classList.remove('open');
+        overlay.style.opacity = '';
+        window.MYTH_ORIENTATION_ACTIVE = false;
+        if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
+      },
+    });
+  }
+  function _missKH(e) { if (e.key === 'Enter') _doDone(); }
+  document.addEventListener('keydown', _missKH);
+  document.getElementById('cf-done-btn').addEventListener('click', _doDone, { once: true });
 }
 
 function groupLabels_g(g) {

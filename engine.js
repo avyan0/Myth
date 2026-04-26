@@ -141,7 +141,9 @@ const Engine = (function () {
   function modifyStat(key, delta) {
     if (!_state || _state.stats[key] === undefined) return;
     const before = _state.stats[key];
-    _state.stats[key] = key === 'gpa' ? _clamp(before + delta, 0, 4) : _clamp(before + delta);
+    _state.stats[key] = key === 'gpa'
+      ? _clamp(before + delta, 0, 4)
+      : _clamp(before + delta, 0, 10);
     _emit('stat_change', { key, before, after: _state.stats[key], delta });
   }
 
