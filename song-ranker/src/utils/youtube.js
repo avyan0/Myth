@@ -1,6 +1,5 @@
 export function extractPlaylistId(input) {
   const trimmed = input.trim()
-  // Already a raw ID (no slashes or dots)
   if (/^[A-Za-z0-9_-]+$/.test(trimmed) && !trimmed.includes('.')) return trimmed
   try {
     const url = new URL(trimmed)
@@ -10,7 +9,7 @@ export function extractPlaylistId(input) {
   }
 }
 
-export async function fetchAllPlaylistItems(playlistId, accessToken) {
+export async function fetchAllPlaylistItems(playlistId, apiKey) {
   const songs = []
   let pageToken = ''
 
@@ -19,11 +18,10 @@ export async function fetchAllPlaylistItems(playlistId, accessToken) {
     url.searchParams.set('part', 'snippet')
     url.searchParams.set('playlistId', playlistId)
     url.searchParams.set('maxResults', '50')
+    url.searchParams.set('key', apiKey)
     if (pageToken) url.searchParams.set('pageToken', pageToken)
 
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
+    const res = await fetch(url.toString())
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
@@ -35,7 +33,6 @@ export async function fetchAllPlaylistItems(playlistId, accessToken) {
     for (const item of data.items || []) {
       const videoId = item.snippet?.resourceId?.videoId
       if (!videoId) continue
-      // Skip deleted/private videos
       if (item.snippet.title === 'Deleted video' || item.snippet.title === 'Private video') continue
 
       songs.push({
@@ -57,36 +54,4 @@ export async function fetchAllPlaylistItems(playlistId, accessToken) {
   } while (pageToken)
 
   return songs
-}
-
-let tokenClient = null
-
-export function initGoogleAuth(clientId, onToken) {
-  return new Promise((resolve, reject) => {
-    const load = () => {
-      tokenClient = window.google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: 'https://www.googleapis.com/auth/youtube.readonly',
-        callback: response => {
-          if (response.error) {
-            reject(new Error(response.error))
-            return
-          }
-          onToken(response.access_token)
-          resolve(response.access_token)
-        },
-      })
-      tokenClient.requestAccessToken({ prompt: 'consent' })
-    }
-
-    if (window.google?.accounts?.oauth2) {
-      load()
-    } else {
-      const script = document.createElement('script')
-      script.src = 'https://accounts.google.com/gsi/client'
-      script.onload = load
-      script.onerror = () => reject(new Error('Failed to load Google Identity Services'))
-      document.head.appendChild(script)
-    }
-  })
 }
