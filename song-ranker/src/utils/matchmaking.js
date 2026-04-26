@@ -10,19 +10,16 @@ export function getNextMatch(songs) {
   }
 
   // Only tiers with 2+ songs are eligible
-  const activeTiers = Object.values(byTier).filter(g => g.length >= 2)
+  const activeTiers = Object.entries(byTier)
+    .filter(([, g]) => g.length >= 2)
+    .map(([tier, g]) => ({ tier: Number(tier), group: g }))
   if (activeTiers.length === 0) return null
 
-  // Pick the tier containing the song with the fewest total comparisons
-  let bestGroup = null
-  let minComp = Infinity
-  for (const group of activeTiers) {
-    const min = Math.min(...group.map(s => s.comparisons))
-    if (min < minComp) {
-      minComp = min
-      bestGroup = group
-    }
-  }
+  // Priority: 0, +1, -1, +2, -2, +3, -3, …
+  // tier >= 0 → priority = tier * 2; tier < 0 → priority = tier * -2 - 1
+  const priority = t => t >= 0 ? t * 2 : t * -2 - 1
+  activeTiers.sort((a, b) => priority(a.tier) - priority(b.tier))
+  const bestGroup = activeTiers[0].group
 
   // From that tier, sort by comparisons and pick the two least-compared songs
   // Add a small shuffle among equals for variety
