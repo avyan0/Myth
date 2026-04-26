@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import SongCard from './SongCard.jsx'
 import TierHistogram from './TierHistogram.jsx'
 import { getNextMatch, isComplete, getActiveTierCount } from '../utils/matchmaking.js'
@@ -7,13 +7,13 @@ export default function MatchupView({ songs, onVote, onReset, totalComparisons }
   const [match, setMatch] = useState(null)
   const [activePlayer, setActivePlayer] = useState(null)
   const [showReset, setShowReset] = useState(false)
-  const [voted, setVoted] = useState(false)
+  const votedRef = useRef(false)
 
   const advance = useCallback(() => {
     const next = getNextMatch(songs)
     setMatch(next)
     setActivePlayer(null)
-    setVoted(false)
+    votedRef.current = false
   }, [songs])
 
   useEffect(() => {
@@ -21,10 +21,9 @@ export default function MatchupView({ songs, onVote, onReset, totalComparisons }
   }, [songs])
 
   const handleVote = (winnerId, loserId) => {
-    if (voted) return
-    setVoted(true)
+    if (votedRef.current) return
+    votedRef.current = true
     setActivePlayer(null)
-    // Brief visual delay so the user sees the highlight
     setTimeout(() => {
       onVote(winnerId, loserId)
     }, 300)

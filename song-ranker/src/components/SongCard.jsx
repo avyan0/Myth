@@ -70,7 +70,7 @@ export default function SongCard({ song, onVote, isPlaying, onPlay }) {
         {localPlaying ? '⏸ Pause' : '▶ Play'}
       </button>
 
-      <button className="vote-btn" onClick={onVote}>
+      <button className="vote-btn" onClick={e => { e.stopPropagation(); onVote() }}>
         Choose This Song
       </button>
     </div>
