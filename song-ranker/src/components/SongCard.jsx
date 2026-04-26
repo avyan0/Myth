@@ -4,7 +4,6 @@ export default function SongCard({ song, onVote, isPlaying, onPlay }) {
   const iframeRef = useRef(null)
   const [localPlaying, setLocalPlaying] = useState(false)
 
-  // When another card starts playing, pause this one
   useEffect(() => {
     if (!isPlaying && localPlaying) {
       sendCommand('pauseVideo')
@@ -12,9 +11,13 @@ export default function SongCard({ song, onVote, isPlaying, onPlay }) {
     }
   }, [isPlaying])
 
-  function sendCommand(func, args) {
+  useEffect(() => {
+    setLocalPlaying(false)
+  }, [song.id])
+
+  function sendCommand(func) {
     iframeRef.current?.contentWindow?.postMessage(
-      JSON.stringify({ event: 'command', func, args: args || [] }),
+      JSON.stringify({ event: 'command', func, args: [] }),
       '*',
     )
   }
@@ -31,16 +34,29 @@ export default function SongCard({ song, onVote, isPlaying, onPlay }) {
     }
   }
 
-  // Reset local play state when song changes
-  useEffect(() => {
-    setLocalPlaying(false)
-  }, [song.id])
-
-  const embedSrc = `https://www.youtube.com/embed/${song.id}?enablejsapi=1&controls=1&modestbranding=1&rel=0&origin=${encodeURIComponent(window.location.origin)}`
+  // Audio-only embed: no video track shown, just the controls bar
+  const embedSrc =
+    `https://www.youtube.com/embed/${song.id}` +
+    `?enablejsapi=1&controls=1&modestbranding=1&rel=0` +
+    `&fs=0&iv_load_policy=3` +
+    `&origin=${encodeURIComponent(window.location.origin)}`
 
   return (
-    <div className={`song-card ${isPlaying && localPlaying ? 'song-card--playing' : ''}`} onClick={onVote}>
-      <div className="song-card__player" onClick={e => e.stopPropagation()}>
+    <div className={`song-card ${localPlaying ? 'song-card--playing' : ''}`} onClick={onVote}>
+
+      {/* Thumbnail as main visual */}
+      <div className="song-card__art">
+        {song.thumbnail
+          ? <img src={song.thumbnail} alt={song.title} />
+          : <div className="song-card__art-placeholder">♪</div>
+        }
+        <button className={`play-overlay ${localPlaying ? 'play-overlay--active' : ''}`} onClick={handlePlayPause}>
+          {localPlaying ? '⏸' : '▶'}
+        </button>
+      </div>
+
+      {/* Audio-only iframe — just the controls bar, video is off-screen */}
+      <div className="song-card__audio" onClick={e => e.stopPropagation()}>
         <iframe
           key={song.id}
           ref={iframeRef}
@@ -48,14 +64,10 @@ export default function SongCard({ song, onVote, isPlaying, onPlay }) {
           title={song.title}
           frameBorder="0"
           allow="autoplay; encrypted-media"
-          allowFullScreen
         />
       </div>
 
       <div className="song-card__info">
-        {song.thumbnail && (
-          <img src={song.thumbnail} alt="" className="song-card__thumb" />
-        )}
         <div className="song-card__text">
           <p className="song-card__title">{song.title}</p>
           <p className="song-card__artist">{song.artist}</p>
@@ -65,10 +77,6 @@ export default function SongCard({ song, onVote, isPlaying, onPlay }) {
           </div>
         </div>
       </div>
-
-      <button className={`play-btn ${localPlaying ? 'play-btn--active' : ''}`} onClick={handlePlayPause}>
-        {localPlaying ? '⏸ Pause' : '▶ Play'}
-      </button>
 
       <button className="vote-btn" onClick={e => { e.stopPropagation(); onVote() }}>
         Choose This Song
