@@ -261,8 +261,17 @@ html, body, #root {
 .song-card:hover .play-overlay,
 .play-overlay--active { opacity: 1; }
 .play-overlay--active { background: rgba(0,0,0,0.15); font-size: 36px; }
+.play-overlay--dead {
+  background: rgba(0,0,0,0.6);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  color: #fff;
+  opacity: 1;
+  letter-spacing: 0.3px;
+}
 
-/* Audio-only iframe strip — shows YouTube controls bar, hides video */
+/* Audio strip — clips to 40 px; iframe/div inside is offset via JS or inline style */
 .song-card__audio {
   width: 100%;
   height: 40px;
@@ -270,13 +279,14 @@ html, body, #root {
   background: #000;
   position: relative;
 }
-.song-card__audio iframe {
-  width: 100%;
-  /* Shift up so only the controls bar at the bottom is visible */
-  height: 200px;
-  margin-top: -160px;
-  display: block;
-  border: none;
+
+.audio-dead {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .song-card__info {
@@ -317,6 +327,7 @@ html, body, #root {
 }
 .tier-badge { background: rgba(124, 106, 247, 0.15); color: var(--accent); }
 .comp-badge { background: var(--surface2); color: var(--text-muted); }
+.fallback-badge { background: rgba(251, 146, 60, 0.15); color: var(--orange); }
 
 .vote-btn {
   margin: 12px 16px 16px;
