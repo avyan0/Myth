@@ -1043,7 +1043,7 @@ function resolveClubChoice(boothType, joined) {
         refreshStatsSidebar();
         if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
         setTimeout(() => {
-          if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('Head back to the gym — Biology class is in there.');
+          if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('Head to Biology Room 102 — south of the gym.');
         }, 700);
       },
     });
@@ -1438,7 +1438,7 @@ function showBioClassEvent() {
       <div class="or-badge">WESTBROOK HIGH SCHOOL</div>
       <div class="bio-trans-period">PERIOD 1</div>
       <div class="bio-trans-subject">BIOLOGY</div>
-      <div class="bio-trans-room">Building C · Room 102</div>
+      <div class="bio-trans-room">South Wing · Room 102</div>
       <div class="bio-trans-line"></div>
       <p class="bio-trans-note">${_bgNote} Five dissection trays sit covered on the lab tables.</p>
     </div>

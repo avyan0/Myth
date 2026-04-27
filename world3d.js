@@ -1398,6 +1398,10 @@ function initWorld3D(playerData) {
   prog(50, 'Gymnasium...');
   buildGym(-92, -62);
 
+  // Biology Room 102 — south of the gym, within freshman zone
+  building(-92, -36, 22, 14, 7, MT.wA, MT.roofR, 'Biology — Room 102', 1, 'cls');
+  ZONES.push({ x1: -103, x2: -81, z1: -43, z2: -29, name: 'Biology Room 102' });
+
   // ── ORIENTATION NPC BODIES ──────────────────────────────────
   // Helper: place a simple character mesh (cylinder body + sphere head)
   function npcBody(x, z, y, shirtHex, skinHex) {
@@ -2100,9 +2104,9 @@ function initWorld3D(playerData) {
     if (window.MYTH_CLUB_CHOICE !== null && window.MYTH_CLUB_CHOICE !== undefined &&
         !window.MYTH_BIO_TRIGGERED) {
       ctx.strokeStyle = 'rgba(100,255,120,0.7)'; ctx.lineWidth = Math.max(1.5, 2 * sc);
-      ctx.beginPath(); ctx.arc(wx(-92), wz(-62), Math.max(5, 22 * sc), 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(wx(-92), wz(-36), Math.max(5, 16 * sc), 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = 'rgba(100,255,120,0.1)';
-      ctx.beginPath(); ctx.arc(wx(-92), wz(-62), Math.max(5, 22 * sc), 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(wx(-92), wz(-36), Math.max(5, 16 * sc), 0, Math.PI * 2); ctx.fill();
     }
     // Highlight gym (PE) after bio done
     if (window.MYTH_BIO_DONE && !window.MYTH_PE_TRIGGERED) {
@@ -2221,7 +2225,7 @@ function initWorld3D(playerData) {
     // ── Next destination hint (bottom right) ──
     var hintTxt = null;
     if (window.MYTH_CLUB_CHOICE !== null && window.MYTH_CLUB_CHOICE !== undefined && !window.MYTH_BIO_TRIGGERED)
-      hintTxt = 'NEXT: Bio Class (green ring)';
+      hintTxt = 'NEXT: Biology Room 102, south of gym (green ring)';
     else if (window.MYTH_BIO_DONE && !window.MYTH_PE_TRIGGERED)
       hintTxt = 'NEXT: PE — Gym (orange ring)';
     if (hintTxt) {
@@ -2412,10 +2416,10 @@ function initWorld3D(playerData) {
       }
     }
 
-    // ── Bio class trigger — re-enter gym after club fair ──
+    // ── Bio class trigger — enter bio room south of gym ──
     if (window.MYTH_CLUB_CHOICE !== undefined && window.MYTH_CLUB_CHOICE !== null &&
         !window.MYTH_BIO_TRIGGERED && !window.MYTH_ORIENTATION_ACTIVE) {
-      if (px >= -112 && px <= -72 && pz >= -77 && pz <= -47) {
+      if (px >= -103 && px <= -81 && pz >= -43 && pz <= -29) {
         window.MYTH_BIO_TRIGGERED = true;
         window.MYTH_ORIENTATION_ACTIVE = true;
         if (document.pointerLockElement === canvas) document.exitPointerLock();
