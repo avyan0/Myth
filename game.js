@@ -1490,12 +1490,16 @@ function showPEBombThreat() {
   setTimeout(() => runBombThreat(), 4500);
 
   function runBombThreat() {
-    // PA crackle effect
+    // Go full-screen for the bomb threat — maximum immersion
+    overlay.classList.add('threat-fullscreen');
+
     inner.innerHTML = `
       <div class="threat-scene" id="threat-scene">
+        <div class="threat-static" id="threat-static"></div>
         <div class="threat-alert-bar" id="threat-bar">
-          <span class="threat-bar-text">⚠ EMERGENCY BROADCAST ⚠</span>
+          <span class="threat-bar-text">🚨 EMERGENCY BROADCAST — WESTBROOK HIGH SCHOOL 🚨</span>
         </div>
+        <div class="threat-broadcast-stamp" id="threat-stamp">LIVE</div>
         <div class="threat-pa" id="threat-pa"></div>
         <div class="threat-gym-dark">
           <div class="threat-corner-students" id="corner-students"></div>
@@ -1507,149 +1511,180 @@ function showPEBombThreat() {
     `;
     G.from(inner, { opacity: 0, duration: 0.3 });
 
-    const pa   = document.getElementById('threat-pa');
+    const pa    = document.getElementById('threat-pa');
     const story = document.getElementById('threat-story');
 
-    const sequence = [
-      {
-        delay: 0,
-        pa: '[PA CRACKLE]',
-        text: null,
-        effect: 'crackle',
-      },
-      {
-        delay: 1200,
-        pa: '"ATTENTION ALL WESTBROOK HIGH STUDENTS AND STAFF — A CREDIBLE THREAT HAS BEEN RECEIVED AT THIS FACILITY. THIS IS A LOCKDOWN. THIS IS NOT A DRILL. ALL STUDENTS REPORT TO SECURE LOCATIONS IMMEDIATELY."',
-        text: null,
-        effect: 'alarm',
-      },
-      {
-        delay: 4200,
-        pa: null,
-        text: 'The gym lights cut to half. Someone hits the main breaker. The air changes. Coach Williams is already moving — no hesitation.',
-        effect: 'dim',
-      },
-      {
-        delay: 6800,
-        pa: null,
-        text: '"CORNER — NORTHEAST — NOW!" Thirty students compress into the space under the emergency exit sign. Everyone moves fast. Nobody argues.',
-        effect: 'corner',
-      },
-      {
-        delay: 9200,
-        pa: null,
-        text: 'You find space behind the bleacher support, next to a rolled-up wrestling mat. The floor is cold through your shorts. You pull your knees in.',
-        effect: 'hide',
-      },
-      {
-        delay: 11500,
-        pa: null,
-        text: 'Nobody speaks above a whisper. One girl is crying quietly. Someone\'s hands are shaking — maybe yours.',
-        effect: null,
-      },
-      {
-        delay: 12600,
-        pa: null,
-        text: (function() {
-          const _secretThoughts = {
-            anxiety:      "The silence is the worst part. Your brain won't stop running scenarios. You breathe through it, one count at a time. You've done this before.",
-            learning:     "Your mind races in its own direction, like always. You catalog exits, patterns, details. A different kind of processing. It keeps you calm.",
-            wealthy:      "You think about how none of this — the school, the floor, the bleachers — would feel real if you told anyone what your house looks like.",
-            talent:       "For some reason, all you can think about is a sketch you never finished. You trace it mentally on the back of your hand.",
-            family:       "You've sat in tense, silent rooms before. You know how to go somewhere else in your head. You go there now.",
-            ex_athlete:   "You feel your weight distributed correctly — heels, knees, back flat. The training doesn't leave. It just becomes background noise.",
-            crush:        "You scan the corner twice before you find them. They're okay. You look away before they notice you looking.",
-            following:    "Nobody here knows you. Nobody here knows the other you either. Right now, that feels like the only good thing.",
-            chronic:      "You check your body the way you always do, automatically — levels, breathing, tension. You're okay. You stay okay.",
-            therapy:      "Your therapist would say: name five things you can see. Cold floor. Wrestling mat. Emergency sign. Dusty bleacher. Someone's untied shoe. You're okay.",
-            ghosted:      "You think about the last group chat. They're probably not thinking about you right now. You're not sure if that's better or worse.",
-            writer:       "Somewhere in the back of your head, you're already writing this. The cold floor. The held breath. The way time dilates when nothing moves.",
-            bad_breakup:  "The thing about real fear is it makes everything else feel like noise. For a minute, the other stuff doesn't matter. You hate that it's almost a relief.",
-            secret_keep:  "You think about what you know. About what it would mean if something actually happened here and certain people never got to answer for it.",
-            language:     "You start counting in the other language. Quietly. In your head. It has always felt like a private room nobody else can enter.",
-            dropout_risk: "You almost didn't come back this year. Sitting here now, you can't decide if that makes this feel more precious or more fragile.",
-          };
-          return _secretThoughts[player.secret && player.secret.id] ||
-            "The seconds stretch. You stop counting and just breathe.";
-        })(),
-        effect: null,
-      },
-      {
-        delay: 14000,
-        pa: '[41 MINUTES LATER]',
-        text: null,
-        effect: 'time',
-      },
-      {
-        delay: 15200,
-        pa: null,
-        text: 'The all-clear sounds. A handwritten note was found in a locker — a prank, almost certainly. But the SWAT team swept the building anyway. Two police dogs. The works.',
-        effect: 'clear',
-      },
-      {
-        delay: 17800,
-        pa: null,
-        text: 'You walk out into the afternoon. The grass looks too bright. Your legs feel like they belong to someone else. You don\'t talk to anyone on the way to the parking lot.',
-        effect: null,
-      },
+    const _secretThought = (function() {
+      const _t = {
+        anxiety:      "The silence is the worst part. Your brain won't stop running scenarios. You breathe through it, one count at a time. You've done this before.",
+        learning:     "Your mind races in its own direction, like always. You catalog exits, patterns, details. A different kind of processing. It keeps you calm.",
+        wealthy:      "You think about how none of this — the school, the floor, the bleachers — would feel real if you told anyone what your house looks like.",
+        talent:       "For some reason, all you can think about is a sketch you never finished. You trace it mentally on the back of your hand.",
+        family:       "You've sat in tense, silent rooms before. You know how to go somewhere else in your head. You go there now.",
+        ex_athlete:   "You feel your weight distributed correctly — heels, knees, back flat. The training doesn't leave. It just becomes background noise.",
+        crush:        "You scan the corner twice before you find them. They're okay. You look away before they notice you looking.",
+        following:    "Nobody here knows you. Nobody here knows the other you either. Right now, that feels like the only good thing.",
+        chronic:      "You check your body the way you always do, automatically — levels, breathing, tension. You're okay. You stay okay.",
+        therapy:      "Your therapist would say: name five things you can see. Cold floor. Wrestling mat. Emergency sign. Dusty bleacher. Someone's untied shoe. You're okay.",
+        ghosted:      "You think about the last group chat. They're probably not thinking about you right now. You're not sure if that's better or worse.",
+        writer:       "Somewhere in the back of your head, you're already writing this. The cold floor. The held breath. The way time dilates when nothing moves.",
+        bad_breakup:  "The thing about real fear is it makes everything else feel like noise. For a minute, the other stuff doesn't matter. You hate that it's almost a relief.",
+        secret_keep:  "You think about what you know. About what it would mean if something actually happened here and certain people never got to answer for it.",
+        language:     "You start counting in the other language. Quietly. In your head. It has always felt like a private room nobody else can enter.",
+        dropout_risk: "You almost didn't come back this year. Sitting here now, you can't decide if that makes this feel more precious or more fragile.",
+      };
+      return _t[player.secret && player.secret.id] || "The seconds stretch. You stop counting and just breathe.";
+    })();
+
+    // Phase 1 sequence — plays up to the choice point
+    const phase1 = [
+      { delay: 0,    pa: '[— PA STATIC —]',   text: null, effect: 'crackle' },
+      { delay: 900,  pa: '"ATTENTION ALL WESTBROOK HIGH STUDENTS AND STAFF."', text: null, effect: 'alarm' },
+      { delay: 2800, pa: '"A CREDIBLE THREAT HAS BEEN RECEIVED AT THIS FACILITY."', text: null, effect: null },
+      { delay: 4600, pa: '"THIS IS A LOCKDOWN. THIS IS NOT A DRILL."', text: null, effect: 'strobe' },
+      { delay: 6200, pa: '"ALL STUDENTS AND STAFF REPORT TO SECURE LOCATIONS IMMEDIATELY. DO NOT LEAVE YOUR SECURE LOCATION UNTIL FURTHER NOTICE."', text: null, effect: null },
+      { delay: 9000, pa: null, text: 'The gym lights cut. Emergency strips on the ceiling click to red. The volleyball net is still up — nobody touched it.', effect: 'dim' },
+      { delay: 11200, pa: null, text: '"CORNER — NORTHEAST — NOW! GO GO GO!" Coach Williams doesn\'t sound like a coach anymore.', effect: 'corner' },
+      { delay: 13400, pa: null, text: 'You compress into the far corner under the emergency exit sign. Cold concrete wall. Thirty bodies. Everyone is breathing too fast.', effect: 'hide' },
+      { delay: 15600, pa: null, text: 'Someone starts sobbing quietly behind you. A freshman you don\'t know. You don\'t turn around. Nobody does.', effect: null },
+      { delay: 17200, pa: null, text: _secretThought, effect: null },
+      { delay: 19000, pa: null, text: 'Coach Williams: "Nobody moves. I mean it. Nobody moves." His voice is completely flat. That\'s the scariest part.', effect: null },
     ];
 
-    let seqIdx = 0;
-    function runSeq(i) {
-      const s = sequence[i];
+    function addBeat(text, cls) {
+      const d = document.createElement('div');
+      d.className = cls || 'threat-beat';
+      d.textContent = text;
+      story.appendChild(d);
+      story.scrollTop = story.scrollHeight;
+      G.from(d, { opacity: 0, y: 10, duration: 0.5 });
+    }
+
+    function runPhase1(i) {
+      const s = phase1[i];
       if (s.pa) {
         pa.textContent = s.pa;
-        pa.className = 'threat-pa' + (s.effect === 'crackle' ? ' crackle' : s.effect === 'time' ? ' time-stamp' : ' lockdown-msg');
+        pa.className = 'threat-pa' + (s.effect === 'crackle' ? ' crackle' : ' lockdown-msg');
         G.from(pa, { opacity: 0, duration: 0.4 });
       }
-      if (s.text) {
-        const d = document.createElement('div');
-        d.className = 'threat-beat';
-        d.textContent = s.text;
-        story.appendChild(d);
-        G.from(d, { opacity: 0, y: 8, duration: 0.5 });
-      }
-      // Visual effects
+      if (s.text) addBeat(s.text);
       const scene = document.getElementById('threat-scene');
-      if (s.effect === 'alarm' && scene) scene.classList.add('alarm-active');
-      if (s.effect === 'dim'   && scene) scene.classList.add('lights-dimmed');
+      if (s.effect === 'alarm'  && scene) scene.classList.add('alarm-active');
+      if (s.effect === 'dim'    && scene) scene.classList.add('lights-dimmed');
+      if (s.effect === 'strobe' && scene) scene.classList.add('strobe-active');
       if (s.effect === 'corner') {
         const cs = document.getElementById('corner-students');
         if (cs) cs.classList.add('huddled');
         const py = document.getElementById('player-you');
         if (py) py.classList.add('hiding');
       }
-      if (s.effect === 'clear' && scene) {
-        scene.classList.remove('alarm-active');
-        scene.classList.add('all-clear');
-      }
-
-      if (i + 1 < sequence.length) {
-        const nextDelay = sequence[i + 1].delay - s.delay;
-        setTimeout(() => runSeq(i + 1), nextDelay);
+      if (i + 1 < phase1.length) {
+        setTimeout(() => runPhase1(i + 1), phase1[i + 1].delay - s.delay);
       } else {
-        setTimeout(showPEResult, 2400);
+        setTimeout(showChoice, 2000);
       }
     }
-    runSeq(0);
+
+    function showChoice() {
+      // Pause narrative — present the disobey choice
+      const choiceDiv = document.createElement('div');
+      choiceDiv.className = 'threat-choice';
+      choiceDiv.innerHTML = `
+        <p class="threat-choice-prompt">The emergency exit is 15 feet away. You could be outside in three seconds. Coach has his back turned.</p>
+        <div class="threat-choice-btns">
+          <button class="threat-btn-stay" id="threat-stay">STAY PUT</button>
+          <button class="threat-btn-run"  id="threat-run">MAKE A RUN FOR IT</button>
+        </div>
+      `;
+      story.appendChild(choiceDiv);
+      story.scrollTop = story.scrollHeight;
+      G.from(choiceDiv, { opacity: 0, y: 14, duration: 0.6 });
+
+      document.getElementById('threat-stay').addEventListener('click', () => {
+        choiceDiv.remove();
+        runPhase2_stay();
+      }, { once: true });
+      document.getElementById('threat-run').addEventListener('click', () => {
+        choiceDiv.remove();
+        runPhase2_run();
+      }, { once: true });
+    }
+
+    // Branch A — obey
+    function runPhase2_stay() {
+      const beats = [
+        { delay: 0,    pa: '[41 MINUTES LATER]', text: null, time: true },
+        { delay: 1400, pa: null, text: 'All-clear. A handwritten note in locker 247 — almost certainly a prank. But SWAT swept every room anyway. Two dogs. The works.' },
+        { delay: 4200, pa: null, text: 'You walk out into the afternoon. The grass looks too bright. Nobody talks on the way to the parking lot.' },
+      ];
+      function rb(i) {
+        const s = beats[i];
+        if (s.pa) { pa.textContent = s.pa; pa.className = 'threat-pa' + (s.time ? ' time-stamp' : ' lockdown-msg'); G.from(pa, { opacity: 0, duration: 0.4 }); }
+        if (s.text) addBeat(s.text);
+        const scene = document.getElementById('threat-scene');
+        if (scene) { scene.classList.remove('alarm-active'); scene.classList.add('all-clear'); }
+        if (i + 1 < beats.length) setTimeout(() => rb(i + 1), beats[i + 1].delay);
+        else setTimeout(() => showPEResult(false), 2400);
+      }
+      rb(0);
+    }
+
+    // Branch B — disobey
+    function runPhase2_run() {
+      const scene = document.getElementById('threat-scene');
+      if (scene) scene.classList.add('run-flash');
+      const beats = [
+        { delay: 0,    text: 'You move. Three seconds, door, outside. The air hits you like a wall. Sunlight.' },
+        { delay: 2200, text: 'You\'re the only student in the courtyard. A security officer sees you immediately. He does not look relieved.' },
+        { delay: 4200, text: 'Forty-five minutes later — after the all-clear — you\'re sitting in the main office. It was a prank. Everyone knows. The officer does not care.' },
+        { delay: 6400, text: 'Principal Reyes: "We\'ll need your parents here Monday morning." He doesn\'t raise his voice. That\'s somehow worse.' },
+      ];
+      function rb(i) {
+        const s = beats[i];
+        if (s.text) addBeat(s.text, 'threat-beat threat-beat-run');
+        if (i + 1 < beats.length) setTimeout(() => rb(i + 1), beats[i + 1].delay);
+        else setTimeout(() => showPEResult(true), 2400);
+      }
+      rb(0);
+    }
+
+    runPhase1(0);
   }
 
-  function showPEResult() {
+  function showPEResult(disobeyed) {
+    overlay.classList.remove('threat-fullscreen');
     const inner2 = overlay.querySelector('.pe-inner');
-    inner2.innerHTML = `
-      <div class="pe-result-screen">
-        <div class="or-badge">PERIOD 4 · PE — LOCKDOWN CONCLUDED</div>
-        <div class="pe-result-icon">🔓</div>
-        <div class="pe-result-title">FALSE ALARM.</div>
-        <p class="pe-result-text">A prank. Probably. But you were in that corner for forty-one minutes and your heart didn't slow down the whole time. Some things stay with you.</p>
-        <button class="btn-primary" id="pe-done-btn" style="margin-top:28px">CONTINUE →</button>
-        <div class="or-key-hint" style="margin-top:6px;font-size:.7rem;opacity:.45">[ ENTER ] to continue</div>
-      </div>
-    `;
+    if (disobeyed) {
+      inner2.innerHTML = `
+        <div class="pe-result-screen">
+          <div class="or-badge">PERIOD 4 · PE — LOCKDOWN CONCLUDED</div>
+          <div class="pe-result-icon">🚪</div>
+          <div class="pe-result-title" style="color:#e05050">PRINCIPAL'S OFFICE.</div>
+          <p class="pe-result-text">It was a false alarm. But you ran during a lockdown — against direct orders. Monday morning: a meeting with Principal Reyes and your parents. It goes on your record.</p>
+          <button class="btn-primary" id="pe-done-btn" style="margin-top:28px">CONTINUE →</button>
+          <div class="or-key-hint" style="margin-top:6px;font-size:.7rem;opacity:.45">[ ENTER ] to continue</div>
+        </div>
+      `;
+    } else {
+      inner2.innerHTML = `
+        <div class="pe-result-screen">
+          <div class="or-badge">PERIOD 4 · PE — LOCKDOWN CONCLUDED</div>
+          <div class="pe-result-icon">🔓</div>
+          <div class="pe-result-title">FALSE ALARM.</div>
+          <p class="pe-result-text">A prank. Probably. But you were in that corner for forty-one minutes and your heart didn't slow down the whole time. Some things stay with you.</p>
+          <button class="btn-primary" id="pe-done-btn" style="margin-top:28px">CONTINUE →</button>
+          <div class="or-key-hint" style="margin-top:6px;font-size:.7rem;opacity:.45">[ ENTER ] to continue</div>
+        </div>
+      `;
+    }
     G.from(inner2.querySelector('.pe-result-screen'), { opacity: 0, y: 20, duration: 0.5 });
 
     if (typeof Engine !== 'undefined') {
-      Engine.modifyStats({ happiness: -2.0, intelligence: 0.5, friendships: 0.3 });
+      if (disobeyed) {
+        Engine.modifyStats({ happiness: -3.0, intelligence: -0.3, friendships: -0.5, gpa: -0.1 });
+      } else {
+        Engine.modifyStats({ happiness: -2.0, intelligence: 0.5, friendships: 0.3 });
+      }
     }
 
     let _f = false;
