@@ -531,6 +531,14 @@ function launchGame() {
   window.MYTH_CLUB_FAIR_TRIGGERED   = false;
   window.MYTH_CLUB_CHOICE           = null;
   window.MYTH_CLUB_MISS_DELTAS      = {};
+  window.MYTH_BIO_TRIGGERED         = false;
+  window.MYTH_BIO_DONE              = false;
+  window.MYTH_PE_TRIGGERED          = false;
+  window.MYTH_PE_DONE               = false;
+  window.MYTH_POWER_OUTAGE          = false;
+  window.MYTH_POWER_RESTORE         = false;
+  window.MYTH_BOMB_THREAT_ACTIVE    = false;
+  window.MYTH_BOMB_CLEAR            = false;
 
   const transEl = document.getElementById('scene-transition');
   transEl.classList.remove('active');
@@ -1078,6 +1086,550 @@ function showClubMissedOverlay() {
   function _missKH(e) { if (e.key === 'Enter') _doDone(); }
   document.addEventListener('keydown', _missKH);
   document.getElementById('cf-done-btn').addEventListener('click', _doDone, { once: true });
+}
+
+// ═══════════════════════════════════════════════════════
+//  BIO CLASS + PE EVENTS
+// ═══════════════════════════════════════════════════════
+
+const PIG_STATIONS = [
+  {
+    id: 'A', system: 'Cardiovascular System',
+    setup: 'The pig is pinned supine. The chest cavity is open, exposing a dark reddish-purple, fist-sized organ nestled between two deflated, pale lungs.',
+    region: 'HEART', emoji: '❤',
+    question: 'What is the primary function of the heart?',
+    choices: ['Filter toxins from the bloodstream', 'Pump blood through the circulatory system', 'Regulate body temperature'],
+    correct: 1,
+    right: 'Correct. The heart is a muscular pump that drives blood through both the pulmonary and systemic circuits.',
+    wrong: 'Not quite. Filtration is the kidney\'s job — the heart is purely a pump.',
+  },
+  {
+    id: 'B', system: 'Digestive System',
+    setup: 'The abdominal cavity is pinned open. A large, multi-lobed brownish-red organ dominates the upper right quadrant of the body cavity.',
+    region: 'LIVER', emoji: '🟤',
+    question: 'What are the two main functions of the liver?',
+    choices: ['Pumping blood and filtering oxygen', 'Producing bile and detoxifying blood', 'Gas exchange and nutrient absorption'],
+    correct: 1,
+    right: 'Correct. The liver produces bile for fat digestion and acts as the body\'s primary blood filter.',
+    wrong: 'That\'s not it. The large brownish organ is the liver — it produces bile and detoxifies blood.',
+  },
+  {
+    id: 'C', system: 'Respiratory System',
+    setup: 'The thoracic cavity is pinned wide. Two pale, spongy organs flank the heart. Below them, a dome-shaped sheet of muscle separates the chest from the abdomen.',
+    region: 'DIAPHRAGM', emoji: '🫧',
+    question: 'What does the diaphragm do when you inhale?',
+    choices: ['It relaxes and rises, compressing the lungs', 'It contracts and flattens, expanding chest volume to draw air in', 'It filters incoming air for pathogens'],
+    correct: 1,
+    right: 'Correct. Diaphragm contraction pulls the muscle downward, increasing chest volume and creating negative pressure.',
+    wrong: 'Close — it\'s a muscle, and muscles contract. The diaphragm flattens downward to pull air into the lungs.',
+  },
+  {
+    id: 'D', system: 'Urinary System',
+    setup: 'Pinned against the dorsal body wall are two bean-shaped organs. A whitish tube runs from each toward the midline, merging at a small balloon-like organ below.',
+    region: 'KIDNEYS', emoji: '🫘',
+    question: 'How do the kidneys maintain homeostasis?',
+    choices: ['By secreting hormones that control heart rate', 'By filtering blood and regulating fluid/electrolyte balance', 'By absorbing nutrients from the digestive tract'],
+    correct: 1,
+    right: 'Correct. The kidneys filter roughly 180 L of blood daily, regulating water, electrolytes, and pH.',
+    wrong: 'Not quite. Kidneys filter blood and regulate fluid balance — homeostasis through excretion, not hormones.',
+  },
+  {
+    id: 'E', system: 'Nervous System',
+    setup: 'The dorsal cranium is carefully opened. A small, wrinkled organ sits in the braincase. It connects via the spinal cord running down the dorsal side of the spine.',
+    region: 'BRAINSTEM', emoji: '🧠',
+    question: 'Which region controls involuntary functions like breathing and heart rate?',
+    choices: ['The cerebrum — conscious thought and movement', 'The cerebellum — balance and coordination', 'The brainstem / medulla oblongata — autonomic functions'],
+    correct: 2,
+    right: 'Correct. The medulla oblongata automates breathing, heart rate, and blood pressure without conscious input.',
+    wrong: 'Those handle voluntary actions. The brainstem / medulla oblongata controls the involuntary systems.',
+  },
+];
+
+function _bioClose(gpaDelta, gradeLabel, colorHex) {
+  const overlay = document.getElementById('bio-overlay');
+  if (!overlay) return;
+  const inner = overlay.querySelector('.bio-inner');
+  inner.innerHTML = `
+    <div class="bio-result-screen" style="--grade-col:${colorHex}">
+      <div class="or-badge">PERIOD 1 · BIOLOGY — RESULT</div>
+      <div class="bio-result-grade">${gradeLabel}</div>
+      <div class="bio-result-sub">${gpaDelta > 0 ? 'GPA improving.' : gpaDelta < 0 ? 'GPA took a hit.' : 'GPA unchanged.'}</div>
+      <button class="btn-primary" id="bio-done-btn" style="margin-top:32px">CONTINUE →</button>
+      <div class="or-key-hint" style="margin-top:8px;font-size:.7rem;opacity:.45">[ ENTER ] to continue</div>
+    </div>
+  `;
+  if (gpaDelta !== 0 && typeof Engine !== 'undefined') Engine.modifyStat('gpa', gpaDelta);
+  G.from(inner.querySelector('.bio-result-screen'), { opacity: 0, y: 20, duration: 0.5 });
+
+  let _f = false;
+  function _done() {
+    if (_f) return; _f = true;
+    document.removeEventListener('keydown', _kh);
+    window.MYTH_POWER_OUTAGE  = false;
+    window.MYTH_POWER_RESTORE = true;
+    G.to(overlay, {
+      opacity: 0, duration: 0.5, ease: 'power2.in',
+      onComplete: () => {
+        overlay.classList.remove('open');
+        overlay.style.opacity = '';
+        window.MYTH_BIO_DONE           = true;
+        window.MYTH_ORIENTATION_ACTIVE = false;
+        refreshStatsSidebar();
+        if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('Head to the gym — PE starts now.');
+        if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
+      },
+    });
+  }
+  function _kh(e) { if (e.key === 'Enter') _done(); }
+  document.addEventListener('keydown', _kh);
+  document.getElementById('bio-done-btn').addEventListener('click', _done, { once: true });
+}
+
+// ── Scenario A: Power Outage ──────────────────────────────────────────────
+function showBioOutage() {
+  window.MYTH_POWER_OUTAGE = true;
+  const overlay = document.getElementById('bio-overlay');
+  const inner   = overlay.querySelector('.bio-inner');
+
+  const beats = [
+    { delay: 0,    html: `<span class="outage-flash"></span><p>Mrs. Alvarez begins distributing the assessment rubrics. You pull back the paper towel on your tray. The smell hits harder now.</p>` },
+    { delay: 2400, html: `<p>Then — the lights. Every overhead fluorescent dies at once. The projector goes black. The ventilation fans wind down with a groan.</p>` },
+    { delay: 4600, html: `<span class="outage-emergency">⚠ EMERGENCY LIGHTING ACTIVATED</span><p>Red emergency strips flicker on along the baseboards. Outside the window, the sky has gone dark. Wind drives rain in sheets against the glass.</p>` },
+    { delay: 7200, html: `<p><span class="speaker">MRS. ALVAREZ:</span> <em>"Stay in your seats. Don't touch the specimens. Maintenance is — "</em> Her radio crackles. She listens. Her expression changes.</p>` },
+    { delay: 9800, html: `<p><span class="speaker">MRS. ALVAREZ:</span> <em>"All right. District policy. Weather-related power event. The practical is cancelled. Everyone receives credit for today."</em></p>` },
+    { delay: 12000, html: `<p class="outage-kicker">Automatic A. You didn't have to know a single organ. The storm just handed it to you.</p>` },
+  ];
+
+  function renderBeat(idx) {
+    const b = beats[idx];
+    const row = document.createElement('div');
+    row.className = 'outage-beat';
+    row.innerHTML = b.html;
+    inner.querySelector('.outage-story').appendChild(row);
+    G.from(row, { opacity: 0, y: 12, duration: 0.6 });
+    if (idx + 1 < beats.length) setTimeout(() => renderBeat(idx + 1), beats[idx + 1].delay - b.delay);
+    else setTimeout(() => _bioClose(0.40, 'A', '#6BCB77'), 1800);
+  }
+
+  inner.innerHTML = `
+    <div class="outage-scene">
+      <div class="outage-sky">
+        <div class="lightning l1"></div>
+        <div class="lightning l2"></div>
+        <div class="wind-particles">${Array.from({length:18},()=>'<span></span>').join('')}</div>
+        <div class="rain-layer"></div>
+      </div>
+      <div class="outage-room-label">BIOLOGY · ROOM 102</div>
+      <div class="outage-story"></div>
+      <div class="outage-meter">
+        <div class="outage-flicker"></div>
+      </div>
+    </div>
+  `;
+  G.from(inner, { opacity: 0, duration: 0.5 });
+  setTimeout(() => renderBeat(0), 500);
+}
+
+// ── Scenario B: Pig Practical ─────────────────────────────────────────────
+function showBioPractical() {
+  const overlay = document.getElementById('bio-overlay');
+  const inner   = overlay.querySelector('.bio-inner');
+  let score = 0, stationIdx = 0, _answered = false;
+
+  function renderStation() {
+    const s = PIG_STATIONS[stationIdx];
+    _answered = false;
+    inner.innerHTML = `
+      <div class="practical-scene">
+        <div class="practical-header">
+          <span class="practical-badge">PERIOD 1 · BIOLOGY — PIG PRACTICAL</span>
+          <span class="practical-progress">Station ${stationIdx + 1} / ${PIG_STATIONS.length}</span>
+        </div>
+        <div class="practical-tray">
+          <div class="tray-label">${s.emoji} STATION ${s.id} — ${s.system.toUpperCase()}</div>
+          <div class="tray-description">${s.setup}</div>
+          <div class="tray-highlight">▶ Focus region: <strong>${s.region}</strong></div>
+        </div>
+        <div class="practical-question">${s.question}</div>
+        <div class="practical-choices">
+          ${s.choices.map((c,i)=>`<button class="prac-btn" data-idx="${i}">${String.fromCharCode(65+i)}. ${c}</button>`).join('')}
+        </div>
+        <div class="practical-feedback" id="prac-fb"></div>
+      </div>
+    `;
+    G.from(inner.querySelector('.practical-scene'), { opacity: 0, y: 16, duration: 0.4 });
+
+    inner.querySelectorAll('.prac-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        if (_answered) return;
+        _answered = true;
+        const chosen = parseInt(this.dataset.idx);
+        const correct = chosen === s.correct;
+        if (correct) score++;
+        inner.querySelectorAll('.prac-btn').forEach((b,i) => {
+          b.disabled = true;
+          if (i === s.correct) b.classList.add('prac-correct');
+          else if (i === chosen && !correct) b.classList.add('prac-wrong');
+        });
+        const fb = document.getElementById('prac-fb');
+        fb.textContent = correct ? `✓ ${s.right}` : `✗ ${s.wrong}`;
+        fb.className = 'practical-feedback ' + (correct ? 'fb-right' : 'fb-wrong');
+        G.from(fb, { opacity: 0, duration: 0.3 });
+        setTimeout(() => {
+          stationIdx++;
+          if (stationIdx < PIG_STATIONS.length) renderStation();
+          else showPracticalResult();
+        }, 2200);
+      });
+    });
+  }
+
+  function showPracticalResult() {
+    const pct = score / PIG_STATIONS.length;
+    let grade, gpaDelta, col;
+    if (pct >= 1.0)        { grade='A+'; gpaDelta= 0.50; col='#F7B731'; }
+    else if (pct >= 0.8)   { grade='A';  gpaDelta= 0.35; col='#6BCB77'; }
+    else if (pct >= 0.6)   { grade='B+'; gpaDelta= 0.15; col='#6BCB77'; }
+    else if (pct >= 0.4)   { grade='B';  gpaDelta= 0;    col='#aaa';    }
+    else if (pct >= 0.2)   { grade='C';  gpaDelta=-0.15; col='#FC7B54'; }
+    else                   { grade='F';  gpaDelta=-0.40; col='#e05050'; }
+
+    inner.innerHTML = `
+      <div class="practical-results">
+        <div class="or-badge">BIOLOGY · PIG PRACTICAL — SCORED</div>
+        <div class="prac-score-line">
+          <span class="prac-score-num" style="color:${col}">${score} / ${PIG_STATIONS.length}</span>
+          <span class="prac-score-grade" style="color:${col}">${grade}</span>
+        </div>
+        <div class="prac-score-breakdown">
+          ${PIG_STATIONS.map((s,i)=>`<div class="prac-station-row">Station ${s.id} — ${s.system}</div>`).join('')}
+        </div>
+        <button class="btn-primary" id="prac-done-btn" style="margin-top:28px">CONTINUE →</button>
+        <div class="or-key-hint" style="margin-top:6px;font-size:.7rem;opacity:.45">[ ENTER ] to continue</div>
+      </div>
+    `;
+    G.from(inner.querySelector('.practical-results'), { opacity: 0, y: 20, duration: 0.5 });
+    let _f = false;
+    function _done() {
+      if (_f) return; _f = true;
+      document.removeEventListener('keydown', _pkh);
+      _bioClose(gpaDelta, grade, col);
+    }
+    function _pkh(e) { if (e.key === 'Enter') _done(); }
+    document.addEventListener('keydown', _pkh);
+    document.getElementById('prac-done-btn').addEventListener('click', _done, { once: true });
+  }
+
+  // Intro card before first station
+  inner.innerHTML = `
+    <div class="practical-intro">
+      <div class="or-badge">PERIOD 1 · BIOLOGY</div>
+      <div class="practical-intro-title">PIG PRACTICAL</div>
+      <p class="practical-intro-desc">Five dissection trays. Five pigs. You have one question per station.<br>Walk up, assess what you see, and answer.</p>
+      <div class="practical-intro-smell">The formaldehyde smell is sharp. Your eyes water slightly.</div>
+      <button class="btn-primary" id="prac-start-btn" style="margin-top:28px">BEGIN →</button>
+      <div class="or-key-hint" style="margin-top:6px;font-size:.7rem;opacity:.45">[ ENTER ] to begin</div>
+    </div>
+  `;
+  G.from(inner, { opacity: 0, duration: 0.5 });
+  let _startFired = false;
+  function _startDone() {
+    if (_startFired) return; _startFired = true;
+    document.removeEventListener('keydown', _startKH);
+    renderStation();
+  }
+  function _startKH(e) { if (e.key === 'Enter') _startDone(); }
+  document.addEventListener('keydown', _startKH);
+  document.getElementById('prac-start-btn').addEventListener('click', _startDone, { once: true });
+}
+
+// ── Scenario C: Chemical Incident ─────────────────────────────────────────
+function showBioChemical() {
+  const overlay = document.getElementById('bio-overlay');
+  const inner   = overlay.querySelector('.bio-inner');
+
+  const beats = [
+    { delay: 0,    text: 'Lab Technician Torres wheels in a supply cart just as the practical begins. He sets two bottles on the counter without checking the labels.' },
+    { delay: 2800, text: 'You see it before he does. The left bottle is pale yellow — the formaldehyde neutralizer. The right bottle is a concentrated bleach solution. He reaches for the right one.' },
+    { delay: 5800, text: 'The moment bleach contacts the residual formaldehyde in the trays, a pale greenish vapor rises from the nearest tray. Then the next. It spreads fast.' },
+    { delay: 8200, text: 'The smell is immediate and violent. Your eyes water. The front row staggers back.', special: 'smell' },
+    { delay: 10200, text: 'Jaylen Rodriguez — front left, the guy who always answers first — stands up from his stool. Looks confused. Then his knees buckle. His stool skitters across the tile.', special: 'faint' },
+    { delay: 13000, text: 'MRS. ALVAREZ: "OUT! EVERYONE OUT RIGHT NOW!" The fire alarm trips. Students flood into the hallway. You make it to the courtyard, eyes streaming.', special: 'alarm' },
+    { delay: 15500, text: 'WVFD Engine 7 arrives in four minutes. Two paramedics evaluate Jaylen on a gurney in the parking lot. A hazmat unit follows six minutes behind.', special: 'ambulance' },
+    { delay: 18500, text: 'Three students are treated for dizziness. Jaylen goes to the hospital for observation — he\'s fine, but the school is liable. Every student in Bio gets an automatic A, posted that night.' },
+  ];
+
+  inner.innerHTML = `
+    <div class="chem-scene">
+      <div class="chem-room">
+        <div class="chem-desks">
+          ${Array.from({length:6},(_,i)=>`<div class="chem-desk" style="--di:${i}"></div>`).join('')}
+        </div>
+        <div class="smoke-container">
+          <div class="smoke-cloud s1"></div>
+          <div class="smoke-cloud s2"></div>
+          <div class="smoke-cloud s3"></div>
+        </div>
+        <div class="faint-figure" id="faint-figure"></div>
+        <div class="ambulance-element" id="ambulance-el"></div>
+      </div>
+      <div class="chem-story" id="chem-story"></div>
+    </div>
+  `;
+  G.from(inner, { opacity: 0, duration: 0.5 });
+
+  let smokeActive = false, ambulanceActive = false;
+  function renderBeat(idx) {
+    const b = beats[idx];
+    const div = document.createElement('div');
+    div.className = 'chem-beat';
+    div.textContent = b.text;
+    document.getElementById('chem-story').appendChild(div);
+    G.from(div, { opacity: 0, y: 8, duration: 0.5 });
+
+    if (b.special === 'smell' && !smokeActive) {
+      smokeActive = true;
+      inner.querySelectorAll('.smoke-cloud').forEach(s => s.classList.add('active'));
+    }
+    if (b.special === 'faint') {
+      const ff = document.getElementById('faint-figure');
+      if (ff) { ff.classList.add('active'); setTimeout(() => ff.classList.add('fallen'), 1200); }
+    }
+    if (b.special === 'alarm') {
+      inner.querySelector('.chem-room').classList.add('alarm-state');
+    }
+    if (b.special === 'ambulance') {
+      const ae = document.getElementById('ambulance-el');
+      if (ae) ae.classList.add('active');
+    }
+
+    if (idx + 1 < beats.length) setTimeout(() => renderBeat(idx + 1), beats[idx + 1].delay - b.delay);
+    else setTimeout(() => _bioClose(0.30, 'A', '#6BCB77'), 2200);
+  }
+  setTimeout(() => renderBeat(0), 400);
+}
+
+// Show bio class intro then branch randomly
+function showBioClassEvent() {
+  window.MYTH_ORIENTATION_ACTIVE = true;
+  const overlay = document.getElementById('bio-overlay');
+  if (!overlay) return;
+  overlay.classList.add('open');
+  const inner = overlay.querySelector('.bio-inner');
+  inner.innerHTML = `
+    <div class="bio-transition">
+      <div class="or-badge">WESTBROOK HIGH SCHOOL</div>
+      <div class="bio-trans-period">PERIOD 1</div>
+      <div class="bio-trans-subject">BIOLOGY</div>
+      <div class="bio-trans-room">Building C · Room 102</div>
+      <div class="bio-trans-line"></div>
+      <p class="bio-trans-note">You make your way across campus to the biology building. The antiseptic smell hits before you even open the door. Five dissection trays sit covered on the lab tables.</p>
+    </div>
+  `;
+  G.from(inner, { opacity: 0, duration: 0.7 });
+
+  const scenarios = ['outage', 'practical', 'chemical'];
+  const chosen = scenarios[Math.floor(Math.random() * scenarios.length)];
+  setTimeout(() => {
+    if (chosen === 'outage')    showBioOutage();
+    else if (chosen === 'practical') showBioPractical();
+    else                        showBioChemical();
+  }, 3000);
+}
+
+// ═══════════════════════════════════════════════════════
+//  PE CLASS — BOMB THREAT
+// ═══════════════════════════════════════════════════════
+
+function showPEBombThreat() {
+  window.MYTH_ORIENTATION_ACTIVE  = true;
+  window.MYTH_BOMB_THREAT_ACTIVE  = true;
+  const overlay = document.getElementById('pe-overlay');
+  if (!overlay) return;
+  overlay.classList.add('open');
+  const inner = overlay.querySelector('.pe-inner');
+
+  // Phase 1: Volleyball intro
+  inner.innerHTML = `
+    <div class="pe-intro-scene">
+      <div class="pe-gym-view">
+        <div class="pe-net"></div>
+        <div class="pe-court-lines"></div>
+        <div class="pe-players">
+          ${Array.from({length:6},(_,i)=>`<div class="pe-player" style="--pi:${i}"></div>`).join('')}
+        </div>
+        <div class="pe-ball" id="pe-ball"></div>
+      </div>
+      <div class="pe-intro-text">
+        <div class="or-badge">PERIOD 4 · PE — GYMNASIUM</div>
+        <p>Coach Williams has the volleyball nets up. The gym still smells faintly of Bio. Energy is loose — people are relieved after whatever happened in their morning classes.</p>
+        <p>You're at the net for your team. The ball comes over. You set it perfectly. Someone spikes it. The other side scrambles.</p>
+        <p class="pe-good-moment">For a moment, everything feels completely normal.</p>
+      </div>
+    </div>
+  `;
+  G.from(inner, { opacity: 0, duration: 0.7 });
+
+  setTimeout(() => runBombThreat(), 4500);
+
+  function runBombThreat() {
+    // PA crackle effect
+    inner.innerHTML = `
+      <div class="threat-scene" id="threat-scene">
+        <div class="threat-alert-bar" id="threat-bar">
+          <span class="threat-bar-text">⚠ EMERGENCY BROADCAST ⚠</span>
+        </div>
+        <div class="threat-pa" id="threat-pa"></div>
+        <div class="threat-gym-dark">
+          <div class="threat-corner-students" id="corner-students"></div>
+          <div class="threat-player-you" id="player-you"></div>
+          <div class="threat-lights" id="threat-lights"></div>
+        </div>
+        <div class="threat-story" id="threat-story"></div>
+      </div>
+    `;
+    G.from(inner, { opacity: 0, duration: 0.3 });
+
+    const pa   = document.getElementById('threat-pa');
+    const story = document.getElementById('threat-story');
+
+    const sequence = [
+      {
+        delay: 0,
+        pa: '[PA CRACKLE]',
+        text: null,
+        effect: 'crackle',
+      },
+      {
+        delay: 1200,
+        pa: '"ATTENTION ALL WESTBROOK HIGH STUDENTS AND STAFF — A CREDIBLE THREAT HAS BEEN RECEIVED AT THIS FACILITY. THIS IS A LOCKDOWN. THIS IS NOT A DRILL. ALL STUDENTS REPORT TO SECURE LOCATIONS IMMEDIATELY."',
+        text: null,
+        effect: 'alarm',
+      },
+      {
+        delay: 4200,
+        pa: null,
+        text: 'The gym lights cut to half. Someone hits the main breaker. The air changes. Coach Williams is already moving — no hesitation.',
+        effect: 'dim',
+      },
+      {
+        delay: 6800,
+        pa: null,
+        text: '"CORNER — NORTHEAST — NOW!" Thirty students compress into the space under the emergency exit sign. Everyone moves fast. Nobody argues.',
+        effect: 'corner',
+      },
+      {
+        delay: 9200,
+        pa: null,
+        text: 'You find space behind the bleacher support, next to a rolled-up wrestling mat. The floor is cold through your shorts. You pull your knees in.',
+        effect: 'hide',
+      },
+      {
+        delay: 11500,
+        pa: null,
+        text: 'Nobody speaks above a whisper. One girl is crying quietly. Someone\'s hands are shaking — maybe yours.',
+        effect: null,
+      },
+      {
+        delay: 14000,
+        pa: '[41 MINUTES LATER]',
+        text: null,
+        effect: 'time',
+      },
+      {
+        delay: 15200,
+        pa: null,
+        text: 'The all-clear sounds. A handwritten note was found in a locker — a prank, almost certainly. But the SWAT team swept the building anyway. Two police dogs. The works.',
+        effect: 'clear',
+      },
+      {
+        delay: 17800,
+        pa: null,
+        text: 'You walk out into the afternoon. The grass looks too bright. Your legs feel like they belong to someone else. You don\'t talk to anyone on the way to the parking lot.',
+        effect: null,
+      },
+    ];
+
+    let seqIdx = 0;
+    function runSeq(i) {
+      const s = sequence[i];
+      if (s.pa) {
+        pa.textContent = s.pa;
+        pa.className = 'threat-pa' + (s.effect === 'crackle' ? ' crackle' : s.effect === 'time' ? ' time-stamp' : ' lockdown-msg');
+        G.from(pa, { opacity: 0, duration: 0.4 });
+      }
+      if (s.text) {
+        const d = document.createElement('div');
+        d.className = 'threat-beat';
+        d.textContent = s.text;
+        story.appendChild(d);
+        G.from(d, { opacity: 0, y: 8, duration: 0.5 });
+      }
+      // Visual effects
+      const scene = document.getElementById('threat-scene');
+      if (s.effect === 'alarm' && scene) scene.classList.add('alarm-active');
+      if (s.effect === 'dim'   && scene) scene.classList.add('lights-dimmed');
+      if (s.effect === 'corner') {
+        const cs = document.getElementById('corner-students');
+        if (cs) cs.classList.add('huddled');
+        const py = document.getElementById('player-you');
+        if (py) py.classList.add('hiding');
+      }
+      if (s.effect === 'clear' && scene) {
+        scene.classList.remove('alarm-active');
+        scene.classList.add('all-clear');
+      }
+
+      if (i + 1 < sequence.length) {
+        const nextDelay = sequence[i + 1].delay - s.delay;
+        setTimeout(() => runSeq(i + 1), nextDelay);
+      } else {
+        setTimeout(showPEResult, 2400);
+      }
+    }
+    runSeq(0);
+  }
+
+  function showPEResult() {
+    const inner2 = overlay.querySelector('.pe-inner');
+    inner2.innerHTML = `
+      <div class="pe-result-screen">
+        <div class="or-badge">PERIOD 4 · PE — LOCKDOWN CONCLUDED</div>
+        <div class="pe-result-icon">🔓</div>
+        <div class="pe-result-title">FALSE ALARM.</div>
+        <p class="pe-result-text">A prank. Probably. But you were in that corner for forty-one minutes and your heart didn't slow down the whole time. Some things stay with you.</p>
+        <button class="btn-primary" id="pe-done-btn" style="margin-top:28px">CONTINUE →</button>
+        <div class="or-key-hint" style="margin-top:6px;font-size:.7rem;opacity:.45">[ ENTER ] to continue</div>
+      </div>
+    `;
+    G.from(inner2.querySelector('.pe-result-screen'), { opacity: 0, y: 20, duration: 0.5 });
+
+    if (typeof Engine !== 'undefined') {
+      Engine.modifyStats({ happiness: -2.0, intelligence: 0.5, friendships: 0.3 });
+    }
+
+    let _f = false;
+    function _done() {
+      if (_f) return; _f = true;
+      document.removeEventListener('keydown', _pekh);
+      window.MYTH_BOMB_THREAT_ACTIVE = false;
+      window.MYTH_BOMB_CLEAR         = true;
+      G.to(overlay, {
+        opacity: 0, duration: 0.5, ease: 'power2.in',
+        onComplete: () => {
+          overlay.classList.remove('open');
+          overlay.style.opacity = '';
+          window.MYTH_PE_DONE            = true;
+          window.MYTH_ORIENTATION_ACTIVE = false;
+          refreshStatsSidebar();
+          if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
+        },
+      });
+    }
+    function _pekh(e) { if (e.key === 'Enter') _done(); }
+    document.addEventListener('keydown', _pekh);
+    document.getElementById('pe-done-btn').addEventListener('click', _done, { once: true });
+  }
 }
 
 function groupLabels_g(g) {

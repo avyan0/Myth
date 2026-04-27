@@ -1535,15 +1535,24 @@ function initWorld3D(playerData) {
   // ============================================================
   prog(56, 'Club fair...');
 
-  // ── Funnel signs pointing south from gym ──
-  var _cfS1 = mkLabel('↓  CLUB FAIR TODAY  ↓', 10);
-  _cfS1.position.set(-80, 4.0, -52);
-
-  var _cfS2 = mkLabel('↓  CLUB FAIR  ↓', 9);
-  _cfS2.position.set(-92, 3.5, -43);
-
-  // ── Large overhead banner above the booths ──
-  var _cfBanner = mkLabel('— WESTBROOK CLUB FAIR —', 16);
+  // ── Semi-transparent barriers delineate the club fair zone ──
+  // Each panel: thin plane, semi-transparent blue glow — visually guides, no collision
+  var _cfBarrMat = new THREE.MeshBasicMaterial({ color: 0x44aaff, transparent: true, opacity: 0.13, side: THREE.DoubleSide });
+  var _cfGlowMat = new THREE.MeshBasicMaterial({ color: 0x88ccff, transparent: true, opacity: 0.06, side: THREE.DoubleSide });
+  // North boundary (z = -43)
+  visBox(36, 3.0, 0.10, _cfBarrMat, -124, 1.5, -43);
+  visBox(36, 3.4, 0.22, _cfGlowMat, -124, 1.5, -43);
+  // South boundary (z = -25)
+  visBox(36, 3.0, 0.10, _cfBarrMat, -124, 1.5, -25);
+  visBox(36, 3.4, 0.22, _cfGlowMat, -124, 1.5, -25);
+  // West boundary (x = -143)
+  visBox(0.10, 3.0, 20, _cfBarrMat, -143, 1.5, -34);
+  visBox(0.22, 3.4, 20, _cfGlowMat, -143, 1.5, -34);
+  // East boundary (x = -105)
+  visBox(0.10, 3.0, 20, _cfBarrMat, -105, 1.5, -34);
+  visBox(0.22, 3.4, 20, _cfGlowMat, -105, 1.5, -34);
+  // Overhead banner
+  var _cfBanner = mkLabel('— WESTBROOK CLUB FAIR —', 14);
   _cfBanner.position.set(-125, 7.0, -34);
 
   // ── Single booth builder ──
@@ -1760,27 +1769,10 @@ function initWorld3D(playerData) {
   var keys = {};
 
   // Club fair / commitment system
-  var clubMeetingTimer    = 0;
-  var CLUB_MEETING_INTERVAL = 180; // 3 real-time minutes per "period"
-
-  // ── Schedule system ──────────────────────────────────────────────────────
-  // Real-time period durations (seconds). At midpoint, attendance is checked.
-  var SCHED_PERIODS = [
-    { id:'before_school', name:'Before School',   dur:60,  free:true,  zx:null,  zz:null, zr:0  },
-    { id:'bio',           name:'Period 1 · Bio',  dur:150, free:false, zx:-23,   zz:-89,  zr:22 },
-    { id:'lit',           name:'Period 2 · Lit',  dur:150, free:false, zx: 7,    zz:-30,  zr:22 },
-    { id:'math',          name:'Period 3 · Math', dur:150, free:false, zx:-11,   zz:-89,  zr:22 },
-    { id:'pe',            name:'Period 4 · PE',   dur:150, free:false, zx:-92,   zz:-62,  zr:28 },
-    { id:'lunch',         name:'Lunch',           dur:90,  free:true,  zx:null,  zz:null, zr:0  },
-    { id:'ec',            name:'EC / Study Hall', dur:150, free:null,  zx:null,  zz:null, zr:0  },
-    { id:'after_school',  name:'After School',    dur:60,  free:true,  zx:null,  zz:null, zr:0  },
-  ];
-  var schedPeriodIdx   = 0;          // index into SCHED_PERIODS
-  var schedPeriodTimer = 0;          // elapsed seconds in current period
-  var schedAttendChecked = false;    // did we already check attendance this period?
-  var schedAbsences    = { bio:0, lit:0, math:0, pe:0, ec:0 }; // absence counters
-  var schedRunning     = false;      // starts when orientation completes
-  var fullMapOpen      = false;
+  var clubMeetingTimer      = 0;
+  var CLUB_MEETING_INTERVAL = 180;
+  var _cfProxTimer = 0, _cfProxType = null; // 1.5s buffer before triggering booth
+  var fullMapOpen = false;
 
   CAM.position.set(px, py, pz);
   window.addEventListener('keydown', function(e) {
@@ -2104,26 +2096,20 @@ function initWorld3D(playerData) {
     ctx.lineTo(ahx + Math.sin(-yaw - 2.4) * arLen * 0.3, ahz + Math.cos(-yaw - 2.4) * arLen * 0.3);
     ctx.closePath(); ctx.fill();
 
-    // Highlight current schedule destination
-    if (schedRunning && SCHED_PERIODS[schedPeriodIdx]) {
-      var sp = SCHED_PERIODS[schedPeriodIdx];
-      // Override EC zone based on club choice
-      var destX = sp.zx, destZ = sp.zz, destR = sp.zr;
-      if (sp.id === 'ec' && window.MYTH_CLUB_CHOICE) {
-        if (window.MYTH_CLUB_CHOICE === 'robotics') { destX=-92; destZ=-62; destR=28; }
-        else if (window.MYTH_CLUB_CHOICE === 'football') { destX=-82; destZ=102; destR=30; }
-      }
-      if (!sp.free && destX !== null) {
-        ctx.strokeStyle = 'rgba(100,255,120,0.7)'; ctx.lineWidth = Math.max(1.5, 2 * sc);
-        ctx.beginPath();
-        ctx.arc(wx(destX), wz(destZ), Math.max(5, destR * sc), 0, Math.PI * 2);
-        ctx.stroke();
-        // Pulsing fill
-        ctx.fillStyle = 'rgba(100,255,120,0.12)';
-        ctx.beginPath();
-        ctx.arc(wx(destX), wz(destZ), Math.max(5, destR * sc), 0, Math.PI * 2);
-        ctx.fill();
-      }
+    // Highlight bio building (next destination) if club fair done but bio not yet triggered
+    if (window.MYTH_CLUB_CHOICE !== null && window.MYTH_CLUB_CHOICE !== undefined &&
+        !window.MYTH_BIO_TRIGGERED) {
+      ctx.strokeStyle = 'rgba(100,255,120,0.7)'; ctx.lineWidth = Math.max(1.5, 2 * sc);
+      ctx.beginPath(); ctx.arc(wx(-14), wz(-82), Math.max(5, 18 * sc), 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = 'rgba(100,255,120,0.1)';
+      ctx.beginPath(); ctx.arc(wx(-14), wz(-82), Math.max(5, 18 * sc), 0, Math.PI * 2); ctx.fill();
+    }
+    // Highlight gym (PE) after bio done
+    if (window.MYTH_BIO_DONE && !window.MYTH_PE_TRIGGERED) {
+      ctx.strokeStyle = 'rgba(255,160,60,0.7)'; ctx.lineWidth = Math.max(1.5, 2 * sc);
+      ctx.beginPath(); ctx.arc(wx(-92), wz(-62), Math.max(5, 22 * sc), 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,160,60,0.1)';
+      ctx.beginPath(); ctx.arc(wx(-92), wz(-62), Math.max(5, 22 * sc), 0, Math.PI * 2); ctx.fill();
     }
   }
 
@@ -2232,24 +2218,19 @@ function initWorld3D(playerData) {
       ctx.fillText(legend[li][1], lx + 16, lgY + 11);
     }
 
-    // ── Schedule panel (bottom right) ──
-    if (schedRunning && SCHED_PERIODS[schedPeriodIdx]) {
-      var sp2 = SCHED_PERIODS[schedPeriodIdx];
-      var timeLeft = Math.max(0, sp2.dur - schedPeriodTimer);
-      var mins = Math.floor(timeLeft / 60), secs = Math.floor(timeLeft % 60);
-      var schedTxt = sp2.name + '  (' + mins + ':' + (secs < 10 ? '0' : '') + secs + ')';
+    // ── Next destination hint (bottom right) ──
+    var hintTxt = null;
+    if (window.MYTH_CLUB_CHOICE !== null && window.MYTH_CLUB_CHOICE !== undefined && !window.MYTH_BIO_TRIGGERED)
+      hintTxt = 'NEXT: Bio Class (green ring)';
+    else if (window.MYTH_BIO_DONE && !window.MYTH_PE_TRIGGERED)
+      hintTxt = 'NEXT: PE — Gym (orange ring)';
+    if (hintTxt) {
       ctx.fillStyle = 'rgba(8,14,26,0.8)';
-      ctx.fillRect(W - 320, H - 70, 300, 50);
+      ctx.fillRect(W - 300, H - 58, 280, 38);
       ctx.strokeStyle = 'rgba(200,180,100,0.4)'; ctx.lineWidth = 1;
-      ctx.strokeRect(W - 320, H - 70, 300, 50);
-      ctx.fillStyle = 'rgba(200,180,100,0.9)'; ctx.font = 'bold 13px monospace'; ctx.textAlign = 'center';
-      ctx.fillText('CURRENT PERIOD', W - 170, H - 51);
-      ctx.fillStyle = '#ffe040'; ctx.font = '12px monospace';
-      ctx.fillText(schedTxt, W - 170, H - 33);
-      if (!sp2.free) {
-        ctx.fillStyle = 'rgba(100,255,120,0.8)'; ctx.font = '10px monospace';
-        ctx.fillText('▶ Go to highlighted zone', W - 170, H - 17);
-      }
+      ctx.strokeRect(W - 300, H - 58, 280, 38);
+      ctx.fillStyle = '#ffe040'; ctx.font = '11px monospace'; ctx.textAlign = 'center';
+      ctx.fillText(hintTxt, W - 160, H - 33);
     }
 
     // Compass rose (top-right)
@@ -2404,25 +2385,53 @@ function initWorld3D(playerData) {
       }
     }
 
-    // ── Club fair booth proximity (after orientation, before club chosen) ──
+    // ── Club fair booth proximity — 1.5s dwell before triggering ──
     if (!window.MYTH_ORIENTATION_ACTIVE &&
         typeof Engine !== 'undefined' && Engine.hasFlag &&
         Engine.hasFlag('orientation_complete') &&
         !window.MYTH_CLUB_CHOICE &&
         !window.MYTH_CLUB_FAIR_TRIGGERED) {
-      var _cfD = function(cx, cz) {
-        var dx = px - cx, dz = pz - cz;
-        return Math.sqrt(dx*dx + dz*dz);
-      };
-      var _trigCF = function(type) {
-        window.MYTH_CLUB_FAIR_TRIGGERED = true;
-        window.MYTH_ORIENTATION_ACTIVE  = true;
+      var _cfDist = function(cx, cz) { var dx=px-cx,dz2=pz-cz; return Math.sqrt(dx*dx+dz2*dz2); };
+      var _nearCF = null;
+      if      (_cfDist(-115,-34)<4.5) _nearCF='robotics';
+      else if (_cfDist(-125,-34)<4.5) _nearCF='football';
+      else if (_cfDist(-135,-34)<4.5) _nearCF='none';
+
+      if (_nearCF) {
+        if (_cfProxType !== _nearCF) { _cfProxTimer = 0; _cfProxType = _nearCF; }
+        _cfProxTimer += dt;
+        if (_cfProxTimer >= 1.5) {
+          _cfProxTimer = 0; _cfProxType = null;
+          window.MYTH_CLUB_FAIR_TRIGGERED = true;
+          window.MYTH_ORIENTATION_ACTIVE  = true;
+          if (document.pointerLockElement === canvas) document.exitPointerLock();
+          if (typeof showClubFairOverlay === 'function') showClubFairOverlay(_nearCF);
+        }
+      } else {
+        _cfProxTimer = 0; _cfProxType = null;
+      }
+    }
+
+    // ── Bio class trigger — walk toward Bio building after club fair ──
+    if (window.MYTH_CLUB_CHOICE !== undefined && window.MYTH_CLUB_CHOICE !== null &&
+        !window.MYTH_BIO_TRIGGERED && !window.MYTH_ORIENTATION_ACTIVE) {
+      var bioDx = px - (-14), bioDz = pz - (-82);
+      if (Math.sqrt(bioDx*bioDx + bioDz*bioDz) < 18) {
+        window.MYTH_BIO_TRIGGERED = true;
+        window.MYTH_ORIENTATION_ACTIVE = true;
         if (document.pointerLockElement === canvas) document.exitPointerLock();
-        if (typeof showClubFairOverlay === 'function') showClubFairOverlay(type);
-      };
-      if      (_cfD(-115, -34) < 4.5) _trigCF('robotics');
-      else if (_cfD(-125, -34) < 4.5) _trigCF('football');
-      else if (_cfD(-135, -34) < 4.5) _trigCF('none');
+        if (typeof showBioClassEvent === 'function') showBioClassEvent();
+      }
+    }
+
+    // ── PE bomb threat — re-enter gym after Bio class ──
+    if (window.MYTH_BIO_DONE && !window.MYTH_PE_TRIGGERED && !window.MYTH_ORIENTATION_ACTIVE) {
+      if (px >= -112 && px <= -72 && pz >= -77 && pz <= -47) {
+        window.MYTH_PE_TRIGGERED = true;
+        window.MYTH_ORIENTATION_ACTIVE = true;
+        if (document.pointerLockElement === canvas) document.exitPointerLock();
+        if (typeof showPEBombThreat === 'function') showPEBombThreat();
+      }
     }
 
     // ── Club commitment meeting timer ──
@@ -2449,80 +2458,29 @@ function initWorld3D(playerData) {
       }
     }
 
-    // ── Schedule system ──────────────────────────────────────────────────────
-    // Starts running once orientation is complete and no overlay is active
-    if (!schedRunning && Engine && Engine.hasFlag && Engine.hasFlag('orientation_complete')) {
-      schedRunning = true;
-      schedPeriodIdx = 0;
-      schedPeriodTimer = 0;
-      schedAttendChecked = false;
+    // ── World atmosphere effects (flags set by story overlays) ──
+    if (window.MYTH_POWER_OUTAGE) {
+      sunL.intensity = Math.max(0.02, sunL.intensity - dt * 2.5);
+      ambL.intensity = Math.max(0.02, ambL.intensity - dt * 2.5);
+      SCN.fog.far    = Math.max(6,    SCN.fog.far    - dt * 60);
+      SCN.fog.color.setRGB(0, 0, 0.01);
+      SCN.background.set(0x000005);
+    } else if (window.MYTH_POWER_RESTORE) {
+      sunL.intensity = Math.min(2.6, sunL.intensity + dt * 1.2);
+      ambL.intensity = Math.min(1.0, ambL.intensity + dt * 1.2);
+      SCN.fog.far    = Math.min(600, SCN.fog.far    + dt * 80);
+      if (SCN.fog.far >= 599) window.MYTH_POWER_RESTORE = false;
     }
-    if (schedRunning && !window.MYTH_ORIENTATION_ACTIVE) {
-      schedPeriodTimer += dt;
-      var sp = SCHED_PERIODS[schedPeriodIdx];
-
-      // Determine EC zone (depends on club choice)
-      var spZx = sp.zx, spZz = sp.zz, spZr = sp.zr;
-      if (sp.id === 'ec') {
-        if (window.MYTH_CLUB_CHOICE === 'robotics') { spZx = -92; spZz = -62; spZr = 28; }
-        else if (window.MYTH_CLUB_CHOICE === 'football') { spZx = -82; spZz = 102; spZr = 30; }
-        else { sp = Object.assign({}, sp, { free: true }); } // no commitment = free
-      }
-
-      // Attendance check fires at halfway through non-free periods
-      if (!sp.free && !schedAttendChecked && schedPeriodTimer >= sp.dur * 0.5) {
-        schedAttendChecked = true;
-        var playerInZone = spZx !== null && Math.sqrt(Math.pow(px - spZx, 2) + Math.pow(pz - spZz, 2)) < spZr;
-        if (!playerInZone) {
-          // Mark absent
-          if (schedAbsences[sp.id] !== undefined) {
-            schedAbsences[sp.id]++;
-            var absCount = schedAbsences[sp.id];
-            if (absCount >= 3) {
-              // Major penalty for chronic absence
-              if (Engine && Engine.modifyStats) {
-                Engine.modifyStats({ gpa: -0.3, happiness: -0.5, intelligence: -0.4 });
-              }
-              showN('⚠ You\'ve missed ' + sp.name + ' 3 times. Consequences.');
-            } else if (absCount === 2) {
-              if (Engine && Engine.modifyStats) Engine.modifyStats({ gpa: -0.15, happiness: -0.3 });
-              showN('⚠ Second absence from ' + sp.name + '.');
-            } else {
-              if (Engine && Engine.modifyStats) Engine.modifyStats({ gpa: -0.05, happiness: -0.1 });
-              showN('You skipped ' + sp.name + '.');
-            }
-          }
-        } else {
-          // Attended — small positive
-          if (Engine && Engine.modifyStats) {
-            Engine.modifyStats({ intelligence: 0.05, happiness: 0.05 });
-          }
-          showN('✓ Attended ' + sp.name + '.');
-        }
-      }
-
-      // Advance to next period
-      if (schedPeriodTimer >= sp.dur) {
-        schedPeriodTimer = 0;
-        schedAttendChecked = false;
-        schedPeriodIdx = (schedPeriodIdx + 1) % SCHED_PERIODS.length;
-        var nextSp = SCHED_PERIODS[schedPeriodIdx];
-        // Show next period notification
-        if (!nextSp.free) {
-          showN('Next: ' + nextSp.name + ' — head to class!');
-        } else {
-          showN(nextSp.name + ' — free time.');
-        }
-      }
-
-      // Update HUD period display
-      var hudPeriod = document.getElementById('hud-period');
-      if (hudPeriod) {
-        var curSp = SCHED_PERIODS[schedPeriodIdx];
-        var timeLeft2 = Math.max(0, curSp.dur - schedPeriodTimer);
-        var m2 = Math.floor(timeLeft2 / 60), s2 = Math.floor(timeLeft2 % 60);
-        hudPeriod.textContent = curSp.name + '  ' + m2 + ':' + (s2 < 10 ? '0' : '') + s2;
-      }
+    if (window.MYTH_BOMB_THREAT_ACTIVE) {
+      sunL.intensity = Math.max(0.15, sunL.intensity - dt * 1.5);
+      ambL.intensity = Math.max(0.08, ambL.intensity - dt * 1.5);
+      SCN.fog.color.setRGB(0.06, 0.02, 0.02);
+      SCN.fog.far    = Math.max(30,   SCN.fog.far    - dt * 20);
+    } else if (window.MYTH_BOMB_CLEAR) {
+      sunL.intensity = Math.min(2.6, sunL.intensity + dt * 0.8);
+      ambL.intensity = Math.min(1.0, ambL.intensity + dt * 0.8);
+      SCN.fog.far    = Math.min(600, SCN.fog.far    + dt * 60);
+      if (SCN.fog.far >= 599) window.MYTH_BOMB_CLEAR = false;
     }
 
     // UI updates
