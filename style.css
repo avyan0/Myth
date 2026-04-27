@@ -2654,6 +2654,94 @@ html, body {
   padding: 0 12vw 6vh;
 }
 
+/* ══════════════════════════════════════════════════════
+   FRESHMAN YEAR END CUTSCENE
+══════════════════════════════════════════════════════ */
+.year-end-overlay {
+  position: fixed; inset: 0; z-index: 900;
+  background: #04080f;
+  display: flex; align-items: center; justify-content: center;
+  overflow-y: auto;
+}
+.yr-inner {
+  width: min(680px, 94vw);
+  padding: 6vh 0 8vh;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.yr-top-badge {
+  font-family: var(--font-m); font-size: .72rem;
+  color: rgba(200,180,100,.5); letter-spacing: .22em;
+  text-transform: uppercase; margin-bottom: 4px;
+}
+.yr-year-label {
+  font-family: var(--font-h); font-size: 1.1rem;
+  color: rgba(200,180,100,.6); letter-spacing: .4em;
+  text-transform: uppercase;
+}
+.yr-complete {
+  font-family: var(--font-h); font-size: 5.5rem;
+  color: #e8dfc8; line-height: 1; letter-spacing: .06em;
+}
+.yr-divider {
+  width: 60px; height: 2px;
+  background: rgba(200,180,100,.4); margin: 8px 0;
+}
+.yr-verdict-label {
+  font-family: var(--font-h); font-size: 1.8rem;
+  color: #F7B731; letter-spacing: .1em;
+}
+.yr-verdict-desc {
+  font-size: 1.05rem; color: rgba(220,210,190,.8);
+  max-width: 520px; line-height: 1.7;
+}
+.yr-ec-line {
+  font-family: var(--font-m); font-size: .78rem;
+  color: rgba(200,180,100,.55); letter-spacing: .1em;
+  margin-top: 4px;
+}
+.yr-ec-val { color: rgba(200,180,100,.9); }
+.yr-stats {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-top: 10px;
+}
+.yr-stat-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 52px 90px;
+  align-items: center; gap: 10px;
+}
+.yr-stat-label {
+  font-family: var(--font-m); font-size: .72rem;
+  color: rgba(200,180,120,.65); letter-spacing: .1em;
+}
+.yr-stat-bar-wrap {
+  height: 5px; background: rgba(255,255,255,.08);
+  border-radius: 3px; overflow: hidden;
+}
+.yr-stat-bar {
+  height: 100%; border-radius: 3px;
+  transition: width .8s ease;
+}
+.yr-stat-val {
+  font-family: var(--font-m); font-size: .8rem;
+  color: #e8dfc8; text-align: right;
+}
+.yr-stat-delta {
+  font-family: var(--font-m); font-size: .75rem;
+  text-align: right;
+}
+.yr-next-label {
+  font-family: var(--font-h); font-size: 1.5rem;
+  color: rgba(200,180,100,.7); letter-spacing: .14em;
+  margin-top: 4px;
+}
+.yr-next-desc {
+  font-size: 1rem; color: rgba(200,190,170,.65);
+  max-width: 500px; line-height: 1.65;
+}
+.yr-continue-btn {
+  margin-top: 18px; align-self: flex-start;
+}
+
 /* PE result */
 .pe-result-screen {
   display: flex; flex-direction: column;

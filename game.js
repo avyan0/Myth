@@ -540,6 +540,9 @@ function launchGame() {
   window.MYTH_BOMB_THREAT_ACTIVE    = false;
   window.MYTH_BOMB_CLEAR            = false;
 
+  // Snapshot starting stats for year-end recap
+  window.MYTH_START_STATS = Object.assign({}, player.stats);
+
   const transEl = document.getElementById('scene-transition');
   transEl.classList.remove('active');
   transEl.style.opacity = '0';
@@ -1698,12 +1701,7 @@ function showPEBombThreat() {
         onComplete: () => {
           overlay.classList.remove('open');
           overlay.style.opacity = '';
-          window.MYTH_PE_DONE              = true;
-          window.MYTH_ORIENTATION_ACTIVE   = false;
-          window.MYTH_FRESHMAN_RESTRICTION = false; // full campus unlocks after PE
-          refreshStatsSidebar();
-          if (window.MYTH_SHOW_NOTIF) setTimeout(() => window.MYTH_SHOW_NOTIF('Campus is yours. Freshman year has started.'), 600);
-          if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
+          showFreshmanYearEnd();
         },
       });
     }
@@ -1711,6 +1709,99 @@ function showPEBombThreat() {
     document.addEventListener('keydown', _pekh);
     document.getElementById('pe-done-btn').addEventListener('click', _done, { once: true });
   }
+}
+
+// ═══════════════════════════════════════════════════════
+//  FRESHMAN YEAR COMPLETION CUTSCENE
+// ═══════════════════════════════════════════════════════
+function showFreshmanYearEnd() {
+  const start  = window.MYTH_START_STATS || {};
+  const now    = player.stats;
+  const ec     = window.MYTH_CLUB_CHOICE === 'robotics' ? 'Robotics Club' :
+                 window.MYTH_CLUB_CHOICE === 'football'  ? 'Football'       : 'No EC joined';
+
+  const statOrder = ['gpa','friendships','relationships','sports','intelligence','extracurriculars','happiness'];
+  const MAX       = { gpa: 4, friendships: 10, relationships: 10, sports: 10, intelligence: 10, extracurriculars: 10, happiness: 10 };
+
+  function statRow(key) {
+    const s0  = start[key] ?? now[key];
+    const s1  = now[key];
+    const d   = +(s1 - s0).toFixed(2);
+    const pct = key === 'gpa' ? (s1 / 4) * 100 : (s1 / 10) * 100;
+    const col = pct >= 70 ? '#F7B731' : pct >= 40 ? '#6BCB77' : '#FC7B54';
+    const arrow = d > 0 ? `<span style="color:#6BCB77">▲ +${d}</span>` :
+                  d < 0 ? `<span style="color:#FC7B54">▼ ${d}</span>`  :
+                          `<span style="color:#888">— 0</span>`;
+    const label = STAT_LABELS[key] || key.toUpperCase();
+    const barW  = Math.round(pct);
+    return `
+      <div class="yr-stat-row">
+        <span class="yr-stat-label">${label}</span>
+        <div class="yr-stat-bar-wrap">
+          <div class="yr-stat-bar" style="width:${barW}%;background:${col}"></div>
+        </div>
+        <span class="yr-stat-val">${s1.toFixed(key==='gpa'?2:1)}</span>
+        <span class="yr-stat-delta">${arrow}</span>
+      </div>
+    `;
+  }
+
+  const gpa     = now.gpa || 0;
+  const overallLabel = gpa >= 3.8 ? 'HONORS FRESHMAN' : gpa >= 3.0 ? 'SOLID YEAR' : gpa >= 2.0 ? 'GETTING BY' : 'ROUGH START';
+  const overallDesc  = gpa >= 3.8 ? "You finished your first year stronger than most upperclassmen. They noticed."
+                     : gpa >= 3.0 ? "You held it together. First year of high school — that's harder than it sounds."
+                     : gpa >= 2.0 ? "It wasn't your best work. You know that. So does everyone else. Sophomore year is a reset."
+                     : "This year got away from you. But you're still here.";
+
+  const overlay = document.getElementById('year-end-overlay');
+  if (!overlay) {
+    // Fallback: inject overlay if not in HTML
+    const el = document.createElement('div');
+    el.id = 'year-end-overlay';
+    el.className = 'year-end-overlay';
+    document.getElementById('scene-game').appendChild(el);
+  }
+  const el = document.getElementById('year-end-overlay');
+  el.innerHTML = `
+    <div class="yr-inner">
+      <div class="yr-top-badge">WESTBROOK HIGH SCHOOL · CUPERTINO, CA</div>
+      <div class="yr-year-label">FRESHMAN YEAR</div>
+      <div class="yr-complete">COMPLETE</div>
+      <div class="yr-divider"></div>
+      <div class="yr-verdict-label">${overallLabel}</div>
+      <p class="yr-verdict-desc">${overallDesc}</p>
+      <div class="yr-ec-line">EC: <span class="yr-ec-val">${ec}</span></div>
+      <div class="yr-stats">
+        ${statOrder.map(statRow).join('')}
+      </div>
+      <div class="yr-divider" style="margin-top:28px"></div>
+      <div class="yr-next-label">SOPHOMORE YEAR BEGINS</div>
+      <p class="yr-next-desc">The campus is yours now. The restrictions are gone. Whatever reputation you built this year — you carry it into Year 2.</p>
+      <button class="btn-primary yr-continue-btn" id="yr-continue-btn">CONTINUE TO SOPHOMORE YEAR →</button>
+      <div class="or-key-hint" style="margin-top:8px;font-size:.7rem;opacity:.4">[ ENTER ] to continue</div>
+    </div>
+  `;
+  el.style.display = 'flex';
+  G.from(el, { opacity: 0, duration: 0.8 });
+  G.from(el.querySelector('.yr-inner'), { y: 30, opacity: 0, duration: 1.0, ease: 'power2.out' });
+
+  let _f2 = false;
+  function _finish() {
+    if (_f2) return; _f2 = true;
+    document.removeEventListener('keydown', _yrKH);
+    G.to(el, { opacity: 0, duration: 0.6, onComplete: () => {
+      el.style.display = 'none';
+      window.MYTH_PE_DONE              = true;
+      window.MYTH_ORIENTATION_ACTIVE   = false;
+      window.MYTH_FRESHMAN_RESTRICTION = false;
+      refreshStatsSidebar();
+      if (window.MYTH_SHOW_NOTIF) setTimeout(() => window.MYTH_SHOW_NOTIF('Welcome to sophomore year. Campus is yours.'), 600);
+      if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
+    }});
+  }
+  function _yrKH(e) { if (e.key === 'Enter') _finish(); }
+  document.addEventListener('keydown', _yrKH);
+  document.getElementById('yr-continue-btn').addEventListener('click', _finish, { once: true });
 }
 
 function groupLabels_g(g) {
