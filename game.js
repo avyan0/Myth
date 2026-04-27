@@ -967,8 +967,12 @@ function showClubFairOverlay(boothType) {
   const overlay = document.getElementById('club-fair-overlay');
   if (!overlay) return;
   const inner = overlay.querySelector('.cf-inner');
+  const _rumorLine = player.rumor
+    ? `<div class="cf-rumor-tag">💬 <em>"${player.rumor}"</em></div>`
+    : '';
   inner.innerHTML = `
     <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; CLUB FAIR</div>
+    ${_rumorLine}
     <div class="cf-icon">${data.icon}</div>
     <div class="cf-title">${data.name}</div>
     <p class="cf-desc">${data.desc}</p>
@@ -1415,6 +1419,20 @@ function showBioClassEvent() {
   if (!overlay) return;
   overlay.classList.add('open');
   const inner = overlay.querySelector('.bio-inner');
+  const _bgBioLines = {
+    new_kid:       "You barely know the building layout. You follow the antiseptic smell.",
+    legacy:        "The Westbrook crest above the door has been here longer than you have.",
+    scholarship:   "You earned your place in this room. Now you have to keep earning it.",
+    transfer:      "Different school, same frog smell. Some things don't change.",
+    local_legend:  "You've heard about this class since sixth grade. Everyone says it's brutal.",
+    military:      "You've started over enough times to know the first test sets the tone.",
+    online_famous: "Nobody in here knows you from your posts. Good.",
+    returnee:      "Room 102. You were in this hallway before. Feels different now.",
+    prodigy:       "You're the youngest one in here. You're also the most prepared.",
+    old_money:     "Your grandfather's name is on the science wing. No pressure.",
+  };
+  const _bgNote = (_bgBioLines[player.background && player.background.id] ||
+    "You make your way to the biology building. The antiseptic smell hits before you even open the door.");
   inner.innerHTML = `
     <div class="bio-transition">
       <div class="or-badge">WESTBROOK HIGH SCHOOL</div>
@@ -1422,7 +1440,7 @@ function showBioClassEvent() {
       <div class="bio-trans-subject">BIOLOGY</div>
       <div class="bio-trans-room">Building C · Room 102</div>
       <div class="bio-trans-line"></div>
-      <p class="bio-trans-note">You make your way across campus to the biology building. The antiseptic smell hits before you even open the door. Five dissection trays sit covered on the lab tables.</p>
+      <p class="bio-trans-note">${_bgNote} Five dissection trays sit covered on the lab tables.</p>
     </div>
   `;
   G.from(inner, { opacity: 0, duration: 0.7 });
@@ -1527,6 +1545,33 @@ function showPEBombThreat() {
         delay: 11500,
         pa: null,
         text: 'Nobody speaks above a whisper. One girl is crying quietly. Someone\'s hands are shaking — maybe yours.',
+        effect: null,
+      },
+      {
+        delay: 12600,
+        pa: null,
+        text: (function() {
+          const _secretThoughts = {
+            anxiety:      "The silence is the worst part. Your brain won't stop running scenarios. You breathe through it, one count at a time. You've done this before.",
+            learning:     "Your mind races in its own direction, like always. You catalog exits, patterns, details. A different kind of processing. It keeps you calm.",
+            wealthy:      "You think about how none of this — the school, the floor, the bleachers — would feel real if you told anyone what your house looks like.",
+            talent:       "For some reason, all you can think about is a sketch you never finished. You trace it mentally on the back of your hand.",
+            family:       "You've sat in tense, silent rooms before. You know how to go somewhere else in your head. You go there now.",
+            ex_athlete:   "You feel your weight distributed correctly — heels, knees, back flat. The training doesn't leave. It just becomes background noise.",
+            crush:        "You scan the corner twice before you find them. They're okay. You look away before they notice you looking.",
+            following:    "Nobody here knows you. Nobody here knows the other you either. Right now, that feels like the only good thing.",
+            chronic:      "You check your body the way you always do, automatically — levels, breathing, tension. You're okay. You stay okay.",
+            therapy:      "Your therapist would say: name five things you can see. Cold floor. Wrestling mat. Emergency sign. Dusty bleacher. Someone's untied shoe. You're okay.",
+            ghosted:      "You think about the last group chat. They're probably not thinking about you right now. You're not sure if that's better or worse.",
+            writer:       "Somewhere in the back of your head, you're already writing this. The cold floor. The held breath. The way time dilates when nothing moves.",
+            bad_breakup:  "The thing about real fear is it makes everything else feel like noise. For a minute, the other stuff doesn't matter. You hate that it's almost a relief.",
+            secret_keep:  "You think about what you know. About what it would mean if something actually happened here and certain people never got to answer for it.",
+            language:     "You start counting in the other language. Quietly. In your head. It has always felt like a private room nobody else can enter.",
+            dropout_risk: "You almost didn't come back this year. Sitting here now, you can't decide if that makes this feel more precious or more fragile.",
+          };
+          return _secretThoughts[player.secret && player.secret.id] ||
+            "The seconds stretch. You stop counting and just breathe.";
+        })(),
         effect: null,
       },
       {

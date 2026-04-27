@@ -1930,6 +1930,18 @@ html, body {
   letter-spacing: 0.02em;
 }
 
+.cf-rumor-tag {
+  font-family: var(--font-m);
+  font-size: 0.78rem;
+  color: rgba(200, 160, 100, 0.7);
+  letter-spacing: 0.04em;
+  border-left: 2px solid rgba(200, 130, 60, 0.4);
+  padding: 4px 10px;
+  background: rgba(200, 120, 60, 0.07);
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 2px;
+}
+
 .cf-buttons {
   display: flex;
   gap: 14px;
