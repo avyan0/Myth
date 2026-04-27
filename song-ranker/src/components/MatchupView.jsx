@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import SongCard from './SongCard.jsx'
 import TierHistogram from './TierHistogram.jsx'
+import RankingsView from './RankingsView.jsx'
 import { getNextMatch, isComplete, getActiveTierCount } from '../utils/matchmaking.js'
 
 export default function MatchupView({ songs, onVote, onReset, totalComparisons }) {
   const [match, setMatch] = useState(null)
   const [activePlayer, setActivePlayer] = useState(null)
   const [showReset, setShowReset] = useState(false)
+  const [showRankings, setShowRankings] = useState(false)
   const votedRef = useRef(false)
 
   const advance = useCallback(() => {
@@ -82,8 +84,11 @@ export default function MatchupView({ songs, onVote, onReset, totalComparisons }
           <span className="sep">·</span>
           <span>{songCount} songs</span>
         </div>
+        <button className="btn-ghost" onClick={() => setShowRankings(true)}>Rankings</button>
         <button className="btn-ghost" onClick={() => setShowReset(true)}>Reset</button>
       </header>
+
+      {showRankings && <RankingsView songs={songs} onClose={() => setShowRankings(false)} />}
 
       {showReset && (
         <div className="modal-overlay" onClick={() => setShowReset(false)}>
