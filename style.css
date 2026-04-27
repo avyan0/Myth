@@ -1997,6 +1997,26 @@ html, body {
 /* ══════════════════════════════════════════════════════
    BIO CLASS OVERLAY  (bottom panel — 3D world visible above)
 ══════════════════════════════════════════════════════ */
+
+/* All text inside bio/PE panels must be light (panels have dark backgrounds) */
+#bio-overlay, #pe-overlay,
+#bio-overlay *, #pe-overlay * {
+  --text:     #e8dfc8;
+  --text-mid: #a89878;
+  color: inherit;
+}
+#bio-overlay p, #bio-overlay div, #bio-overlay span,
+#pe-overlay  p, #pe-overlay  div, #pe-overlay  span {
+  color: #e8dfc8;
+}
+#bio-overlay .or-badge, #pe-overlay .or-badge {
+  color: rgba(200, 180, 100, 0.75);
+  border-color: rgba(200, 180, 100, 0.3);
+}
+#bio-overlay .btn-primary, #pe-overlay .btn-primary {
+  color: #2D1F12;
+}
+
 #bio-overlay, #pe-overlay {
   z-index: 820;
   /* Override full-screen .or-overlay → bottom panel */
@@ -2187,26 +2207,26 @@ html, body {
   color: var(--accent); letter-spacing: .1em;
 }
 .practical-tray {
-  background: rgba(12,26,18,.8);
-  border: 1px solid rgba(80,180,100,.25);
+  background: rgba(18,36,26,.85);
+  border: 1px solid rgba(80,180,100,.35);
   border-radius: 8px; padding: 18px 22px;
   flex-shrink: 0;
 }
 .tray-label {
   font-family: var(--font-m); font-size: .78rem;
-  color: rgba(100,200,120,.8); letter-spacing: .14em;
+  color: rgba(120,220,140,.9); letter-spacing: .14em;
   margin-bottom: 8px;
 }
 .tray-description {
-  font-size: 1.1rem; color: var(--text); line-height: 1.6; margin-bottom: 8px;
+  font-size: 1.1rem; color: #ddd8c8; line-height: 1.6; margin-bottom: 8px;
 }
 .tray-highlight {
   font-family: var(--font-m); font-size: .78rem;
-  color: rgba(200,180,100,.75); letter-spacing: .06em;
+  color: rgba(220,200,120,.85); letter-spacing: .06em;
 }
-.tray-highlight strong { color: var(--accent); }
+.tray-highlight strong { color: #8ddfaa; }
 .practical-question {
-  font-size: 1.28rem; color: var(--text); line-height: 1.5;
+  font-size: 1.28rem; color: #e8dfc8; line-height: 1.5;
   font-weight: 600; flex-shrink: 0;
 }
 .practical-choices {
@@ -2215,7 +2235,7 @@ html, body {
 .prac-btn {
   background: rgba(20,30,50,.7);
   border: 1px solid rgba(200,180,100,.3);
-  color: var(--text); font-family: var(--font-b);
+  color: #e8dfc8; font-family: var(--font-b);
   font-size: 1.06rem; letter-spacing: .04em;
   padding: 13px 20px; border-radius: 6px;
   cursor: pointer; text-align: left;

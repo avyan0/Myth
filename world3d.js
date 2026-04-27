@@ -1539,22 +1539,22 @@ function initWorld3D(playerData) {
   // ============================================================
   prog(56, 'Club fair...');
 
-  // ── Semi-transparent barriers delineate the club fair zone ──
-  // Each panel: thin plane, semi-transparent blue glow — visually guides, no collision
-  var _cfBarrMat = new THREE.MeshBasicMaterial({ color: 0x44aaff, transparent: true, opacity: 0.13, side: THREE.DoubleSide });
-  var _cfGlowMat = new THREE.MeshBasicMaterial({ color: 0x88ccff, transparent: true, opacity: 0.06, side: THREE.DoubleSide });
-  // North boundary (z = -43)
-  visBox(36, 3.0, 0.10, _cfBarrMat, -124, 1.5, -43);
-  visBox(36, 3.4, 0.22, _cfGlowMat, -124, 1.5, -43);
-  // South boundary (z = -25)
-  visBox(36, 3.0, 0.10, _cfBarrMat, -124, 1.5, -25);
-  visBox(36, 3.4, 0.22, _cfGlowMat, -124, 1.5, -25);
-  // West boundary (x = -143)
-  visBox(0.10, 3.0, 20, _cfBarrMat, -143, 1.5, -34);
-  visBox(0.22, 3.4, 20, _cfGlowMat, -143, 1.5, -34);
-  // East boundary (x = -105)
-  visBox(0.10, 3.0, 20, _cfBarrMat, -105, 1.5, -34);
-  visBox(0.22, 3.4, 20, _cfGlowMat, -105, 1.5, -34);
+  // ── Semi-transparent freshman restriction barriers ──
+  // Panels mark the actual freshman zone boundary (px -138...-65, pz -85...-22).
+  var _barrMat  = new THREE.MeshBasicMaterial({ color: 0x44aaff, transparent: true, opacity: 0.18, side: THREE.DoubleSide });
+  var _barrGlow = new THREE.MeshBasicMaterial({ color: 0x88ccff, transparent: true, opacity: 0.07, side: THREE.DoubleSide });
+  // East wall — x = -65 (main campus off-limits; full freshman zone z range)
+  visBox(0.12, 6.0, 63, _barrMat,  -65, 3.0, -53.5);
+  visBox(0.30, 6.5, 64, _barrGlow, -65, 3.0, -53.5);
+  // West wall — x = -138
+  visBox(0.12, 4.0, 63, _barrMat,  -138, 2.0, -53.5);
+  visBox(0.30, 4.4, 64, _barrGlow, -138, 2.0, -53.5);
+  // North wall — z = -85
+  visBox(73, 4.0, 0.12, _barrMat,  -101.5, 2.0, -85);
+  visBox(74, 4.4, 0.30, _barrGlow, -101.5, 2.0, -85);
+  // South wall — z = -22
+  visBox(73, 4.0, 0.12, _barrMat,  -101.5, 2.0, -22);
+  visBox(74, 4.4, 0.30, _barrGlow, -101.5, 2.0, -22);
   // Overhead banner
   var _cfBanner = mkLabel('— WESTBROOK CLUB FAIR —', 14);
   _cfBanner.position.set(-125, 7.0, -34);
