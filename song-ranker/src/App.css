@@ -219,75 +219,35 @@ html, body, #root {
 }
 .song-card--playing { border-color: var(--green); }
 
-/* Album art area */
-.song-card__art {
-  position: relative;
+/* 16:9 YouTube / Piped player */
+.song-card__player {
   width: 100%;
-  aspect-ratio: 1;
-  background: var(--surface2);
-  overflow: hidden;
-}
-.song-card__art img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.song-card__art-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 48px;
-  color: var(--text-muted);
-}
-
-/* Play button overlaid on art */
-.play-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.35);
-  border: none;
-  color: #fff;
-  font-size: 40px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-.song-card:hover .play-overlay,
-.play-overlay--active { opacity: 1; }
-.play-overlay--active { background: rgba(0,0,0,0.15); font-size: 36px; }
-.play-overlay--dead {
-  background: rgba(0,0,0,0.6);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  color: #fff;
-  opacity: 1;
-  letter-spacing: 0.3px;
-}
-
-/* Audio strip — clips to 40 px; iframe/div inside is offset via JS or inline style */
-.song-card__audio {
-  width: 100%;
-  height: 40px;
-  overflow: hidden;
+  aspect-ratio: 16 / 9;
   background: #000;
-  position: relative;
+  overflow: hidden;
+}
+.song-card__player > div {
+  width: 100%;
+  height: 100%;
 }
 
-.audio-dead {
-  height: 40px;
+.player-dead {
+  width: 100%;
+  height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  gap: 10px;
   color: var(--text-muted);
+  font-size: 13px;
 }
+.player-dead a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.player-dead a:hover { text-decoration: underline; }
 
 .song-card__info {
   padding: 14px 16px 0;
