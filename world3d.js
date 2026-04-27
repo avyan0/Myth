@@ -2084,25 +2084,25 @@ function initWorld3D(playerData) {
     ctx.strokeStyle = '#ffe040'; ctx.lineWidth = Math.max(1.5, 2.5 * sc);
     ctx.beginPath();
     ctx.moveTo(pdx, pdz);
-    ctx.lineTo(pdx + Math.sin(-yaw) * arLen, pdz + Math.cos(-yaw) * arLen);
+    ctx.lineTo(pdx + Math.sin(yaw) * arLen, pdz - Math.cos(yaw) * arLen);
     ctx.stroke();
     // Arrow head
     ctx.fillStyle = '#ffe040';
     ctx.beginPath();
-    var ahx = pdx + Math.sin(-yaw) * arLen;
-    var ahz = pdz + Math.cos(-yaw) * arLen;
+    var ahx = pdx + Math.sin(yaw) * arLen;
+    var ahz = pdz - Math.cos(yaw) * arLen;
     ctx.moveTo(ahx, ahz);
-    ctx.lineTo(ahx + Math.sin(-yaw + 2.4) * arLen * 0.3, ahz + Math.cos(-yaw + 2.4) * arLen * 0.3);
-    ctx.lineTo(ahx + Math.sin(-yaw - 2.4) * arLen * 0.3, ahz + Math.cos(-yaw - 2.4) * arLen * 0.3);
+    ctx.lineTo(ahx - Math.sin(yaw - 2.4) * arLen * 0.3, ahz + Math.cos(yaw - 2.4) * arLen * 0.3);
+    ctx.lineTo(ahx - Math.sin(yaw + 2.4) * arLen * 0.3, ahz + Math.cos(yaw + 2.4) * arLen * 0.3);
     ctx.closePath(); ctx.fill();
 
     // Highlight bio building (next destination) if club fair done but bio not yet triggered
     if (window.MYTH_CLUB_CHOICE !== null && window.MYTH_CLUB_CHOICE !== undefined &&
         !window.MYTH_BIO_TRIGGERED) {
       ctx.strokeStyle = 'rgba(100,255,120,0.7)'; ctx.lineWidth = Math.max(1.5, 2 * sc);
-      ctx.beginPath(); ctx.arc(wx(-14), wz(-82), Math.max(5, 18 * sc), 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(wx(-92), wz(-62), Math.max(5, 22 * sc), 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = 'rgba(100,255,120,0.1)';
-      ctx.beginPath(); ctx.arc(wx(-14), wz(-82), Math.max(5, 18 * sc), 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(wx(-92), wz(-62), Math.max(5, 22 * sc), 0, Math.PI * 2); ctx.fill();
     }
     // Highlight gym (PE) after bio done
     if (window.MYTH_BIO_DONE && !window.MYTH_PE_TRIGGERED) {
@@ -2412,11 +2412,10 @@ function initWorld3D(playerData) {
       }
     }
 
-    // ── Bio class trigger — walk toward Bio building after club fair ──
+    // ── Bio class trigger — re-enter gym after club fair ──
     if (window.MYTH_CLUB_CHOICE !== undefined && window.MYTH_CLUB_CHOICE !== null &&
         !window.MYTH_BIO_TRIGGERED && !window.MYTH_ORIENTATION_ACTIVE) {
-      var bioDx = px - (-14), bioDz = pz - (-82);
-      if (Math.sqrt(bioDx*bioDx + bioDz*bioDz) < 18) {
+      if (px >= -112 && px <= -72 && pz >= -77 && pz <= -47) {
         window.MYTH_BIO_TRIGGERED = true;
         window.MYTH_ORIENTATION_ACTIVE = true;
         if (document.pointerLockElement === canvas) document.exitPointerLock();

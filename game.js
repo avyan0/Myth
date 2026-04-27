@@ -729,19 +729,15 @@ function closeOrientationOverlay() {
     onComplete: () => {
       overlay.classList.remove('open');
       overlay.style.opacity = '';
-      window.MYTH_ORIENTATION_ACTIVE   = false;
-      window.MYTH_FRESHMAN_RESTRICTION = false;  // full campus unlocked after orientation
+      window.MYTH_ORIENTATION_ACTIVE = false;
+      // Restriction stays on — only the immediate campus is accessible until after PE
       Engine.setFlag('orientation_complete');
       refreshStatsSidebar();
       if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
       setTimeout(safeEventCheck, 400);
-      // Staggered hints nudging player to find the club fair
       setTimeout(() => {
-        if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('Overheard: "There\'s a club fair somewhere on campus today..."');
+        if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('Overheard: "There\'s a club fair somewhere near the gym..."');
       }, 3500);
-      setTimeout(() => {
-        if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('Someone mentions seeing signs posted south of the gym.');
-      }, 9000);
     },
   });
 }
@@ -1042,6 +1038,9 @@ function resolveClubChoice(boothType, joined) {
         window.MYTH_ORIENTATION_ACTIVE = false;
         refreshStatsSidebar();
         if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
+        setTimeout(() => {
+          if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('Head back to the gym — Biology class is in there.');
+        }, 700);
       },
     });
   }
@@ -1619,9 +1618,11 @@ function showPEBombThreat() {
         onComplete: () => {
           overlay.classList.remove('open');
           overlay.style.opacity = '';
-          window.MYTH_PE_DONE            = true;
-          window.MYTH_ORIENTATION_ACTIVE = false;
+          window.MYTH_PE_DONE              = true;
+          window.MYTH_ORIENTATION_ACTIVE   = false;
+          window.MYTH_FRESHMAN_RESTRICTION = false; // full campus unlocks after PE
           refreshStatsSidebar();
+          if (window.MYTH_SHOW_NOTIF) setTimeout(() => window.MYTH_SHOW_NOTIF('Campus is yours. Freshman year has started.'), 600);
           if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
         },
       });
