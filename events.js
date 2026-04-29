@@ -859,7 +859,7 @@ EventManager.registerMany([
     category: 'athletic',
     title:    'Football — First Practice',
     once:     true,
-    trigger:  s => s.grade === 10 && s.week === 2 && s.period.id === 'after_school' && Engine.hasFlag('soph_ec_football') && (Engine.hasFlag('soph_apcsa1_done') || Engine.hasFlag('soph_studies1_done')) && !Engine.hasFlag('soph_football_done'),
+    trigger:  s => s.grade === 10 && s.week >= 2 && s.period.id === 'after_school' && Engine.hasFlag('soph_ec_football') && Engine.hasFlag('football_field_visited') && (Engine.hasFlag('soph_apcsa1_done') || Engine.hasFlag('soph_studies1_done')) && !Engine.hasFlag('soph_football_done'),
     scene: {
       location: 'ATHLETIC FIELD',
       setup: "First football practice with Coach Rivera.",

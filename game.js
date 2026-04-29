@@ -1554,28 +1554,7 @@ function showPEBombThreat() {
   overlay.classList.add('open');
   const inner = overlay.querySelector('.pe-inner');
 
-  // Phase 1: Volleyball intro
-  inner.innerHTML = `
-    <div class="pe-intro-scene">
-      <div class="pe-gym-view">
-        <div class="pe-net"></div>
-        <div class="pe-court-lines"></div>
-        <div class="pe-players">
-          ${Array.from({length:6},(_,i)=>`<div class="pe-player" style="--pi:${i}"></div>`).join('')}
-        </div>
-        <div class="pe-ball" id="pe-ball"></div>
-      </div>
-      <div class="pe-intro-text">
-        <div class="or-badge">PERIOD 4 · PE — GYMNASIUM</div>
-        <p>Coach Williams has the volleyball nets up. The gym still smells faintly of Bio. Energy is loose — people are relieved after whatever happened in their morning classes.</p>
-        <p>You're at the net for your team. The ball comes over. You set it perfectly. Someone spikes it. The other side scrambles.</p>
-        <p class="pe-good-moment">For a moment, everything feels completely normal.</p>
-      </div>
-    </div>
-  `;
-  G.from(inner, { opacity: 0, duration: 0.7 });
-
-  setTimeout(() => runBombThreat(), 4500);
+  runBombThreat();
 
   function runBombThreat() {
     // Go full-screen for the bomb threat — maximum immersion
@@ -1631,7 +1610,7 @@ function showPEBombThreat() {
       { delay: 2800, pa: '"A CREDIBLE THREAT HAS BEEN RECEIVED AT THIS FACILITY."', text: null, effect: null },
       { delay: 4600, pa: '"THIS IS A LOCKDOWN. THIS IS NOT A DRILL."', text: null, effect: 'strobe' },
       { delay: 6200, pa: '"ALL STUDENTS AND STAFF REPORT TO SECURE LOCATIONS IMMEDIATELY. DO NOT LEAVE YOUR SECURE LOCATION UNTIL FURTHER NOTICE."', text: null, effect: null },
-      { delay: 9000, pa: null, text: 'The gym lights cut. Emergency strips on the ceiling click to red. The volleyball net is still up — nobody touched it.', effect: 'dim' },
+      { delay: 9000, pa: null, text: 'The gym lights cut. Emergency strips on the ceiling click to red.', effect: 'dim' },
       { delay: 11200, pa: null, text: '"CORNER — NORTHEAST — NOW! GO GO GO!" Coach Williams doesn\'t sound like a coach anymore.', effect: 'corner' },
       { delay: 13400, pa: null, text: 'You compress into the far corner under the emergency exit sign. Cold concrete wall. Thirty bodies. Everyone is breathing too fast.', effect: 'hide' },
       { delay: 15600, pa: null, text: 'Someone starts sobbing quietly behind you. A freshman you don\'t know. You don\'t turn around. Nobody does.', effect: null },

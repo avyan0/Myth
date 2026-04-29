@@ -500,7 +500,7 @@ function initWorld3D(playerData) {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(text, 256, 36);
     var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthTest: true }));
-    sp.scale.set(scale || 12, 1.8, 1);
+    sp.scale.set((scale || 12) * 0.5, 0.85, 1);
     SCN.add(sp);
     return sp;
   }
@@ -1790,6 +1790,7 @@ function initWorld3D(playerData) {
   var orientationTriggered = false;
   var jcd = 0;
   var keys = {};
+  var sprintOn = false, sprintCooldown = 0;
 
   // Club fair / commitment system
   var clubMeetingTimer      = 0;
@@ -1822,6 +1823,17 @@ function initWorld3D(playerData) {
         var nowOpen = po.classList.toggle('open');
         if (nowOpen) populatePauseStats();
         else if (locked) canvas.requestPointerLock();
+      }
+    }
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+      e.preventDefault();
+      if (!sprintOn && sprintCooldown <= 0) {
+        sprintOn = true;
+        showN('Sprint ON  (press Shift again to stop)');
+      } else if (sprintOn) {
+        sprintOn = false;
+        sprintCooldown = 5;
+        showN('Sprint OFF  — cooldown 5s');
       }
     }
     if (e.code === 'Escape' && fullMapOpen) {
@@ -2315,9 +2327,11 @@ function initWorld3D(playerData) {
     jcd = Math.max(0, jcd - dt);
     ntimer = Math.max(0, ntimer - dt);
     if (ntimer <= 0) notifEl.style.display = 'none';
+    sprintCooldown = Math.max(0, sprintCooldown - dt);
+    if (sprintCooldown > 0 && sprintOn) sprintOn = false;
 
-    // Movement speed (walking pace, no sprint)
-    var spd = 5.5;
+    // Movement speed — sprint toggle (Shift) doubles speed, 5s cooldown after use
+    var spd = sprintOn ? 11.0 : 5.5;
 
     // Movement vector in camera-relative space
     var mvx = 0, mvz = 0;
@@ -2456,6 +2470,13 @@ function initWorld3D(playerData) {
       }
     }
 
+    // ── Football field first-visit flag ──
+    if (!window.MYTH_FRESHMAN_RESTRICTION && typeof Engine !== 'undefined' && Engine.hasFlag &&
+        !Engine.hasFlag('football_field_visited') &&
+        px >= -145 && px <= -22 && pz >= 62 && pz <= 162) {
+      Engine.setFlag('football_field_visited');
+    }
+
     // ── Club commitment meeting timer ──
     if (window.MYTH_CLUB_CHOICE && window.MYTH_CLUB_CHOICE !== 'none' &&
         !window.MYTH_ORIENTATION_ACTIVE) {
@@ -2491,6 +2512,7 @@ function initWorld3D(playerData) {
       sunL.intensity = Math.min(2.6, sunL.intensity + dt * 1.2);
       ambL.intensity = Math.min(1.0, ambL.intensity + dt * 1.2);
       SCN.fog.far    = Math.min(600, SCN.fog.far    + dt * 80);
+      SCN.background.set(0x87ceeb);
       if (SCN.fog.far >= 599) window.MYTH_POWER_RESTORE = false;
     }
     if (window.MYTH_BOMB_THREAT_ACTIVE) {
