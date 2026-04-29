@@ -929,10 +929,8 @@ function initWorld3D(playerData) {
     var gw = 42, gd = 32, gh = 14;
 
     // -- EXTERIOR SHELL ------------------------------------------
-    // West wall — split with door gap at center (exit, opposite east entrance)
-    solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx - gw/2 + 0.25, 0, gz - (gd/4 + 0.8));
-    solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx - gw/2 + 0.25, 0, gz + (gd/4 + 0.8));
-    solidBox(0.5, gh - 3.2, 3.2, MT.wG, gx - gw/2 + 0.25, 3.2, gz);
+    // West wall — solid, no door
+    solidBox(0.5, gh, gd, MT.wG, gx - gw/2 + 0.25, 0, gz);
     // East wall — split with door gap at center (z=gz), opening 3.2 wide
     solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx + gw/2 - 0.25, 0, gz - (gd/4 + 0.8));
     solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx + gw/2 - 0.25, 0, gz + (gd/4 + 0.8));
@@ -965,27 +963,8 @@ function initWorld3D(playerData) {
     var gymDoorCol = new THREE.Box3(_gdMin.clone(), _gdMax.clone());
     DOORS.push({ mesh: gymDoor, open: false, cx: gx + gw/2 - 0.05, cz: gz,
                  col: gymDoorCol, origMin: _gdMin.clone(), origMax: _gdMax.clone(), wallAxis: 'x' });
-    // West exit door (directly opposite east entrance)
-    var gymWDoor = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.1, 2.8), MT.dr);
-    gymWDoor.position.set(gx - gw/2 + 0.05, 1.55, gz);
-    gymWDoor.castShadow = true; SCN.add(gymWDoor);
-    var _gwdMin = new THREE.Vector3(gx - gw/2 - 0.28, 0, gz - 1.4);
-    var _gwdMax = new THREE.Vector3(gx - gw/2 + 0.28, 3.15, gz + 1.4);
-    var gymWDoorCol = new THREE.Box3(_gwdMin.clone(), _gwdMax.clone());
-    DOORS.push({ mesh: gymWDoor, open: false, cx: gx - gw/2 + 0.05, cz: gz,
-                 col: gymWDoorCol, origMin: _gwdMin.clone(), origMax: _gwdMax.clone(), wallAxis: 'x' });
-    // West exit ramp/curb
-    solidBox(0.9, 0.18, 5.5, MT.stt, gx - gw/2 - 0.65, 0, gz);
-    addSurf(gx - gw/2 - 0.65, gz, 0.9, 5.5, 0.18);
-    // West exit signs
-    var westExitSp = mkLabel('EXIT ←  Campus West', 14);
-    westExitSp.position.set(gx - gw/2 + 1.8, gh * 0.50, gz);
-    var westExtSp = mkLabel('Gym West Exit', 12);
-    westExtSp.position.set(gx - gw/2 - 2.0, gh * 0.45, gz);
-
-    // High windows on west wall — skip area near door gap (gz ± 4.5)
+    // High windows on west wall — full wall, no gap
     for (var ww = gz - gd/2 + 3; ww < gz + gd/2 - 2; ww += 4.5) {
-      if (Math.abs(ww - gz) < 4.5) continue;
       visBox(0.12, 1.8, 2.2, MT.win, gx - gw/2 - 0.02, gh*0.6, ww);
     }
     // High windows on east wall — skip area near door gap (gz ± 3.5)
