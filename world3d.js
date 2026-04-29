@@ -1283,7 +1283,7 @@ function initWorld3D(playerData) {
   });
   var skyDome = new THREE.Mesh(
     new THREE.SphereGeometry(750, 32, 16),
-    new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide })
+    new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, transparent: true, depthWrite: false })
   );
   SCN.add(skyDome);
 
@@ -1356,6 +1356,64 @@ function initWorld3D(playerData) {
   prog(34, 'Buildings C and E...');
   building(-32,-54,26,13,9,MT.wA,MT.roofR,'Building C',2,'cls');
   building(12,-54,24,13,9,MT.wA,MT.roofR,'Bldg E - Science',2,'cls');
+
+  // ── Science Building: interior staircase + accessible 2nd floor ──
+  (function buildScienceFloor2() {
+    var bx=12, bz=-54, bw=24, bd=13, bh=9;
+    var f2=bh/2; // 4.5 — second floor Y
+
+    // Interior staircase in the back-right corner
+    // 9 steps × 0.5Y rise, 0.5Z run → total climb = 4.5 units
+    var sX=22, sW=3.0, sZs=-59.5;
+    for (var si=0; si<9; si++) {
+      solidBox(sW, 0.3, 0.48, MT.stt, sX, si*0.5, sZs + si*0.5);
+      addSurf(sX, sZs + si*0.5, sW, 0.48, si*0.5 + 0.3);
+    }
+    // Stair side wall (slim guardrail along left side of stairs)
+    for (var gi=0; gi<4; gi++) {
+      solidBox(0.12, 0.65, 0.48, MT.wA, sX - sW/2 - 0.06, gi*1.0 + 0.5, sZs + gi*1.0 + 0.25);
+    }
+
+    // Landing at top — connects stairs to 2nd floor interior
+    var landZ = sZs + 9*0.5; // = -55.0
+    var landLen = bz + bd/2 - 0.5 - landZ; // front of interior - landZ ≈ 8.0
+    solidBox(sW, 0.18, landLen, MT.stt, sX, f2, landZ + landLen/2);
+    addSurf(sX, landZ + landLen/2, sW, landLen, f2 + 0.18);
+
+    // 2nd floor main interior floor (all except staircase footprint)
+    var mainW = bw - 0.7 - sW - 0.6; // = 24-0.7-3.0-0.6 = 19.7
+    var mainX = bx - (sW + 0.6)/2;   // offset left of staircase
+    surfBox(mainW, 0.18, bd - 0.7, MT.fl, mainX, f2, bz);
+
+    // Guardrail at the stair opening on 2nd floor (safety railing)
+    solidBox(sW, 0.85, 0.12, MT.pol, sX, f2 + 0.18, landZ + 0.06);
+    // Side railing (along X edge of stairs)
+    solidBox(0.12, 0.85, landLen, MT.pol, sX - sW/2 - 0.06, f2 + 0.18, landZ + landLen/2);
+
+    // 2nd floor lab content — lab tables in 2 rows
+    for (var lr=0; lr<2; lr++) {
+      for (var lc=0; lc<3; lc++) {
+        visBox(1.5, 0.08, 0.85, MT.dsk, bx - 7 + lc*5.5, f2 + 0.75, bz - 3 + lr*4.5);
+        // Chair in front of each desk
+        visBox(0.65, 0.6, 0.65, MT.chr, bx - 7 + lc*5.5, f2 + 0.38, bz - 1.7 + lr*4.5);
+      }
+    }
+
+    // Whiteboard on back (north) wall of 2nd floor
+    visBox(8.0, 2.0, 0.12, MT.brd, bx - 4, f2 + 1.8, bz - bd/2 + 0.46);
+    visBox(7.6, 1.65, 0.05, MT.chk, bx - 4, f2 + 1.8, bz - bd/2 + 0.52);
+    // Teacher's desk at front (south) wall 2nd floor
+    solidBox(1.6, 0.08, 1.0, MT.dsk, bx - 9, f2 + 0.75, bz + bd/2 - 2.5);
+    // Ceiling lights 2nd floor
+    visBox(2.5, 0.12, 0.38, ceilLightMat, bx - 5, f2 + bh/2 - 0.08, bz - 2);
+    visBox(2.5, 0.12, 0.38, ceilLightMat, bx - 5, f2 + bh/2 - 0.08, bz + 2);
+
+    // Label sprite above 2nd floor
+    var sp2 = mkLabel('Science — Rm 201', 11);
+    sp2.position.set(bx - 4, bh + 2.5, bz);
+    NPCS.push({ x: bx - 3, z: bz, radius: 7, label: 'Science Room 201 (2F)',
+      msg: 'Science Room 201 — 2nd Floor. Stairs in the back-right corner (east wall).' });
+  })();
 
   prog(39, 'F Buildings...');
   var fbx=[-72,-44,-14,16,44];
@@ -2139,6 +2197,67 @@ function initWorld3D(playerData) {
     // Draw map centered on player; scale = 0.4 px per world unit (tight radius)
     _drawMapScene(mmCtx, mmSz, mmSz, px, pz, 0.4, false);
     mmCtx.restore();
+
+    // ── Navigation arrows: show when MYTH_SOPH_NAV_TARGET is active ──
+    if (window.MYTH_SOPH_NAV_TARGET) {
+      var _snt2 = window.MYTH_SOPH_NAV_TARGET;
+      // Direction from player to target (in minimap pixel space)
+      var _tdx = _snt2.x - px, _tdz = _snt2.z - pz;
+      var _dist = Math.sqrt(_tdx*_tdx + _tdz*_tdz);
+      if (_dist > _snt2.r) {
+        // Angle toward target
+        var _ang = Math.atan2(_tdx, -_tdz); // screen angle: right=east, up=north
+        // Convert to minimap scale (0.4 px/unit) — clamp arrow to circle boundary
+        var _mxT = _snt2.x, _mzT = _snt2.z;
+        var _sc2 = 0.4;
+        var _cpx = mmSz/2 + (_mxT - px) * _sc2, _cpz = mmSz/2 + (_mzT - pz) * _sc2;
+        // If target dot is within minimap, draw a pulsing dot on it
+        var _mmRad = mmSz/2 - 4;
+        var _tdpx = _cpx - mmSz/2, _tdpz = _cpz - mmSz/2;
+        var _inMap = Math.sqrt(_tdpx*_tdpx + _tdpz*_tdpz) < _mmRad;
+        mmCtx.save();
+        mmCtx.beginPath(); mmCtx.arc(mmSz/2, mmSz/2, mmSz/2 - 1, 0, Math.PI*2); mmCtx.clip();
+        if (_inMap) {
+          // Target dot (pulsing)
+          var _pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.006);
+          mmCtx.fillStyle = 'rgba(100,220,255,' + (0.55 + 0.4 * _pulse).toFixed(2) + ')';
+          mmCtx.beginPath(); mmCtx.arc(_cpx, _cpz, 5, 0, Math.PI*2); mmCtx.fill();
+          mmCtx.strokeStyle = 'rgba(160,240,255,0.9)'; mmCtx.lineWidth = 1.5;
+          mmCtx.beginPath(); mmCtx.arc(_cpx, _cpz, 5 + 3 * _pulse, 0, Math.PI*2); mmCtx.stroke();
+        } else {
+          // Arrow at edge of minimap circle pointing toward target
+          var _edgeX = mmSz/2 + Math.sin(_ang) * (_mmRad - 8);
+          var _edgeZ = mmSz/2 - Math.cos(_ang) * (_mmRad - 8);
+          var _aLen = 9, _aW = 5;
+          mmCtx.save();
+          mmCtx.translate(_edgeX, _edgeZ);
+          mmCtx.rotate(_ang);
+          mmCtx.globalAlpha = 0.82;
+          mmCtx.fillStyle = '#64dcff';
+          mmCtx.beginPath();
+          mmCtx.moveTo(0, -_aLen);
+          mmCtx.lineTo(-_aW, _aLen * 0.3);
+          mmCtx.lineTo(0,  _aLen * 0.0);
+          mmCtx.lineTo(_aW, _aLen * 0.3);
+          mmCtx.closePath();
+          mmCtx.fill();
+          mmCtx.strokeStyle = 'rgba(255,255,255,0.55)'; mmCtx.lineWidth = 0.8;
+          mmCtx.stroke();
+          mmCtx.restore();
+        }
+        // Distance label at the edge arrow
+        if (!_inMap) {
+          var _distLblX = mmSz/2 + Math.sin(_ang) * (_mmRad - 20);
+          var _distLblZ = mmSz/2 - Math.cos(_ang) * (_mmRad - 20);
+          mmCtx.fillStyle = 'rgba(100,220,255,0.85)';
+          mmCtx.font = 'bold 7px monospace';
+          mmCtx.textAlign = 'center';
+          mmCtx.fillText(Math.round(_dist) + 'm', _distLblX, _distLblZ + 3);
+        }
+        mmCtx.restore();
+      }
+    }
+
     // North label
     mmCtx.fillStyle = 'rgba(232,208,112,0.8)'; mmCtx.font = 'bold 8px monospace';
     mmCtx.textAlign = 'center'; mmCtx.fillText('N', mmSz/2, 11);
@@ -2460,13 +2579,32 @@ function initWorld3D(playerData) {
         window.MYTH_ORIENTATION_ACTIVE = true;
         if (document.pointerLockElement === canvas) document.exitPointerLock();
         var _classFns = {
-          apcsa:   [window.showAPCSA_Class1,    window.showAPCSA_Final],
-          physics: [window.showPhysics_Class1,  window.showPhysics_FieldTrip],
-          studies: [window.showStudies_Class1,   window.showStudies_Class2],
+          apcsa:    [window.showAPCSA_Class1,    window.showAPCSA_Final],
+          physics:  [window.showPhysics_Class1,  window.showPhysics_FieldTrip],
+          studies:  [window.showStudies_Class1,  window.showStudies_Class2],
+          robotics: [window.showRobotics_EC,     null],
+          football: [window.showFootball_EC,     null],
         };
         window.MYTH_SOPH_ON_DONE = _snt.done;
         var _fn = _classFns[_snt.course] && _classFns[_snt.course][_snt.classNum - 1];
         if (_fn) setTimeout(_fn, 200);
+      }
+    }
+
+    // ── EC navigation countdown timer ──
+    if (window.MYTH_EC_NAV_START && window.MYTH_SOPH_NAV_TARGET) {
+      var _ecElapsed  = (Date.now() - window.MYTH_EC_NAV_START) / 1000;
+      var _ecRemain   = Math.max(0, window.MYTH_EC_NAV_LIMIT - _ecElapsed);
+      var _ecMin      = Math.floor(_ecRemain / 60);
+      var _ecSec      = Math.floor(_ecRemain % 60);
+      var _timerEl    = document.getElementById('ec-nav-timer');
+      if (_timerEl) {
+        _timerEl.textContent = _ecMin + ':' + (_ecSec < 10 ? '0' : '') + _ecSec;
+        _timerEl.style.color = _ecRemain < 20 ? '#ff6060' : _ecRemain < 45 ? '#ffc040' : '#64dcff';
+      }
+      if (_ecElapsed > window.MYTH_EC_NAV_LIMIT) {
+        window.MYTH_EC_LATE      = true;
+        window.MYTH_EC_NAV_START = null; // stop ticking
       }
     }
 
@@ -2503,28 +2641,22 @@ function initWorld3D(playerData) {
 
     // ── World atmosphere effects (flags set by story overlays) ──
     if (window.MYTH_POWER_OUTAGE) {
-      sunL.intensity = Math.max(0.02, sunL.intensity - dt * 2.5);
-      ambL.intensity = Math.max(0.02, ambL.intensity - dt * 2.5);
-      SCN.fog.far    = Math.max(6,    SCN.fog.far    - dt * 60);
+      sunL.intensity  = Math.max(0.02, sunL.intensity  - dt * 2.5);
+      ambL.intensity  = Math.max(0.02, ambL.intensity  - dt * 2.5);
+      SCN.fog.density = Math.min(0.09, SCN.fog.density + dt * 0.35);
       SCN.fog.color.setRGB(0, 0, 0.01);
       SCN.background.set(0x000005);
     } else if (window.MYTH_POWER_RESTORE) {
-      sunL.intensity = Math.min(2.6, sunL.intensity + dt * 1.2);
-      ambL.intensity = Math.min(1.0, ambL.intensity + dt * 1.2);
-      SCN.fog.far    = Math.min(600, SCN.fog.far    + dt * 80);
+      SCN.fog.density = Math.max(0.003, SCN.fog.density - dt * 0.06);
       SCN.background.set(0x87ceeb);
-      if (SCN.fog.far >= 599) window.MYTH_POWER_RESTORE = false;
+      if (SCN.fog.density <= 0.0031) window.MYTH_POWER_RESTORE = false;
     }
     if (window.MYTH_BOMB_THREAT_ACTIVE) {
-      sunL.intensity = Math.max(0.15, sunL.intensity - dt * 1.5);
-      ambL.intensity = Math.max(0.08, ambL.intensity - dt * 1.5);
+      SCN.fog.density = Math.min(0.012, SCN.fog.density + dt * 0.02);
       SCN.fog.color.setRGB(0.06, 0.02, 0.02);
-      SCN.fog.far    = Math.max(30,   SCN.fog.far    - dt * 20);
     } else if (window.MYTH_BOMB_CLEAR) {
-      sunL.intensity = Math.min(2.6, sunL.intensity + dt * 0.8);
-      ambL.intensity = Math.min(1.0, ambL.intensity + dt * 0.8);
-      SCN.fog.far    = Math.min(600, SCN.fog.far    + dt * 60);
-      if (SCN.fog.far >= 599) window.MYTH_BOMB_CLEAR = false;
+      SCN.fog.density = Math.max(0.003, SCN.fog.density - dt * 0.015);
+      if (SCN.fog.density <= 0.0031) window.MYTH_BOMB_CLEAR = false;
     }
 
     // UI updates

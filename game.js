@@ -1967,6 +1967,7 @@ function showPEBombThreat() {
         onComplete: () => {
           overlay.classList.remove('open');
           overlay.style.opacity = '';
+          window.MYTH_ORIENTATION_ACTIVE = false;
           showFreshmanYearEnd();
         },
       });
@@ -2227,7 +2228,20 @@ function showSophomoreYear() {
         </div>
         <button class="btn-primary ys-confirm" id="ys-next" style="margin-top:32px">CONTINUE →</button>
       </div>`;
-    document.getElementById('ys-next').addEventListener('click',()=>_sophEvent(0),{once:true});
+    document.getElementById('ys-next').addEventListener('click',()=>{
+      const ec = window.MYTH_CLUB_CHOICE;
+      const overlay2 = _getYrOverlay();
+      // If player has an EC, navigate to it first; then go to events
+      if (ec && ec !== 'none' && (ec === 'robotics' || ec === 'football')) {
+        overlay2.style.display = 'none';
+        _goToClass(ec, 1, () => _sophEvent(0));
+        if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF(
+          ec === 'robotics' ? 'Head to Room 108 — Robotics Lab (near Bio Room, west campus). EC starts soon!'
+                            : 'Head to the Football Field (north end of campus). Practice starts soon!');
+      } else {
+        _sophEvent(0);
+      }
+    },{once:true});
   }
 
   render();
@@ -2688,9 +2702,11 @@ window.showFreshmanYearEnd = function() {
 
 // Classroom locations in the 3D world (center of each building)
 const _SOPH_LOCS = {
-  apcsa:   { room: 'Room 214 — Building B', x: 12,  z: -74, r: 16 },
-  physics: { room: 'Room 203 — Science Wing', x: 76, z: -32, r: 16 },
-  studies: { room: 'Room 119 — Building C', x: -32, z: -54, r: 16 },
+  apcsa:    { room: 'Room 214 — Building B',     x: 12,  z: -74,  r: 16 },
+  physics:  { room: 'Room 203 — Science Wing',   x: 76,  z: -32,  r: 16 },
+  studies:  { room: 'Room 119 — Building C',     x: -32, z: -54,  r: 16 },
+  robotics: { room: 'Room 108 — Robotics Lab',   x: -97, z: -36,  r: 14 },
+  football: { room: 'Football Field',            x: -82, z: 102,  r: 18 },
 };
 
 // Sequence: c1c1, c2c1, brawl, c1c2, psat, c2c2, fitness, end
@@ -2713,7 +2729,17 @@ function _sophStep(idx, c1, c2) {
 function _goToClass(course, classNum, done) {
   const loc = _SOPH_LOCS[course];
   const hint = document.getElementById('soph-nav-hint');
-  if (hint) { hint.textContent = '📍 Head to ' + loc.room; hint.style.display = 'block'; }
+  // Determine nav time limit (EC = 90s real-time, class = unlimited)
+  const isEC = (course === 'robotics' || course === 'football');
+  const timeLimit = isEC ? 90 : 0; // seconds; 0 = no limit
+  window.MYTH_EC_NAV_START = isEC ? Date.now() : null;
+  window.MYTH_EC_NAV_LIMIT = timeLimit;
+  window.MYTH_EC_LATE      = false;
+  if (hint) {
+    const timerStr = isEC ? ' · <span id="ec-nav-timer">1:30</span>' : '';
+    hint.innerHTML = '📍 Head to ' + loc.room + timerStr;
+    hint.style.display = 'block';
+  }
   window.MYTH_SOPH_NAV_TARGET = { x: loc.x, z: loc.z, r: loc.r, course, classNum, done };
   window.MYTH_ORIENTATION_ACTIVE = false;
 }
@@ -2963,97 +2989,245 @@ function _apcsa_hospital() {
 }
 
 // ════════════════════════════════════════════════════════
-//  ROBOTICS EC
+//  ROBOTICS EC  — interactive build mini-game
 // ════════════════════════════════════════════════════════
-window.showRobotics_EC = function() { Engine.setFlag('soph_robotics_started'); _robotics_beat1(); };
-function _robotics_beat1() {
-  _sophShow(`<div class="soph-badge">ROOM 108 · ROBOTICS TEAM</div><h1 class="soph-title">AFTER SCHOOL.</h1>
-    <div class="soph-scene"><p>Mr. Vasquez's room looks like a hardware store exploded in a computer lab. Bins of servos, wires, half-assembled arms.</p></div>
-    <div class="soph-speaker">MR. VASQUEZ</div><div class="soph-speech">"You're the new one. We're building a line-following bot for regionals. Pick a task — everything needs doing."</div>
-    <div class="soph-prompt">WHERE DO YOU START?</div>
-    <div class="soph-choices">
-      <button class="soph-choice" id="rb-a"><span class="soph-choice-label">MOUNT THE SERVO MOTORS</span><span class="soph-choice-hint">Physical work. Screw motors to the chassis.</span></button>
-      <button class="soph-choice" id="rb-b"><span class="soph-choice-label">WIRE THE SENSOR ARRAY</span><span class="soph-choice-hint">Careful soldering. IR sensors need precise placement.</span></button>
-      <button class="soph-choice" id="rb-c"><span class="soph-choice-label">READ THE SCHEMATIC FIRST</span><span class="soph-choice-hint">Understand the whole system before touching anything.</span></button>
-    </div><div class="soph-nav"><span class="soph-progress">1 / 4</span></div>`);
-  document.getElementById('rb-a').onclick = () => { Engine.modifyStats({extracurriculars:1,physique:1}); _flushStatToast(); _robotics_beat2('You torque down the motors. Vasquez: "Even spacing. Good instinct."','+1 EXTRACURRICULARS · +1 PHYSIQUE'); };
-  document.getElementById('rb-b').onclick = () => { Engine.modifyStats({extracurriculars:1,gpa:1}); _flushStatToast(); _robotics_beat2('You solder clean joints. The senior next to you stops to watch.','+1 EXTRACURRICULARS · +1 GPA'); };
-  document.getElementById('rb-c').onclick = () => { Engine.modifyStats({extracurriculars:1,intelligence:1}); _flushStatToast(); _robotics_beat2('You catch a labeling error nobody else noticed. Vasquez marks it on the board.','+1 EXTRACURRICULARS · +1 INTELLIGENCE'); };
+window.showRobotics_EC = function() {
+  Engine.setFlag('soph_robotics_started');
+  const late = window.MYTH_EC_LATE;
+  _sophShow(`
+    <div class="soph-badge">ROOM 108 · ROBOTICS TEAM${late ? ' · <span style="color:#ff8060">LATE</span>' : ''}</div>
+    <h1 class="soph-title" style="font-size:2.2rem">AFTER SCHOOL.</h1>
+    <div class="soph-scene">
+      <p>Vasquez's room looks like a hardware store exploded in a computer lab. Bins of servos, wires, half-assembled bots everywhere.</p>
+      ${late ? '<p style="color:#ff8060;font-style:italic">You arrived late. Vasquez clocks you coming in. "You missed the brief."</p>' : ''}
+    </div>
+    <div class="soph-speaker">MR. VASQUEZ</div>
+    <div class="soph-speech">"You're building a line-following bot for regionals. I need the chassis assembled — five components, in order. Watch the diagram."</div>
+    <div class="soph-nav"><span class="soph-progress">1 / 3</span><button class="btn-primary" id="rb-start">START BUILD →</button></div>
+  `);
+  document.getElementById('rb-start').onclick = () => _robotics_build(late);
+};
+
+function _robotics_build(late) {
+  // Component assembly mini-game: click components in the correct order within 18s
+  const ORDER = ['chassis','motors','sensor','wiring','firmware'];
+  const LABELS = { chassis:'🔩 CHASSIS', motors:'⚙ MOTORS', sensor:'👁 SENSOR', wiring:'🔌 WIRING', firmware:'💾 FIRMWARE' };
+  let seq = [], errors = 0, timerID = null, timeLeft = 18;
+
+  function render() {
+    _sophShow(`
+      <div class="soph-badge">ROOM 108 · BUILD SEQUENCE</div>
+      <div class="soph-scene" style="text-align:center;padding:8px 0">
+        <div style="font-size:0.8rem;color:#aaa;margin-bottom:6px;letter-spacing:.1em">ASSEMBLE IN ORDER → CHASSIS → MOTORS → SENSOR → WIRING → FIRMWARE</div>
+        <div id="rb-timer" style="font-size:2rem;font-weight:700;color:#64dcff;letter-spacing:.12em;margin:8px 0">${timeLeft}s</div>
+        <div id="rb-progress" style="font-size:1rem;color:#88eebb;min-height:1.5em">${seq.map(k=>LABELS[k]).join(' → ') || '...'}</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:14px 0" id="rb-components">
+        ${ORDER.map(k => `<button class="soph-choice rb-part" id="rb-${k}" style="min-width:130px;padding:12px 8px;${seq.includes(k)?'opacity:0.3;pointer-events:none':''}">
+          <span class="soph-choice-label" style="font-size:1.1rem">${LABELS[k]}</span>
+        </button>`).join('')}
+      </div>
+      <div id="rb-error" style="color:#ff6060;font-size:0.85rem;min-height:1.2em;text-align:center"></div>
+      <div class="soph-nav"><span class="soph-progress">2 / 3</span></div>
+    `);
+    // Wire buttons
+    ORDER.forEach(k => {
+      const btn = document.getElementById('rb-' + k);
+      if (btn && !seq.includes(k)) {
+        btn.onclick = () => {
+          const expected = ORDER[seq.length];
+          if (k === expected) {
+            seq.push(k);
+            document.getElementById('rb-progress').textContent = seq.map(x=>LABELS[x]).join(' → ');
+            btn.style.opacity = '0.3'; btn.style.pointerEvents = 'none';
+            btn.style.background = 'rgba(100,220,150,0.15)';
+            if (seq.length === ORDER.length) {
+              clearInterval(timerID);
+              _robotics_build_done(errors, timeLeft, late);
+            }
+          } else {
+            errors++;
+            document.getElementById('rb-error').textContent = '✗ Wrong order — check the diagram!';
+            btn.style.background = 'rgba(255,60,60,0.18)';
+            setTimeout(() => { btn.style.background = ''; if(document.getElementById('rb-error')) document.getElementById('rb-error').textContent = ''; }, 700);
+          }
+        };
+      }
+    });
+    // Start countdown
+    timerID = setInterval(() => {
+      timeLeft--;
+      const tel = document.getElementById('rb-timer');
+      if (tel) {
+        tel.textContent = timeLeft + 's';
+        tel.style.color = timeLeft <= 6 ? '#ff6060' : timeLeft <= 10 ? '#ffc040' : '#64dcff';
+      }
+      if (timeLeft <= 0) {
+        clearInterval(timerID);
+        _robotics_build_done(errors + (ORDER.length - seq.length), 0, late);
+      }
+    }, 1000);
+  }
+  render();
 }
-function _robotics_beat2(narr, delta) {
-  _sophShow(`<div class="soph-badge">ROOM 108 · ROBOTICS TEAM</div>
-    <div class="soph-scene"><p>${narr}</p></div><div class="soph-stat-delta">${delta}</div>
-    <div class="soph-speaker">MR. VASQUEZ</div><div class="soph-speech">"Next — program the movement logic. Line-following bot. Who wants to take a pass at the code?"</div>
-    <div class="soph-prompt">DO YOU VOLUNTEER?</div>
-    <div class="soph-choices">
-      <button class="soph-choice" id="rb-vol"><span class="soph-choice-label">VOLUNTEER — "I'll try it"</span></button>
-      <button class="soph-choice" id="rb-pass"><span class="soph-choice-label">LET SOMEONE ELSE GO FIRST</span></button>
-    </div><div class="soph-nav"><span class="soph-progress">2 / 4</span></div>`);
-  document.getElementById('rb-vol').onclick  = () => { Engine.modifyStats({extracurriculars:1,stress:1}); _flushStatToast(); _robotics_beat3(true); };
-  document.getElementById('rb-pass').onclick = () => { Engine.modifyStats({selfAwareness:1}); _flushStatToast(); _robotics_beat3(false); };
-}
-function _robotics_beat3(vol) {
-  const n = vol ? 'You write a PID loop. The bot oscillates but tracks the line. Vasquez tweaks two constants. "Solid foundation."' : 'You watch Priya write it. You catch a divide-by-zero bug before she runs it. "Nice catch," she says.';
-  _sophShow(`<div class="soph-badge">ROOM 108 · ROBOTICS TEAM</div>
-    <div class="soph-scene"><p>${n}</p></div>
-    <div class="soph-scene"><p>The bot follows the line for a meter then drifts off. Everyone groans, then laughs.</p></div>
-    <div class="soph-nav"><span class="soph-progress">3 / 4</span><button class="btn-primary" id="soph-next">NEXT →</button></div>`);
-  document.getElementById('soph-next').onclick = _robotics_beat4;
-}
-function _robotics_beat4() {
-  _sophShow(`<div class="soph-badge">ROOM 108 · ROBOTICS TEAM</div>
-    <div class="soph-speaker">MR. VASQUEZ</div><div class="soph-speech">"Tuesdays and Thursdays. Regionals is in February. Get comfortable."</div>
-    <div class="soph-scene"><p>You stack the chassis parts. The room smells like solder. It's kind of a good smell.</p></div>
-    <div class="soph-nav"><span class="soph-progress">4 / 4</span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+
+function _robotics_build_done(errors, timeLeft, late) {
+  const perfect  = errors === 0 && timeLeft > 5;
+  const decent   = errors <= 2;
+  const narr = perfect
+    ? 'Clean. Every component locked in under 15 seconds. Vasquez says nothing — which means he\'s impressed.'
+    : decent
+    ? 'A couple missteps but you finished it. Vasquez adjusts one connector. "Not bad for a first try."'
+    : 'The build takes longer than it should. Vasquez walks over and re-does two connections. "Watch me."';
+  const delta = perfect
+    ? { extracurriculars:2, intelligence:1, gpa:0.2 }
+    : decent
+    ? { extracurriculars:1, intelligence:1 }
+    : { extracurriculars:1, stress:1 };
+  const deltaStr = perfect ? '+2 EC · +1 INT · GPA +0.2' : decent ? '+1 EC · +1 INT' : '+1 EC · +1 STRESS';
+  Engine.modifyStats(delta); if (late) Engine.modifyStats({extracurriculars:-0.5}); _flushStatToast();
+
+  _sophShow(`
+    <div class="soph-badge">ROOM 108 · ROBOTICS TEAM</div>
+    <div class="soph-scene"><p>${narr}</p></div>
+    <div class="soph-stat-delta${perfect?'':' '}">${deltaStr}${late ? ' · −0.5 EC (late)' : ''}</div>
+    <div class="soph-speaker">MR. VASQUEZ</div>
+    <div class="soph-speech">"Tuesdays and Thursdays. Regionals is February. The schedule is on the board."</div>
+    <div class="soph-scene"><p>You stack the parts. The room smells like solder. It's kind of a good smell.</p></div>
+    <div class="soph-nav"><span class="soph-progress">3 / 3</span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>
+  `);
   document.getElementById('soph-done').onclick = () => _sophDone('soph_robotics_done');
 }
 
 // ════════════════════════════════════════════════════════
-//  FOOTBALL EC
+//  FOOTBALL EC  — interactive sprint drill mini-game
 // ════════════════════════════════════════════════════════
-window.showFootball_EC = function() { Engine.setFlag('soph_football_started'); _football_beat1(); };
-function _football_beat1() {
-  _sophShow(`<div class="soph-badge">ATHLETIC FIELD · VARSITY FOOTBALL</div><h1 class="soph-title">FIRST PRACTICE.</h1>
-    <div class="soph-speaker">COACH RIVERA</div><div class="soph-speech">"Sprints. Forty yards. I time everyone on day one. Line up."</div>
-    <div class="soph-prompt">HOW DO YOU RUN IT?</div>
-    <div class="soph-choices">
-      <button class="soph-choice" id="fb-a"><span class="soph-choice-label">FULL SEND FROM THE START</span></button>
-      <button class="soph-choice" id="fb-b"><span class="soph-choice-label">CONTROLLED BURST — BUILD TO TOP SPEED</span></button>
-      <button class="soph-choice" id="fb-c"><span class="soph-choice-label">PACE YOURSELF</span></button>
-    </div><div class="soph-nav"><span class="soph-progress">1 / 4</span></div>`);
-  document.getElementById('fb-a').onclick = () => { Engine.modifyStats({athleticism:2,physique:1,stress:1}); _flushStatToast(); _football_weights('"5.4 seconds. Close to pulling something." You didn\'t.','+2 ATH · +1 PHY · +1 STRESS'); };
-  document.getElementById('fb-b').onclick = () => { Engine.modifyStats({athleticism:1,physique:2}); _flushStatToast(); _football_weights('"5.6. Good form. Do it right every time."','+1 ATH · +2 PHY'); };
-  document.getElementById('fb-c').onclick = () => { Engine.modifyStats({selfAwareness:1,athleticism:1}); _flushStatToast(); _football_weights('"6.1. You\'ve got more. We\'ll find it."','+1 SELF-AWR · +1 ATH'); };
+window.showFootball_EC = function() {
+  Engine.setFlag('soph_football_started');
+  const late = window.MYTH_EC_LATE;
+  _sophShow(`
+    <div class="soph-badge">ATHLETIC FIELD · VARSITY FOOTBALL${late ? ' · <span style="color:#ff8060">LATE</span>' : ''}</div>
+    <h1 class="soph-title" style="font-size:2.2rem">FIRST PRACTICE.</h1>
+    <div class="soph-scene">
+      <p>The field smells like cut grass and sweat. Coach Rivera stands at the 40-yard line with a stopwatch.</p>
+      ${late ? '<p style="color:#ff8060;font-style:italic">You jog in late. Rivera clocks you. "Conditioning after practice. You run extra."</p>' : ''}
+    </div>
+    <div class="soph-speaker">COACH RIVERA</div>
+    <div class="soph-speech">"Forty-yard dash. Fastest today makes the depth chart. Tap LEFT and RIGHT as fast as you can — alternate feet. GO."</div>
+    <div class="soph-nav"><span class="soph-progress">1 / 3</span><button class="btn-primary" id="fb-start">TAKE YOUR MARK →</button></div>
+  `);
+  document.getElementById('fb-start').onclick = () => _football_sprint(late);
+};
+
+function _football_sprint(late) {
+  // Sprint drill: alternate tap ← → buttons as fast as possible in 5 seconds
+  let taps = 0, nextExpected = 'L', done = false, timerID = null, timeLeft = 5;
+
+  _sophShow(`
+    <div class="soph-badge">ATHLETIC FIELD · SPRINT DRILL</div>
+    <div class="soph-scene" style="text-align:center">
+      <div style="font-size:0.8rem;color:#aaa;letter-spacing:.1em;margin-bottom:6px">ALTERNATE  ←  →  AS FAST AS YOU CAN</div>
+      <div id="fb-timer" style="font-size:3rem;font-weight:700;color:#ffc040;letter-spacing:.1em">5</div>
+      <div id="fb-taps" style="font-size:2rem;color:#88eebb;margin:6px 0">0 steps</div>
+      <div id="fb-cue" style="font-size:1.8rem;font-weight:700;color:#64dcff;margin:10px 0;min-height:2.4rem">← LEFT</div>
+    </div>
+    <div style="display:flex;gap:16px;justify-content:center;margin:14px 0">
+      <button id="fb-left"  style="padding:18px 32px;font-size:1.3rem;font-weight:700;background:rgba(60,120,220,0.25);border:2px solid #4488ff;border-radius:8px;color:#88bbff;cursor:pointer;min-width:120px">← LEFT</button>
+      <button id="fb-right" style="padding:18px 32px;font-size:1.3rem;font-weight:700;background:rgba(220,120,60,0.25);border:2px solid #ff8844;border-radius:8px;color:#ffbb88;cursor:pointer;min-width:120px">RIGHT →</button>
+    </div>
+    <div class="soph-nav"><span class="soph-progress">2 / 3</span></div>
+  `);
+
+  function updateCue() {
+    const cue = document.getElementById('fb-cue');
+    if (cue) { cue.textContent = nextExpected === 'L' ? '← LEFT' : 'RIGHT →'; cue.style.color = nextExpected === 'L' ? '#64dcff' : '#ffaa44'; }
+  }
+  updateCue();
+
+  function handleTap(dir) {
+    if (done) return;
+    const expected = nextExpected;
+    if (dir === expected) {
+      taps++;
+      nextExpected = expected === 'L' ? 'R' : 'L';
+      const tEl = document.getElementById('fb-taps'); if (tEl) tEl.textContent = taps + ' steps';
+      updateCue();
+      // Flash button green
+      const btn = document.getElementById('fb-' + (dir === 'L' ? 'left' : 'right'));
+      if (btn) { btn.style.background = 'rgba(80,220,120,0.35)'; setTimeout(()=>{ btn.style.background = dir==='L'?'rgba(60,120,220,0.25)':'rgba(220,120,60,0.25)'; }, 150); }
+    } else {
+      // Wrong key — flash red
+      const btn = document.getElementById('fb-' + (dir === 'L' ? 'left' : 'right'));
+      if (btn) { btn.style.background = 'rgba(220,60,60,0.35)'; setTimeout(()=>{ btn.style.background = dir==='L'?'rgba(60,120,220,0.25)':'rgba(220,120,60,0.25)'; }, 150); }
+    }
+  }
+
+  document.getElementById('fb-left').onclick  = () => handleTap('L');
+  document.getElementById('fb-right').onclick = () => handleTap('R');
+
+  // Keyboard support (← and →)
+  function kbHandler(e) {
+    if (e.key === 'ArrowLeft')  handleTap('L');
+    if (e.key === 'ArrowRight') handleTap('R');
+  }
+  document.addEventListener('keydown', kbHandler);
+
+  timerID = setInterval(() => {
+    timeLeft--;
+    const tel = document.getElementById('fb-timer');
+    if (tel) { tel.textContent = timeLeft; tel.style.color = timeLeft <= 2 ? '#ff6060' : '#ffc040'; }
+    if (timeLeft <= 0) {
+      clearInterval(timerID); done = true;
+      document.removeEventListener('keydown', kbHandler);
+      _football_sprint_done(taps, late);
+    }
+  }, 1000);
 }
-function _football_weights(narr, delta) {
-  _sophShow(`<div class="soph-badge">ATHLETIC FIELD · VARSITY FOOTBALL</div>
-    <div class="soph-scene"><p>${narr}</p></div><div class="soph-stat-delta">${delta}</div>
-    <div class="soph-speaker">COACH RIVERA</div><div class="soph-speech">"Weight room. Twenty minutes. Bench, squat, core. I want to see your baseline."</div>
-    <div class="soph-prompt">HOW DO YOU APPROACH THE WEIGHTS?</div>
-    <div class="soph-choices">
-      <button class="soph-choice" id="wt-a"><span class="soph-choice-label">PUSH FOR YOUR MAX</span></button>
-      <button class="soph-choice" id="wt-b"><span class="soph-choice-label">STRONG BUT SUSTAINABLE</span></button>
-    </div><div class="soph-nav"><span class="soph-progress">2 / 4</span></div>`);
-  document.getElementById('wt-a').onclick = () => { Engine.modifyStats({physique:2,athleticism:1,sleep:-1}); _flushStatToast(); _football_practice('Numbers you haven\'t touched before. Rivera writes them down. Arms shake for an hour.','+2 PHY · +1 ATH · −1 SLEEP'); };
-  document.getElementById('wt-b').onclick = () => { Engine.modifyStats({physique:1,athleticism:1}); _flushStatToast(); _football_practice('Clean reps. Rivera nods once. His version of approval.','+1 PHY · +1 ATH'); };
-}
-function _football_practice(narr, delta) {
-  _sophShow(`<div class="soph-badge">ATHLETIC FIELD · VARSITY FOOTBALL</div>
-    <div class="soph-scene"><p>${narr}</p></div><div class="soph-stat-delta">${delta}</div>
-    <div class="soph-speaker">COACH RIVERA</div><div class="soph-speech">"Route running. 5-yard out, 10-yard curl, post. Corner is live. Run it clean."</div>
+
+function _football_sprint_done(taps, late) {
+  const elite = taps >= 14;
+  const good  = taps >= 10;
+  const time  = elite ? '5.1s' : good ? '5.5s' : '5.9s';
+  const narr  = elite
+    ? `${taps} alternating steps. Pure acceleration. Rivera's stopwatch reads ${time}. He writes it down without a word.`
+    : good
+    ? `${taps} steps. Solid. ${time} — you're in the top half. Rivera nods: "Good form. Build on it."`
+    : `${taps} steps. ${time}. Rivera: "You've got more in there. We'll find it."`;
+  const delta = elite ? { athleticism:3, physique:2 } : good ? { athleticism:2, physique:1 } : { athleticism:1, physique:1 };
+  const ds    = elite ? '+3 ATH · +2 PHY' : good ? '+2 ATH · +1 PHY' : '+1 ATH · +1 PHY';
+  Engine.modifyStats(delta); if (late) Engine.modifyStats({ athleticism:-1 }); _flushStatToast();
+
+  _sophShow(`
+    <div class="soph-badge">ATHLETIC FIELD · VARSITY FOOTBALL</div>
+    <div class="soph-scene"><p>${narr}</p></div>
+    <div class="soph-stat-delta">${ds}${late ? ' · −1 ATH (late)' : ''}</div>
+    <div class="soph-speaker">COACH RIVERA</div>
+    <div class="soph-speech">"Route running. Five-yard out. Corner is live. Run it clean — or sell the fake. Your call."</div>
     <div class="soph-prompt">HOW DO YOU RUN THE ROUTE?</div>
     <div class="soph-choices">
-      <button class="soph-choice" id="rt-a"><span class="soph-choice-label">SELL THE FAKE — HEAD JUKE INTO THE BREAK</span></button>
-      <button class="soph-choice" id="rt-b"><span class="soph-choice-label">RUN IT EXACTLY AS DRAWN</span></button>
-    </div><div class="soph-nav"><span class="soph-progress">3 / 4</span></div>`);
-  document.getElementById('rt-a').onclick = () => { Engine.modifyStats({athleticism:2,toxicity:1}); _flushStatToast(); _football_end('You sell the fake hard. Corner bites. Rivera whistles twice.','+2 ATH · +1 TOX'); };
-  document.getElementById('rt-b').onclick = () => { Engine.modifyStats({athleticism:1,integrity:1}); _flushStatToast(); _football_end('Clean break. Rivera: "That\'s the standard."','+1 ATH · +1 INT'); };
+      <button class="soph-choice" id="rt-a"><span class="soph-choice-label">SELL THE FAKE — head juke into the break</span><span class="soph-choice-hint">High risk, high reward. Corner might bite.</span></button>
+      <button class="soph-choice" id="rt-b"><span class="soph-choice-label">RUN IT EXACTLY AS DRAWN</span><span class="soph-choice-hint">Discipline. Rivera's baseline standard.</span></button>
+    </div>
+    <div class="soph-nav"><span class="soph-progress">3 / 3</span></div>
+  `);
+  document.getElementById('rt-a').onclick = () => {
+    Engine.modifyStats({ athleticism:2, toxicity:1 }); _flushStatToast();
+    _football_end('You sell the fake hard. Corner bites. Rivera whistles twice. "Do it again."', '+2 ATH · +1 TOX');
+  };
+  document.getElementById('rt-b').onclick = () => {
+    Engine.modifyStats({ athleticism:1, integrity:1 }); _flushStatToast();
+    _football_end('Clean break at the cone. Rivera: "That\'s the standard. Every time."', '+1 ATH · +1 INT');
+  };
 }
+
 function _football_end(narr, delta) {
-  _sophShow(`<div class="soph-badge">ATHLETIC FIELD · VARSITY FOOTBALL</div>
-    <div class="soph-scene"><p>${narr}</p></div><div class="soph-stat-delta">${delta}</div>
+  _sophShow(`
+    <div class="soph-badge">ATHLETIC FIELD · VARSITY FOOTBALL</div>
+    <div class="soph-scene"><p>${narr}</p></div>
+    <div class="soph-stat-delta">${delta}</div>
     <div class="soph-scene"><p>Practice ends with conditioning — ten 100-yard gassers. By the showers you can barely lift your arms. But something about it felt right.</p></div>
-    <div class="soph-nav"><span class="soph-progress">4 / 4</span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+    <div class="soph-nav"><span class="soph-progress">3 / 3</span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>
+  `);
   document.getElementById('soph-done').onclick = () => _sophDone('soph_football_done');
 }
 
