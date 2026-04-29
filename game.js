@@ -1710,9 +1710,120 @@ function showPEBombThreat() {
         const s = beats[i];
         if (s.text) addBeat(s.text, 'threat-beat threat-beat-run');
         if (i + 1 < beats.length) setTimeout(() => rb(i + 1), beats[i + 1].delay);
-        else setTimeout(() => showPEResult(true), 2400);
+        else setTimeout(() => showPrincipalsOffice(), 2400);
       }
       rb(0);
+    }
+
+    function showPrincipalsOffice() {
+      overlay.classList.remove('threat-fullscreen');
+      const inner2 = overlay.querySelector('.pe-inner');
+      inner2.innerHTML = `
+        <div class="pe-result-screen principal-scene">
+          <div class="or-badge">MONDAY MORNING · PRINCIPAL'S OFFICE</div>
+          <div class="pe-result-icon" style="font-size:2.8rem">🏛️</div>
+          <div class="pe-result-title" style="color:#e0c878;font-size:2rem">PRINCIPAL REYES</div>
+          <p class="pe-result-text" style="font-size:1.25rem;max-width:600px;margin:0 auto 10px">
+            The office smells like carpet and old coffee. Your parents sit in the chairs against the wall.
+            Principal Reyes is behind his desk. He lets the silence run for a long moment before speaking.
+          </p>
+          <p class="pe-result-text" style="font-size:1.2rem;font-style:italic;color:#ffd700;max-width:600px;margin:0 auto 18px">
+            "You left during a lockdown. Against direct orders. Against every protocol we've drilled for four years.
+            I need to understand why you thought that was the right call."
+          </p>
+          <p class="pe-result-text" style="font-size:1.1rem;color:#c8c0b0;max-width:560px;margin:0 auto 24px">
+            Your parents aren't saying anything. They're waiting to see what you do.
+          </p>
+          <div class="threat-choice" style="margin-top:10px">
+            <div class="threat-choice-btns" style="justify-content:center;gap:18px">
+              <button class="threat-btn-stay" id="po-apologize" style="min-width:220px;font-size:1rem">
+                APOLOGIZE — "I panicked. I'm sorry."
+              </button>
+              <button class="threat-btn-run" id="po-defend" style="min-width:220px;font-size:1rem">
+                DEFEND YOURSELF — "I thought my life was in danger."
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      G.from(inner2.querySelector('.principal-scene'), { opacity: 0, y: 20, duration: 0.5 });
+
+      document.getElementById('po-apologize').addEventListener('click', () => {
+        inner2.innerHTML = `
+          <div class="pe-result-screen principal-scene">
+            <div class="or-badge">PRINCIPAL'S OFFICE — CONTINUED</div>
+            <div class="pe-result-icon" style="font-size:2.4rem">📋</div>
+            <div class="pe-result-title" style="color:#88cc88;font-size:1.8rem">YOU APOLOGIZED</div>
+            <p class="pe-result-text" style="font-size:1.25rem;max-width:600px;margin:0 auto 14px">
+              "I panicked," you say. "I know I shouldn't have. I'm sorry."
+            </p>
+            <p class="pe-result-text" style="font-size:1.15rem;color:#c8c0b0;max-width:580px;margin:0 auto 14px">
+              Reyes studies you for a moment. He clicks his pen twice.
+              "That's the right answer. Doesn't undo what you did — but it's the right answer."
+              He turns to your parents. "One week of lunch detention. Community service hours through the front office. That's my call."
+            </p>
+            <p class="pe-result-text" style="font-size:1.15rem;color:#e8e0d0;max-width:580px;margin:0 auto 14px">
+              Your parent puts a hand on your shoulder in the parking lot. They don't say much.
+              They don't need to. You already know.
+            </p>
+            <p class="pe-result-text" style="font-size:1.1rem;font-style:italic;color:#ffd700;max-width:560px;margin:0 auto 24px">
+              It goes in the record. But the way you handled the meeting won't.
+            </p>
+            <button class="btn-primary" id="pe-done-btn" style="margin-top:22px">CONTINUE →</button>
+            <div class="or-key-hint" style="margin-top:6px;font-size:.7rem;opacity:.45">[ ENTER ] to continue</div>
+          </div>
+        `;
+        G.from(inner2.querySelector('.principal-scene'), { opacity: 0, y: 20, duration: 0.5 });
+        if (typeof Engine !== 'undefined')
+          Engine.modifyStats({ happiness: -1.5, stress: -1.0, integrity: +1.0, gpa: -0.1 });
+        _wirePeDoneBtn();
+      }, { once: true });
+
+      document.getElementById('po-defend').addEventListener('click', () => {
+        inner2.innerHTML = `
+          <div class="pe-result-screen principal-scene">
+            <div class="or-badge">PRINCIPAL'S OFFICE — CONTINUED</div>
+            <div class="pe-result-icon" style="font-size:2.4rem">🔥</div>
+            <div class="pe-result-title" style="color:#e07070;font-size:1.8rem">YOU STOOD YOUR GROUND</div>
+            <p class="pe-result-text" style="font-size:1.25rem;max-width:600px;margin:0 auto 14px">
+              "I thought there was a real shooter. I made a decision to survive. I'd make it again."
+            </p>
+            <p class="pe-result-text" style="font-size:1.15rem;color:#c8c0b0;max-width:580px;margin:0 auto 14px">
+              Reyes doesn't blink. Long pause.
+              "That is the wrong answer in this office." He laces his fingers.
+              "Lockdown protocol exists so that one person running doesn't get thirty other people shot trying to chase them.
+              You think you're a variable. You're not. You're a domino."
+            </p>
+            <p class="pe-result-text" style="font-size:1.15rem;color:#e8e0d0;max-width:580px;margin:0 auto 14px">
+              Two weeks detention. A letter home. Required meeting with the school counselor.
+            </p>
+            <p class="pe-result-text" style="font-size:1.1rem;font-style:italic;color:#ff9966;max-width:560px;margin:0 auto 24px">
+              The thing is — he wasn't wrong. You know that now.
+            </p>
+            <button class="btn-primary" id="pe-done-btn" style="margin-top:22px">CONTINUE →</button>
+            <div class="or-key-hint" style="margin-top:6px;font-size:.7rem;opacity:.45">[ ENTER ] to continue</div>
+          </div>
+        `;
+        G.from(inner2.querySelector('.principal-scene'), { opacity: 0, y: 20, duration: 0.5 });
+        if (typeof Engine !== 'undefined')
+          Engine.modifyStats({ happiness: -2.5, stress: +1.5, integrity: -0.5, gpa: -0.2 });
+        _wirePeDoneBtn();
+      }, { once: true });
+
+      function _wirePeDoneBtn() {
+        let _fp = false;
+        function _donePO() {
+          if (_fp) return; _fp = true;
+          document.removeEventListener('keydown', _pokh);
+          showPEResult(true);
+        }
+        function _pokh(e) { if (e.key === 'Enter') _donePO(); }
+        document.addEventListener('keydown', _pokh);
+        setTimeout(() => {
+          const btn = document.getElementById('pe-done-btn');
+          if (btn) btn.addEventListener('click', _donePO, { once: true });
+        }, 100);
+      }
     }
 
     runPhase1(0);
@@ -2392,11 +2503,69 @@ function _sophHide(cb) {
 window.showFreshmanYearEnd = function() {
   window.MYTH_SOPH_CLASS = null;
   window.MYTH_SOPH_EC    = null;
+
+  // ── Step 1: Freshman year narrative summary ──────────────
+  const now    = (typeof Engine !== 'undefined' && Engine.getState) ? (Engine.getState()?.stats ?? {}) : {};
+  const start  = window.MYTH_START_STATS || {};
+  const ec     = window.MYTH_CLUB_CHOICE === 'robotics' ? 'Robotics Club' :
+                 window.MYTH_CLUB_CHOICE === 'football'  ? 'Football'       : 'No EC';
+  const gpa    = now.gpa || 0;
+  const gpaLabel = gpa >= 3.8 ? 'Honors Freshman' : gpa >= 3.0 ? 'Solid Year' : gpa >= 2.0 ? 'Getting By' : 'Rough Start';
+  const disobeyed = window.MYTH_PE_DISOBEYED;
+
+  const statOrder = ['gpa','friendships','relationships','sports','intelligence','extracurriculars','happiness'];
+  function summaryRow(key) {
+    const s0 = start[key] ?? (now[key] || 0);
+    const s1 = now[key] || 0;
+    const d  = +(s1 - s0).toFixed(2);
+    const arrow = d > 0 ? `<span style="color:#6BCB77">▲ +${d}</span>` :
+                  d < 0 ? `<span style="color:#FC7B54">▼ ${d}</span>`  :
+                          `<span style="color:#888">—</span>`;
+    const label = (typeof STAT_LABELS !== 'undefined' ? STAT_LABELS[key] : null) || key.toUpperCase();
+    const pct = key === 'gpa' ? (s1/4)*100 : (s1/10)*100;
+    const col = pct >= 70 ? '#F7B731' : pct >= 40 ? '#6BCB77' : '#FC7B54';
+    return `<div class="yr-stat-row">
+      <span class="yr-stat-label">${label}</span>
+      <div class="yr-stat-bar-wrap"><div class="yr-stat-bar" style="width:${Math.round(pct)}%;background:${col}"></div></div>
+      <span class="yr-stat-val">${s1.toFixed(key==='gpa'?2:1)}</span>
+      <span class="yr-stat-delta">${arrow}</span>
+    </div>`;
+  }
+
+  _sophShow(`
+    <div class="soph-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN YEAR — RECAP</div>
+    <h1 class="soph-title" style="font-size:2.6rem;margin-bottom:6px">YEAR ONE.</h1>
+    <div class="soph-scene" style="max-width:560px;margin:0 auto 18px">
+      <p style="font-size:1.2rem;line-height:1.8;color:#f0ece4">
+        Bio class. The smell of formaldehyde. A cat on a steel tray. You held the scalpel.
+        You figured out what you were made of — at least a little.
+      </p>
+      <p style="font-size:1.2rem;line-height:1.8;color:#f0ece4;margin-top:10px">
+        PE. A PA announcement that didn't sound like a drill.
+        Forty-one minutes on a cold gym floor.
+        ${disobeyed ? 'You ran. Principal\'s office. Monday morning. It went on the record.' : 'You stayed. Coach Williams\' voice was flat. You breathed through it.'}
+      </p>
+      <p style="font-size:1.15rem;line-height:1.8;color:#c8c0b0;margin-top:10px">
+        EC: <strong style="color:#ffd700">${ec}</strong>
+        &nbsp;·&nbsp; Final verdict: <strong style="color:#ffd700">${gpaLabel}</strong>
+      </p>
+    </div>
+    <div class="yr-stats" style="width:100%;max-width:520px;margin:0 auto">
+      ${statOrder.map(summaryRow).join('')}
+    </div>
+    <div class="soph-nav" style="margin-top:32px">
+      <button class="btn-primary" id="soph-summary-next">SOPHOMORE YEAR →</button>
+    </div>
+  `);
+  document.getElementById('soph-summary-next').addEventListener('click', _showSophSelection, { once: true });
+
+  // ── Step 2: Class + EC selection ─────────────────────────
+  function _showSophSelection() {
   _sophShow(`
     <div class="soph-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; END OF FRESHMAN YEAR</div>
     <h1 class="soph-title">SOPHOMORE YEAR.</h1>
     <div class="soph-scene">
-      <p>It went fast. One year down. The halls feel smaller somehow — or maybe you just got bigger. Summer passed. You're back. Time to pick your path.</p>
+      <p>The halls feel smaller somehow — or maybe you just got bigger. Summer passed. You're back. Time to pick your path.</p>
     </div>
     <div class="soph-prompt">SELECT YOUR SOPHOMORE CLASS:</div>
     <div class="soph-grade-choice-grid" id="soph-class-grid" style="grid-template-columns:1fr 1fr 1fr">
@@ -2431,8 +2600,16 @@ window.showFreshmanYearEnd = function() {
     Engine.setFlag('soph_ec_' + ecChoice);
     Engine.setFlag('freshman_year_complete');
     Engine.forceGradeUp(); updateHUD();
-    _sophHide(() => { Engine.advancePeriod(); safeEventCheck(); });
+    _sophHide(() => {
+      window.MYTH_ORIENTATION_ACTIVE   = false;
+      window.MYTH_PE_DONE              = true;
+      window.MYTH_FRESHMAN_RESTRICTION = false;
+      refreshStatsSidebar();
+      Engine.advancePeriod();
+      safeEventCheck();
+    });
   });
+  } // end _showSophSelection
 };
 
 // ════════════════════════════════════════════════════════

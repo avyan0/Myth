@@ -2036,30 +2036,30 @@ html, body {
 /* Transition screen */
 .bio-transition {
   display: flex; flex-direction: column;
-  align-items: flex-start; justify-content: flex-end;
-  height: 100%; padding: 4vh 10vw 5vh;
-  gap: 10px;
+  align-items: center; justify-content: center;
+  height: 100%; padding: 4vh 8vw 5vh;
+  gap: 14px; text-align: center;
 }
 .bio-trans-period {
-  font-family: var(--font-h); font-size: 1.15rem;
-  color: var(--text-mid); letter-spacing: .25em;
+  font-family: var(--font-h); font-size: 1.25rem;
+  color: #ffd700; letter-spacing: .28em;
   text-transform: uppercase;
 }
 .bio-trans-subject {
-  font-family: var(--font-h); font-size: 4.2rem;
-  color: var(--text); line-height: 1; letter-spacing: .06em;
+  font-family: var(--font-h); font-size: 4.8rem;
+  color: #ffffff; line-height: 1; letter-spacing: .06em;
 }
 .bio-trans-room {
-  font-family: var(--font-m); font-size: 1rem;
-  color: var(--text-mid); letter-spacing: .1em;
+  font-family: var(--font-m); font-size: 1.15rem;
+  color: #c8c0b0; letter-spacing: .1em;
 }
 .bio-trans-line {
-  width: 48px; height: 2px;
-  background: var(--accent); margin: 10px 0;
+  width: 64px; height: 2px;
+  background: #ffd700; margin: 12px 0;
 }
 .bio-trans-note {
-  font-size: 1.15rem; color: var(--text);
-  max-width: 520px; line-height: 1.7;
+  font-size: 1.3rem; color: #f0e8d0;
+  max-width: 560px; line-height: 1.75; text-align: center;
 }
 
 /* Result screen */
@@ -2472,20 +2472,21 @@ html, body {
   color: #fff; letter-spacing: .2em;
 }
 .threat-pa {
-  position: absolute; top: 60px; left: 10vw; right: 10vw;
-  font-family: var(--font-m); font-size: 1rem;
-  color: var(--text-mid); letter-spacing: .06em;
-  line-height: 1.6;
+  position: absolute; top: 60px; left: 6vw; right: 6vw;
+  font-family: var(--font-m); font-size: 1.3rem;
+  color: #e8e0d0; letter-spacing: .06em;
+  line-height: 1.7; text-align: center;
 }
-.threat-pa.crackle { color: rgba(200,180,100,.6); font-size: .9rem; }
+.threat-pa.crackle { color: #ffd700; font-size: 1.1rem; }
 .threat-pa.lockdown-msg {
-  font-family: var(--font-h); font-size: 1.2rem;
-  color: #ff6060; letter-spacing: .08em;
-  border-left: 3px solid rgba(255,80,80,.6); padding-left: 14px;
+  font-family: var(--font-h); font-size: 1.65rem;
+  color: #ff4444; letter-spacing: .1em;
+  text-align: center; padding: 0;
+  text-shadow: 0 0 18px rgba(255,60,60,.5);
 }
 .threat-pa.time-stamp {
-  font-family: var(--font-m); font-size: 1.6rem;
-  color: rgba(200,180,100,.5); letter-spacing: .2em;
+  font-family: var(--font-m); font-size: 1.8rem;
+  color: #ffd700; letter-spacing: .22em;
   text-align: center;
 }
 .threat-gym-dark {
@@ -2512,14 +2513,15 @@ html, body {
 
 .threat-story {
   position: absolute; bottom: 0; left: 0; right: 0;
-  padding: 0 10vw 5vh;
+  padding: 0 8vw 5vh;
   background: linear-gradient(transparent, rgba(8,4,12,.97) 28%);
-  display: flex; flex-direction: column;
-  gap: 10px; max-height: 52vh;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; max-height: 52vh; overflow-y: auto;
 }
 .threat-beat {
-  font-size: 1.12rem; line-height: 1.65;
-  max-width: 640px;
+  font-size: 1.3rem; line-height: 1.75;
+  max-width: 680px; text-align: center;
+  color: #f0ece4;
 }
 
 /* ── Full-screen override during bomb threat ── */
@@ -2639,14 +2641,20 @@ html, body {
   padding: 14px 28px;
 }
 #pe-overlay.threat-fullscreen .threat-bar-text {
-  font-size: 1rem;
+  font-size: 1.1rem;
 }
 #pe-overlay.threat-fullscreen .threat-pa {
-  top: 72px; font-size: 1.12rem;
+  top: 72px; font-size: 1.4rem;
+}
+#pe-overlay.threat-fullscreen .threat-pa.lockdown-msg {
+  font-size: 1.9rem;
 }
 #pe-overlay.threat-fullscreen .threat-story {
   max-height: 55vh;
-  padding: 0 12vw 6vh;
+  padding: 0 8vw 6vh;
+}
+#pe-overlay.threat-fullscreen .threat-beat {
+  font-size: 1.4rem;
 }
 
 /* ══════════════════════════════════════════════════════

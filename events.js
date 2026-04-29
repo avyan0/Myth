@@ -998,16 +998,16 @@ EventManager.registerMany([
     },
   },
 
-  // Brawl Stars tournament popup — fires after initial EC session, prompts big tournament
+  // Brawl Stars tournament popup — fires for every player at grade 10 week 3
   {
     id:       'brawl_tournament_popup',
     category: 'drama',
     title:    'Tournament Invite',
     once:     true,
-    trigger:  s => s.grade === 10 && Engine.hasFlag('soph_brawl_done') && !Engine.hasFlag('brawl_tournament_offered'),
+    trigger:  s => s.grade === 10 && s.week === 3 && s.dayIndex === 0 && s.period.id === 'after_school' && !Engine.hasFlag('brawl_tournament_offered'),
     scene: {
       location: 'PHONE',
-      setup: "Okafor texts you during lunch. \"You've been grinding. There's a 32-player regional bracket this weekend — real prize pool, leaderboard points. I put your name in but it's your call. You've been playing well enough to win this.\"",
+      setup: "A notification from the school's esports Discord. Okafor pinged everyone: \"32-player regional Brawl Stars bracket — this weekend, open entry, real prize pool. I signed up. You should too.\"",
       choices: [
         {
           label: 'ENTER THE TOURNAMENT — "I\'m in"',
