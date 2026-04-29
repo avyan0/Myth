@@ -6,14 +6,14 @@ function initWorld3D(playerData) {
   // ============================================================
   var canvas = document.getElementById('world3d-c');
   var REN = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: 'high-performance' });
-  REN.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  REN.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   REN.setSize(window.innerWidth, window.innerHeight);
   REN.shadowMap.enabled = true;
-  REN.shadowMap.type = THREE.PCFSoftShadowMap;
+  REN.shadowMap.type = THREE.PCFShadowMap;
+  REN.shadowMap.autoUpdate = false;
   REN.toneMapping = THREE.ACESFilmicToneMapping;
   REN.toneMappingExposure = 1.25;
   REN.outputEncoding = THREE.sRGBEncoding;
-  REN.physicallyCorrectLights = true;
 
   var SCN = new THREE.Scene();
   SCN.fog = new THREE.FogExp2(0x87ceeb, 0.003);
@@ -31,14 +31,14 @@ function initWorld3D(playerData) {
   var sunL = new THREE.DirectionalLight(0xfff5dd, 2.2);
   sunL.position.set(80, 160, 60);
   sunL.castShadow = true;
-  sunL.shadow.mapSize.width = 4096;
-  sunL.shadow.mapSize.height = 4096;
+  sunL.shadow.mapSize.width = 1024;
+  sunL.shadow.mapSize.height = 1024;
   sunL.shadow.camera.near = 1;
-  sunL.shadow.camera.far = 700;
-  sunL.shadow.camera.left = -320;
-  sunL.shadow.camera.right = 320;
-  sunL.shadow.camera.top = 320;
-  sunL.shadow.camera.bottom = -320;
+  sunL.shadow.camera.far = 500;
+  sunL.shadow.camera.left = -200;
+  sunL.shadow.camera.right = 200;
+  sunL.shadow.camera.top = 200;
+  sunL.shadow.camera.bottom = -200;
   sunL.shadow.bias = -0.0005;
   sunL.shadow.normalBias = 0.02;
   SCN.add(sunL);
@@ -439,10 +439,11 @@ function initWorld3D(playerData) {
   }
 
   // Draw visual only (no collision - used for thin decor, lines, etc.)
+  // visBox objects never cast shadows (too many small meshes); large ones still receive.
   function visBox(w, h, d, mat, x, y, z, ns) {
     var mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
     mesh.position.set(x, y, z);
-    if (!ns) { mesh.castShadow = true; mesh.receiveShadow = true; }
+    if (!ns) { mesh.receiveShadow = true; }
     SCN.add(mesh);
     return mesh;
   }
@@ -463,7 +464,7 @@ function initWorld3D(playerData) {
   function visCyl(rt, rb, h, seg, mat, x, y, z) {
     var mesh = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat);
     mesh.position.set(x, y, z);
-    mesh.castShadow = true; mesh.receiveShadow = true;
+    mesh.receiveShadow = true;
     SCN.add(mesh);
     return mesh;
   }
@@ -472,7 +473,6 @@ function initWorld3D(playerData) {
   function visCone(r, h, seg, mat, x, y, z) {
     var mesh = new THREE.Mesh(new THREE.ConeGeometry(r, h, seg), mat);
     mesh.position.set(x, y, z);
-    mesh.castShadow = true;
     SCN.add(mesh);
     return mesh;
   }
@@ -1310,12 +1310,14 @@ function initWorld3D(playerData) {
     [-200,195,100,240,65],[0,180,200,190,58],[140,210,-60,170,52],
     [-130,188,40,210,60],[60,175,180,165,48]
   ];
+  var cloudSprites = [];
   for (var ci=0;ci<cloudData.length;ci++) {
     var cd=cloudData[ci];
     var csp=new THREE.Sprite(cloudMat.clone());
     csp.position.set(cd[0],cd[1],cd[2]);
     csp.scale.set(cd[3],cd[4],1);
     SCN.add(csp);
+    cloudSprites.push(csp);
   }
 
   prog(9, 'Roads and paths...');
@@ -1922,12 +1924,13 @@ function initWorld3D(playerData) {
     else showN('Nothing nearby. Walk up to a building, field, or landmark and press E.');
   }
 
+  var _doorWP = new THREE.Vector3();
   function toggleDoor() {
     var best = null, bestD = Infinity;
     for (var i = 0; i < DOORS.length; i++) {
       var dr = DOORS[i];
-      var wp = new THREE.Vector3();
-      dr.mesh.getWorldPosition(wp);
+      dr.mesh.getWorldPosition(_doorWP);
+      var wp = _doorWP;
       var dx = px - wp.x, dz = pz - wp.z;
       var d = Math.sqrt(dx*dx + dz*dz);
       if (d < 7 && d < bestD) { best = dr; bestD = d; }
@@ -1963,6 +1966,10 @@ function initWorld3D(playerData) {
   // ============================================================
   var playerBox = new THREE.Box3(); // updated every frame
 
+  // Pre-allocated vectors for sweepMove — avoids GC pressure every frame
+  var _sweepPMin = new THREE.Vector3();
+  var _sweepPMax = new THREE.Vector3();
+
   function getSurfaceY(nx, nz) {
     // Find the highest walkable surface beneath the player
     var topY = -Infinity;
@@ -1981,32 +1988,21 @@ function initWorld3D(playerData) {
   }
 
   function sweepMove(nx, ny, nz) {
-    // Build player capsule box at proposed new position
     var halfW = PR, halfH = PH;
-    var pMin = new THREE.Vector3(nx - halfW, ny - halfH, nz - halfW);
-    var pMax = new THREE.Vector3(nx + halfW, ny + 0.1,   nz + halfW);
+    _sweepPMin.set(nx - halfW, ny - halfH, nz - halfW);
+    _sweepPMax.set(nx + halfW, ny + 0.1,   nz + halfW);
 
-    var allCols = COLS.slice();
-    // Add closed door collision boxes
-    for (var j = 0; j < DOORS.length; j++) {
-      if (!DOORS[j].open && DOORS[j].col && !DOORS[j].col.isEmpty()) allCols.push(DOORS[j].col);
-    }
-
-    for (var i = 0; i < allCols.length; i++) {
-      var col = allCols[i];
+    var i, col, ox, oy, oz;
+    for (i = 0; i < COLS.length; i++) {
+      col = COLS[i];
       if (col.isEmpty()) continue;
-      // Quick overlap check
-      if (pMax.x <= col.min.x || pMin.x >= col.max.x) continue;
-      if (pMax.y <= col.min.y || pMin.y >= col.max.y) continue;
-      if (pMax.z <= col.min.z || pMin.z >= col.max.z) continue;
-
-      // Overlap exists - compute penetration on each axis
-      var ox = Math.min(pMax.x - col.min.x, col.max.x - pMin.x);
-      var oy = Math.min(pMax.y - col.min.y, col.max.y - pMin.y);
-      var oz = Math.min(pMax.z - col.min.z, col.max.z - pMin.z);
-
+      if (_sweepPMax.x <= col.min.x || _sweepPMin.x >= col.max.x) continue;
+      if (_sweepPMax.y <= col.min.y || _sweepPMin.y >= col.max.y) continue;
+      if (_sweepPMax.z <= col.min.z || _sweepPMin.z >= col.max.z) continue;
+      ox = Math.min(_sweepPMax.x - col.min.x, col.max.x - _sweepPMin.x);
+      oy = Math.min(_sweepPMax.y - col.min.y, col.max.y - _sweepPMin.y);
+      oz = Math.min(_sweepPMax.z - col.min.z, col.max.z - _sweepPMin.z);
       if (oy < ox && oy < oz) continue;
-
       if (ox < oz) {
         if (nx < (col.min.x + col.max.x) / 2) nx -= ox + 0.001;
         else nx += ox + 0.001;
@@ -2014,9 +2010,31 @@ function initWorld3D(playerData) {
         if (nz < (col.min.z + col.max.z) / 2) nz -= oz + 0.001;
         else nz += oz + 0.001;
       }
+      _sweepPMin.set(nx - halfW, ny - halfH, nz - halfW);
+      _sweepPMax.set(nx + halfW, ny + 0.1,   nz + halfW);
+    }
 
-      pMin.set(nx - halfW, ny - halfH, nz - halfW);
-      pMax.set(nx + halfW, ny + 0.1,   nz + halfW);
+    // Closed door colliders (processed separately to avoid array allocation)
+    for (var j = 0; j < DOORS.length; j++) {
+      if (!DOORS[j].open && DOORS[j].col && !DOORS[j].col.isEmpty()) {
+        col = DOORS[j].col;
+        if (_sweepPMax.x <= col.min.x || _sweepPMin.x >= col.max.x) continue;
+        if (_sweepPMax.y <= col.min.y || _sweepPMin.y >= col.max.y) continue;
+        if (_sweepPMax.z <= col.min.z || _sweepPMin.z >= col.max.z) continue;
+        ox = Math.min(_sweepPMax.x - col.min.x, col.max.x - _sweepPMin.x);
+        oy = Math.min(_sweepPMax.y - col.min.y, col.max.y - _sweepPMin.y);
+        oz = Math.min(_sweepPMax.z - col.min.z, col.max.z - _sweepPMin.z);
+        if (oy < ox && oy < oz) continue;
+        if (ox < oz) {
+          if (nx < (col.min.x + col.max.x) / 2) nx -= ox + 0.001;
+          else nx += ox + 0.001;
+        } else {
+          if (nz < (col.min.z + col.max.z) / 2) nz -= oz + 0.001;
+          else nz += oz + 0.001;
+        }
+        _sweepPMin.set(nx - halfW, ny - halfH, nz - halfW);
+        _sweepPMax.set(nx + halfW, ny + 0.1,   nz + halfW);
+      }
     }
 
     return { x: nx, y: ny, z: nz };
@@ -2417,6 +2435,12 @@ function initWorld3D(playerData) {
   var notifEl  = document.getElementById('notif');
   var clock    = new THREE.Clock();
 
+  // Cached DOM refs — never query inside the hot loop
+  var _hudZoneEl    = document.getElementById('hud-zone');
+  var _pauseOverlay = document.getElementById('pause-overlay');
+  var _mmFrame      = 0;   // minimap throttle counter
+  var _sunTimer     = 0;   // seconds since last shadow-map update
+
   function animate() {
     requestAnimationFrame(animate);
     var dt = Math.min(clock.getDelta(), 0.05);
@@ -2445,8 +2469,7 @@ function initWorld3D(playerData) {
     // Proposed XZ position
     // Block movement during overlay/pause
     if (window.MYTH_ORIENTATION_ACTIVE) { mvx = 0; mvz = 0; }
-    var poPause = document.getElementById('pause-overlay');
-    if (poPause && poPause.classList.contains('open')) { mvx = 0; mvz = 0; }
+    if (_pauseOverlay && _pauseOverlay.classList.contains('open')) { mvx = 0; mvz = 0; }
     var npx = px + mvx * spd * dt;
     var npz = pz + mvz * spd * dt;
 
@@ -2495,20 +2518,24 @@ function initWorld3D(playerData) {
       poolMesh.position.y = 0.55 + Math.sin(poolTime * 0.8) * 0.02;
     }
 
-    // Slow day/night cycle
+    // Day/night atmosphere — intensity + fog animate freely (cheap)
+    _sunTimer += dt;
     var t = Date.now() * 0.00002;
-    sunL.position.set(Math.cos(t)*220, Math.abs(Math.sin(t))*180+50, Math.sin(t)*120);
     var dl = Math.max(0.2, Math.sin(t + Math.PI/2));
     sunL.intensity = 1.8 + dl * 0.8;
     ambL.intensity = 0.5 + dl * 0.5;
-    // Animate fog color with time of day
     var fogR = 0.53 + dl*0.12, fogG = 0.7 + dl*0.1, fogB = 0.85 + dl*0.05;
     SCN.fog.color.setRGB(fogR, fogG, fogB);
-    // Rotate clouds slowly
-    for (var ci2=0;ci2<SCN.children.length;ci2++) {
-      if (SCN.children[ci2].isSprite && SCN.children[ci2].material && SCN.children[ci2].material.map === cloudTex) {
-        SCN.children[ci2].position.x += Math.sin(t*0.01)*0.01;
-      }
+    // Move sun position only every 5 s — triggers shadow-map recompute
+    if (_sunTimer >= 5.0) {
+      _sunTimer = 0;
+      sunL.position.set(Math.cos(t)*220, Math.abs(Math.sin(t))*180+50, Math.sin(t)*120);
+      REN.shadowMap.needsUpdate = true;
+    }
+    // Drift clouds using dedicated array (avoids O(n) scan over all scene children)
+    var cloudDrift = Math.sin(t * 0.01) * 0.01;
+    for (var ci2 = 0; ci2 < cloudSprites.length; ci2++) {
+      cloudSprites[ci2].position.x += cloudDrift;
     }
 
     // Zone-entry orientation trigger — fires when player steps inside the gym
@@ -2660,9 +2687,11 @@ function initWorld3D(playerData) {
     }
 
     // UI updates
-    var hz=document.getElementById('hud-zone'); if(hz) hz.textContent=getZone();
+    if (_hudZoneEl) _hudZoneEl.textContent = getZone();
     updatePrompt();
-    if (!fullMapOpen) drawMM();
+    // Throttle minimap: redraw every 3rd frame (imperceptible at 60 fps)
+    _mmFrame++;
+    if (!fullMapOpen && (_mmFrame % 3 === 0)) drawMM();
     REN.render(SCN, CAM);
   }
 
@@ -2709,6 +2738,9 @@ function initWorld3D(playerData) {
 
   // Expose canvas for external pointer lock requests
   window.MYTH_WORLD3D_CANVAS = canvas;
+
+  // Compute initial shadow map now that the scene is fully built
+  REN.shadowMap.needsUpdate = true;
 
   animate();
 }

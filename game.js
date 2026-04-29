@@ -596,9 +596,11 @@ const OR_SPEECH = [
   { speaker: 'COACH RIVERA',         text: 'Before we continue — find your seat. This isn\'t assigned. But remember: where you sit on day one tells people something.' },
 ];
 let _orSpeechIdx = 0;
+let _orChoiceResolved = false; // guard: resolveOrientationChoice fires exactly once
 
 function showOrientationOverlay() {
   _orSpeechIdx = 0;
+  _orChoiceResolved = false;
   const overlay = document.getElementById('orientation-overlay');
   overlay.classList.add('open');
   const inner = overlay.querySelector('.or-inner');
@@ -668,10 +670,6 @@ function _showSeatChoice(inner) {
   `;
   G.from('.or-choice-btn', { opacity: 0, y: 10, stagger: 0.07, duration: 0.35, ease: 'power2.out' });
 
-  document.querySelectorAll('.or-choice-btn').forEach(btn => {
-    btn.addEventListener('click', () => resolveOrientationChoice(btn.dataset.choice), { once: true });
-  });
-
   // Keyboard 1-4
   const keyHandler = (e) => {
     const map = { '1': 'alone_back', '2': 'familiar_face', '3': 'front_row', '4': 'popular_kids',
@@ -684,9 +682,18 @@ function _showSeatChoice(inner) {
     }
   };
   document.addEventListener('keydown', keyHandler);
+
+  document.querySelectorAll('.or-choice-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.removeEventListener('keydown', keyHandler); // always clean up keyboard handler
+      resolveOrientationChoice(btn.dataset.choice);
+    }, { once: true });
+  });
 }
 
 function resolveOrientationChoice(choice) {
+  if (_orChoiceResolved) return;
+  _orChoiceResolved = true;
   const OUTCOMES = {
     alone_back: {
       deltas: { intelligence: +1, happiness: -1, friendships: -1 },
