@@ -490,13 +490,16 @@ function initWorld3D(playerData) {
     var cv = document.createElement('canvas');
     cv.width = 512; cv.height = 72;
     var ctx = cv.getContext('2d');
-    ctx.fillStyle = 'rgba(6,12,30,0.9)';
+    ctx.fillStyle = 'rgba(8,15,40,0.97)';
     ctx.beginPath(); ctx.roundRect(3, 3, 506, 66, 9); ctx.fill();
-    ctx.font = 'bold 24px sans-serif';
-    ctx.fillStyle = '#e8d070';
+    ctx.strokeStyle = 'rgba(232,208,112,0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(3, 3, 506, 66, 9); ctx.stroke();
+    ctx.font = 'bold 26px sans-serif';
+    ctx.fillStyle = '#f0dc88';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(text, 256, 36);
-    var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthTest: false }));
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthTest: true }));
     sp.scale.set(scale || 12, 1.8, 1);
     SCN.add(sp);
     return sp;
@@ -571,11 +574,6 @@ function initWorld3D(playerData) {
       // 2nd floor walkway (solid so you can stand on it)
       solidBox(w + 2.0, 0.3, 2.8, MT.con, x, h/2, z + d/2 + 1.0);
       addSurf(x, z + d/2 + 1.0, w + 2.0, 2.8, h/2 + 0.3);
-      // Railings (solid)
-      for (var ri = x - w/2; ri <= x + w/2; ri += 2.5) {
-        solidBox(0.12, 1.1, 0.12, MT.pol, ri, h/2 + 0.3, z + d/2 + 2.2);
-      }
-      solidBox(w + 2.2, 0.1, 0.12, MT.pol, x, h/2 + 1.35, z + d/2 + 2.2);
     }
 
     // INTERIOR
@@ -732,6 +730,41 @@ function initWorld3D(playerData) {
 
       // Calendar/whiteboard on side wall
       solidBox(0.1, 0.8, 1.2, mk(0xffffff, 0.5), bx - w/2 + 0.55, 1.5, bz - 1.5);
+
+    } else if (type === 'locker') {
+      // Tile floor
+      var lkFloorMat = makeTex(128, 128, function(c2, w2, h2) {
+        c2.fillStyle = '#c8c0b8'; c2.fillRect(0,0,w2,h2);
+        c2.strokeStyle = '#a89890'; c2.lineWidth = 1.5;
+        for (var lfi = 0; lfi < w2; lfi += 32) { c2.beginPath(); c2.moveTo(lfi,0); c2.lineTo(lfi,h2); c2.stroke(); }
+        for (var lfj = 0; lfj < h2; lfj += 32) { c2.beginPath(); c2.moveTo(0,lfj); c2.lineTo(w2,lfj); c2.stroke(); }
+      });
+      var lkFloor = new THREE.Mesh(new THREE.BoxGeometry(w-0.8, 0.1, d-0.8), new THREE.MeshStandardMaterial({map:lkFloorMat,roughness:0.4,metalness:0.1}));
+      lkFloor.position.set(bx, 0.1, bz); lkFloor.receiveShadow=true; SCN.add(lkFloor);
+      addSurf(bx, bz, w-0.8, d-0.8, 0.1);
+      // Lockers along back (north) wall and side walls
+      var lkMat = mk(0x5577aa, 0.6, 0.4);
+      var lkDoorMat = mk(0x3355aa, 0.55, 0.5);
+      // Back wall lockers
+      for (var lki = bx - w/2 + 1.2; lki < bx + w/2 - 0.8; lki += 1.0) {
+        solidBox(0.85, 2.0, 0.55, lkMat, lki, 0, bz - d/2 + 0.55);
+        visBox(0.75, 1.85, 0.04, lkDoorMat, lki, 0, bz - d/2 + 0.82);
+        visBox(0.08, 0.08, 0.06, mk(0xdddddd, 0.3, 0.6), lki + 0.28, 0.96, bz - d/2 + 0.86);
+      }
+      // Left wall lockers
+      for (var lkj = bz - d/2 + 1.2; lkj < bz + d/2 - 0.8; lkj += 1.0) {
+        solidBox(0.55, 2.0, 0.85, lkMat, bx - w/2 + 0.55, 0, lkj);
+        visBox(0.04, 1.85, 0.75, lkDoorMat, bx - w/2 + 0.82, 0, lkj);
+        visBox(0.06, 0.08, 0.08, mk(0xdddddd, 0.3, 0.6), bx - w/2 + 0.86, 0.96, lkj + 0.28);
+      }
+      // Benches down the center
+      for (var lkb = bz - d/2 + 2.5; lkb < bz + d/2 - 2; lkb += 4.5) {
+        solidBox(w * 0.6, 0.06, 0.36, mk(0x8a6a3a, 0.7), bx, 0.46, lkb);
+        solidBox(0.1, 0.46, 0.3, mk(0x555555,0.5), bx - w*0.25, 0, lkb);
+        solidBox(0.1, 0.46, 0.3, mk(0x555555,0.5), bx + w*0.25, 0, lkb);
+      }
+      // Ceiling light strip
+      visBox(w - 2, 0.08, 0.4, ceilLightMat, bx, h - 0.1, bz);
 
     } else if (type === 'gym') {
       // This is now handled by buildGym() separately - skip
@@ -896,14 +929,27 @@ function initWorld3D(playerData) {
     var gw = 42, gd = 32, gh = 14;
 
     // -- EXTERIOR SHELL ------------------------------------------
-    // West wall (solid)
-    solidBox(0.5, gh, gd, MT.wG, gx - gw/2 + 0.25, 0, gz);
+    // West wall — split with door gap at center (exit, opposite east entrance)
+    solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx - gw/2 + 0.25, 0, gz - (gd/4 + 0.8));
+    solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx - gw/2 + 0.25, 0, gz + (gd/4 + 0.8));
+    solidBox(0.5, gh - 3.2, 3.2, MT.wG, gx - gw/2 + 0.25, 3.2, gz);
     // East wall — split with door gap at center (z=gz), opening 3.2 wide
     solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx + gw/2 - 0.25, 0, gz - (gd/4 + 0.8));
     solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx + gw/2 - 0.25, 0, gz + (gd/4 + 0.8));
     solidBox(0.5, gh - 3.2, 3.2, MT.wG, gx + gw/2 - 0.25, 3.2, gz);
-    // South wall — solid (no entrance here any more)
-    solidBox(gw, gh, 0.5, MT.wG, gx, 0, gz + gd/2 - 0.25);
+    // South wall — split with door at center (exit toward bio room / club fair)
+    solidBox((gw - 3.2) / 2, gh, 0.5, MT.wG, gx - (gw/4 + 0.8), 0, gz + gd/2 - 0.25);
+    solidBox((gw - 3.2) / 2, gh, 0.5, MT.wG, gx + (gw/4 + 0.8), 0, gz + gd/2 - 0.25);
+    solidBox(3.2, gh - 3.1, 0.5, MT.wG, gx, 3.1, gz + gd/2 - 0.25);
+    // South door mesh
+    var gymSDoor = new THREE.Mesh(new THREE.BoxGeometry(2.8, 3.1, 0.1), MT.dr);
+    gymSDoor.position.set(gx, 1.55, gz + gd/2 - 0.05);
+    gymSDoor.castShadow = true; SCN.add(gymSDoor);
+    var _gsdMin = new THREE.Vector3(gx - 1.4, 0, gz + gd/2 - 0.28);
+    var _gsdMax = new THREE.Vector3(gx + 1.4, 3.15, gz + gd/2 + 0.28);
+    var gymSDoorCol = new THREE.Box3(_gsdMin.clone(), _gsdMax.clone());
+    DOORS.push({ mesh: gymSDoor, open: false, cx: gx, cz: gz + gd/2 - 0.05,
+                 col: gymSDoorCol, origMin: _gsdMin.clone(), origMax: _gsdMax.clone(), wallAxis: 'z' });
     // North wall split by tunnel - built inside bleacher section below
     // Roof
     solidBox(gw + 0.6, 0.8, gd + 0.6, MT.roofG, gx, gh, gz);
@@ -919,9 +965,27 @@ function initWorld3D(playerData) {
     var gymDoorCol = new THREE.Box3(_gdMin.clone(), _gdMax.clone());
     DOORS.push({ mesh: gymDoor, open: false, cx: gx + gw/2 - 0.05, cz: gz,
                  col: gymDoorCol, origMin: _gdMin.clone(), origMax: _gdMax.clone(), wallAxis: 'x' });
+    // West exit door (directly opposite east entrance)
+    var gymWDoor = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.1, 2.8), MT.dr);
+    gymWDoor.position.set(gx - gw/2 + 0.05, 1.55, gz);
+    gymWDoor.castShadow = true; SCN.add(gymWDoor);
+    var _gwdMin = new THREE.Vector3(gx - gw/2 - 0.28, 0, gz - 1.4);
+    var _gwdMax = new THREE.Vector3(gx - gw/2 + 0.28, 3.15, gz + 1.4);
+    var gymWDoorCol = new THREE.Box3(_gwdMin.clone(), _gwdMax.clone());
+    DOORS.push({ mesh: gymWDoor, open: false, cx: gx - gw/2 + 0.05, cz: gz,
+                 col: gymWDoorCol, origMin: _gwdMin.clone(), origMax: _gwdMax.clone(), wallAxis: 'x' });
+    // West exit ramp/curb
+    solidBox(0.9, 0.18, 5.5, MT.stt, gx - gw/2 - 0.65, 0, gz);
+    addSurf(gx - gw/2 - 0.65, gz, 0.9, 5.5, 0.18);
+    // West exit signs
+    var westExitSp = mkLabel('EXIT ←  Campus West', 14);
+    westExitSp.position.set(gx - gw/2 + 1.8, gh * 0.50, gz);
+    var westExtSp = mkLabel('Gym West Exit', 12);
+    westExtSp.position.set(gx - gw/2 - 2.0, gh * 0.45, gz);
 
-    // High windows on west wall
+    // High windows on west wall — skip area near door gap (gz ± 4.5)
     for (var ww = gz - gd/2 + 3; ww < gz + gd/2 - 2; ww += 4.5) {
+      if (Math.abs(ww - gz) < 4.5) continue;
       visBox(0.12, 1.8, 2.2, MT.win, gx - gw/2 - 0.02, gh*0.6, ww);
     }
     // High windows on east wall — skip area near door gap (gz ± 3.5)
@@ -929,9 +993,15 @@ function initWorld3D(playerData) {
       if (Math.abs(ww2 - gz) < 4.5) continue;
       visBox(0.12, 1.8, 2.2, MT.win, gx + gw/2 + 0.02, gh*0.6, ww2);
     }
-    // Sign above east entrance
-    var eastEntrSp = mkLabel('↑  ORIENTATION  ↑', 9);
-    eastEntrSp.position.set(gx + gw/2 + 0.5, gh * 0.55, gz);
+    // East entrance sign — visible from spawn
+    var eastEntrSp = mkLabel('>> ENTER GYM  /  ORIENTATION <<', 18);
+    eastEntrSp.position.set(gx + gw/2 + 2.0, gh * 0.55, gz);
+    // South exit sign (interior, above south door)
+    var exitSp = mkLabel('EXIT →  Bio Room / Club Fair', 14);
+    exitSp.position.set(gx, gh * 0.50, gz + gd/2 - 1.8);
+    // South exit sign (exterior)
+    var southExitSp = mkLabel('Gym South Exit', 12);
+    southExitSp.position.set(gx, gh * 0.45, gz + gd/2 + 1.5);
 
     // -- GYM FLOOR ------------------------------------------------
     var gymFloorTex = makeTex(512, 512, function(c2, w2, h2) {
@@ -1040,94 +1110,16 @@ function initWorld3D(playerData) {
     var blRows = 8, blW = gw - 4;
     var blMats = [mk(0x3355aa, 0.6), mk(0xcc3322, 0.6)];
 
-    // TUNNEL under north bleachers - left side of stand
-    var tunnelCX  = gx - 8;
-    var tunnelW   = 4.2;
-    var tunnelH   = 2.3;
-    var tunRowLen = blRows * 0.85 + 1.5;
-    var halfGap   = tunnelW / 2;
-    var tunnelStartZ = gz - gd/2 + 0.8;
-    var tunnelEndZ   = gz - gd/2 - tunRowLen + 0.3;
-    var tunnelMidZ   = (tunnelStartZ + tunnelEndZ) / 2;
-    var tunLen       = Math.abs(tunnelStartZ - tunnelEndZ);
-
-    // North bleachers - rows below tunnel height are SPLIT, rows above are full
+    // North bleachers — full-width rows, no tunnel
     for (var br2 = 0; br2 < blRows; br2++) {
       var byN = br2 * 0.62;
       var bzN = gz - gd/2 + 0.8 + br2 * 0.85;
-      var rowTop = byN + 0.32;
-
-      if (byN < tunnelH) {
-        // Split row: left piece
-        var leftEdge  = gx - blW/2;
-        var leftW2    = (tunnelCX - halfGap) - leftEdge;
-        var leftCX2   = leftEdge + leftW2/2;
-        if (leftW2 > 0.3) {
-          solidBox(leftW2, 0.32, 0.88, blMats[br2%2], leftCX2, byN, bzN);
-          addSurf(leftCX2, bzN, leftW2, 0.88, rowTop);
-          visBox(leftW2, rowTop, 0.12, mk(0x444444,0.9), leftCX2, rowTop/2, bzN + 0.38);
-        }
-        // Split row: right piece
-        var rightStart2 = tunnelCX + halfGap;
-        var rightW2     = (gx + blW/2) - rightStart2;
-        var rightCX2    = rightStart2 + rightW2/2;
-        if (rightW2 > 0.3) {
-          solidBox(rightW2, 0.32, 0.88, blMats[br2%2], rightCX2, byN, bzN);
-          addSurf(rightCX2, bzN, rightW2, 0.88, rowTop);
-          visBox(rightW2, rowTop, 0.12, mk(0x444444,0.9), rightCX2, rowTop/2, bzN + 0.38);
-        }
-      } else {
-        // Full width row (above tunnel clearance - becomes tunnel ceiling)
-        solidBox(blW, 0.32, 0.88, blMats[br2%2], gx, byN, bzN);
-        addSurf(gx, bzN, blW, 0.88, rowTop);
-        visBox(blW, rowTop, 0.12, mk(0x444444,0.9), gx, rowTop/2, bzN + 0.38);
-      }
+      solidBox(blW, 0.32, 0.88, blMats[br2%2], gx, byN, bzN);
+      addSurf(gx, bzN, blW, 0.88, byN + 0.32);
+      visBox(blW, byN + 0.32, 0.12, mk(0x444444,0.9), gx, (byN+0.32)/2, bzN + 0.38);
     }
-
-    // Tunnel walls (sides of the corridor)
-    solidBox(0.28, tunnelH, tunLen, mk(0x888880,0.9), tunnelCX - halfGap - 0.14, 0, tunnelMidZ);
-    solidBox(0.28, tunnelH, tunLen, mk(0x888880,0.9), tunnelCX + halfGap + 0.14, 0, tunnelMidZ);
-    // Tunnel ceiling (underside slab)
-    visBox(tunnelW + 0.6, 0.18, tunLen, mk(0xb0a898,0.95), tunnelCX, tunnelH, tunnelMidZ);
-    // Tunnel floor
-    visBox(tunnelW, 0.1, tunLen, mk(0xc0b8a0,0.88), tunnelCX, 0.05, tunnelMidZ, true);
-    addSurf(tunnelCX, tunnelMidZ, tunnelW, tunLen, 0.1);
-    // Punch hole through north wall for tunnel - north wall was one solidBox(gw,gh,0.5)
-    // We need to replace it with two halves bracketing the tunnel gap.
-    // The north wall addCol was already placed; add two BLOCKING walls on sides of gap only.
-    // (The original north wall solidBox stays but we carve by placing nothing - 
-    //  player passes through that 0.5 thick wall slice at tunnel pos since gap exists in bleachers)
-    // Add explicit blocker walls flanking the tunnel on the exterior north wall face:
-    var nwLeftW = (tunnelCX - halfGap) - (gx - gw/2);
-    solidBox(nwLeftW, gh, 0.5, MT.wG, gx - gw/2 + nwLeftW/2, 0, gz - gd/2 + 0.25);
-    var nwRightStart = tunnelCX + halfGap;
-    var nwRightW = (gx + gw/2) - nwRightStart;
-    solidBox(nwRightW, gh, 0.5, MT.wG, nwRightStart + nwRightW/2, 0, gz - gd/2 + 0.25);
-    // Header above tunnel on north wall
-    solidBox(tunnelW, gh - tunnelH, 0.5, MT.wG, tunnelCX, tunnelH, gz - gd/2 + 0.25);
-
-    // Tunnel lights (ceiling strips)
-    var tlMat2 = new THREE.MeshStandardMaterial({color:0xffffee,emissive:0xffffcc,emissiveIntensity:0.9});
-    for (var tl2 = tunnelEndZ+0.8; tl2 < tunnelStartZ; tl2 += 2.2) {
-      visBox(tunnelW-0.5, 0.05, 0.35, tlMat2, tunnelCX, tunnelH-0.1, tl2, true);
-    }
-
-    // Arch frame around outside tunnel opening
-    var archMat2 = mk(0x3355aa, 0.7);
-    visBox(tunnelW+1.6, 0.32, 0.22, archMat2, tunnelCX, tunnelH+0.16, tunnelEndZ+0.15);
-    visBox(0.2, tunnelH+0.32, 0.22, archMat2, tunnelCX-halfGap-0.5, (tunnelH+0.32)/2, tunnelEndZ+0.15);
-    visBox(0.2, tunnelH+0.32, 0.22, archMat2, tunnelCX+halfGap+0.5, (tunnelH+0.32)/2, tunnelEndZ+0.15);
-
-    // Signs
-    var exitSp = mkLabel('GYM EXIT / ENTRANCE', 8);
-    exitSp.position.set(tunnelCX, tunnelH+1.4, tunnelEndZ+0.6);
-    var arrowSp2 = mkLabel('< Exit under bleachers', 7);
-    arrowSp2.position.set(tunnelCX, tunnelH+0.6, gz - gd/2 + 3.5);
-
-    NPCS.push({x:tunnelCX, z:tunnelEndZ+1, radius:5, label:'Gym Tunnel Exit',
-      msg:'Tunnel exit under the north bleachers. Walk through to leave the gymnasium!'});
-    NPCS.push({x:tunnelCX, z:gz-gd/2+2, radius:5, label:'Gym Tunnel Entrance',
-      msg:'Walk through the tunnel under the bleachers to exit the gym. Follow the lights!'});
+    // North wall — fully solid
+    solidBox(gw, gh, 0.5, MT.wG, gx, 0, gz - gd/2 + 0.25);
 
     // South bleachers — front rows near court, back rows near south wall, all facing north
     for (var br3 = 0; br3 < blRows; br3++) {
@@ -1398,9 +1390,46 @@ function initWorld3D(playerData) {
   prog(50, 'Gymnasium...');
   buildGym(-92, -62);
 
-  // Biology Room 102 — south of the gym, within freshman zone
-  building(-92, -36, 22, 14, 7, MT.wA, MT.roofR, 'Biology — Room 102', 1, 'cls');
-  ZONES.push({ x1: -103, x2: -81, z1: -43, z2: -29, name: 'Biology Room 102' });
+  // Biology Room 102 — south of gym, door faces west toward club fair
+  (function buildBioRoom() {
+    var bx = -97, bz = -36, bw = 22, bd = 14, bh = 7, dW = 3.0;
+    surfBox(bw-0.6, 0.18, bd-0.6, MT.fl, bx, 0, bz);
+    visBox(bw-0.6, 0.15, bd-0.6, MT.con, bx, bh, bz);
+    solidBox(bw+0.6, 0.75, bd+0.6, MT.roofR, bx, bh, bz);
+    // North, south, east walls — solid
+    solidBox(bw, bh, 0.5, MT.wA, bx, 0, bz - bd/2 + 0.25);
+    solidBox(bw, bh, 0.5, MT.wA, bx, 0, bz + bd/2 - 0.25);
+    solidBox(0.5, bh, bd, MT.wA, bx + bw/2 - 0.25, 0, bz);
+    // West wall — split with door at center
+    solidBox(0.5, bh, (bd - dW) / 2, MT.wA, bx - bw/2 + 0.25, 0, bz - (bd/4 + dW/4));
+    solidBox(0.5, bh, (bd - dW) / 2, MT.wA, bx - bw/2 + 0.25, 0, bz + (bd/4 + dW/4));
+    solidBox(0.5, bh - 3.1, dW, MT.wA, bx - bw/2 + 0.25, 3.1, bz);
+    // West door
+    var bioD = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.1, 2.8), MT.dr);
+    bioD.position.set(bx - bw/2 + 0.05, 1.55, bz);
+    bioD.castShadow = true; SCN.add(bioD);
+    var _bdMin = new THREE.Vector3(bx - bw/2 - 0.28, 0, bz - 1.4);
+    var _bdMax = new THREE.Vector3(bx - bw/2 + 0.28, 3.15, bz + 1.4);
+    DOORS.push({ mesh: bioD, open: false, cx: bx - bw/2 + 0.05, cz: bz,
+                 col: new THREE.Box3(_bdMin.clone(), _bdMax.clone()),
+                 origMin: _bdMin.clone(), origMax: _bdMax.clone(), wallAxis: 'x' });
+    // Windows
+    for (var bwi = bx - bw/2 + 3; bwi < bx + bw/2 - 2; bwi += 3.2) {
+      visBox(1.1, 1.2, 0.12, MT.win, bwi, bh*0.5, bz + bd/2 + 0.02);
+      visBox(1.1, 1.2, 0.12, MT.win, bwi, bh*0.5, bz - bd/2 - 0.02);
+    }
+    // Interior desks
+    for (var bdr = 0; bdr < 3; bdr++) {
+      for (var bdc = 0; bdc < 4; bdc++) {
+        solidBox(1.4, 0.08, 0.9, MT.dsk, bx - 6 + bdc * 4, 0.75, bz - 3.5 + bdr * 3.5);
+      }
+    }
+    var bioSp = mkLabel('Biology — Room 102', 13);
+    bioSp.position.set(bx, bh + 4, bz);
+    NPCS.push({ x: bx, z: bz, radius: 8, label: 'Biology Room 102',
+      msg: 'Biology Room 102 — Period 1. West door opens toward the Club Fair.' });
+    ZONES.push({ x1: bx-bw/2, x2: bx+bw/2, z1: bz-bd/2, z2: bz+bd/2, name: 'Biology Room 102' });
+  })();
 
   // ── ORIENTATION NPC BODIES ──────────────────────────────────
   // Helper: place a simple character mesh (cylinder body + sphere head)
@@ -1528,7 +1557,7 @@ function initWorld3D(playerData) {
     msg:'WESTBROOK HIGH SCHOOL\nMain campus beyond the gates — Buildings A through F, Cafeteria, Library.\nFreshmen: report to the gym (east entrance) for orientation first.'});
 
   prog(54, 'Locker rooms and weight room...');
-  building(-92,-32,28,15,6,mk(0xd0c8b8),mk(0x607080),'Locker Rooms',1,'cls');
+  building(-92,-32,28,15,6,mk(0xd0c8b8),mk(0x607080),'Locker Rooms',1,'locker');
   building(-92,-12,22,13,6,mk(0xd0c8b8),mk(0x506070),'Weight Room',1,'wgt');
   NPCS.push({x:-92,z:-12,radius:6,label:'Weight Room',msg:'Weight Room - Bench press, squat racks, free weights. Open 6am-8pm.'});
 
@@ -1639,7 +1668,6 @@ function initWorld3D(playerData) {
     visBox(24,0.1,0.13,MT.tln,tx,0.1,26,true); visBox(24,0.1,0.13,MT.tln,tx,0.1,52,true); visBox(24,0.1,0.13,MT.tln,tx,0.1,78,true);
     solidBox(24,1.1,0.12,mk(0xeeeeee,0.5),tx,0,52); // NET is solid
   }
-  fence(-128,26,-86,26,3); fence(-128,78,-86,78,3); fence(-128,26,-128,78,3); fence(-86,26,-86,78,3);
   mkLabel('Tennis Courts',10).position.set(-112,5,52);
   NPCS.push({x:-112,z:52,radius:7,label:'Tennis Courts',msg:'3 hard courts - MVHS Tennis. The nets are solid so you cannot run through them!'});
   ZONES.push({x1:-130,x2:-86,z1:26,z2:78,name:'Tennis Courts'});
@@ -1671,7 +1699,6 @@ function initWorld3D(playerData) {
   visCyl(1.6,2,0.6,12,MT.mnd,52,0.3,126);
   addSurf(52,126,3.2,3.2,0.6); // stand on the mound
   visBox(0.18,0.12,52,MT.tln,72,0.07,102,true); visBox(0.18,0.12,52,MT.tln,32,0.07,102,true);
-  fence(32,152,72,152,4); fence(32,152,32,145,4); fence(72,152,72,145,4);
   solidBox(14,2.1,4.5,mk(0xaaaaaa),40,0,151); solidBox(14,2.1,4.5,mk(0xaaaaaa),64,0,151); // dugouts
   solidBox(10,7,1,MT.scr,52,0,86); visBox(9,6,0.1,MT.eG,52,3.5,85.6,true); // scoreboard
   solidBox(0.5,20,0.5,MT.pol,32,0,88); visBox(8,0.5,1.5,MT.pol,32,20,88); visBox(7,0.3,1.2,MT.eL,32,20.3,88,true);
@@ -1689,7 +1716,6 @@ function initWorld3D(playerData) {
     solidBox(8,2.5,0.2,mk(0xffffff),112,0,gz);
     solidBox(0.2,2.5,3,mk(0xffffff),108,0,gz); solidBox(0.2,2.5,3,mk(0xffffff),116,0,gz);
   });
-  fence(79,56,145,56,1.5); fence(79,148,145,148,1.5);
   mkLabel('Field Hockey',10).position.set(112,5,102);
   NPCS.push({x:112,z:102,radius:7,label:'Field Hockey',msg:'MVHS Field Hockey - regulation turf. Goals at both ends - you cannot walk through them!'});
   ZONES.push({x1:79,x2:145,z1:56,z2:150,name:'Field Hockey Field'});
@@ -1729,8 +1755,6 @@ function initWorld3D(playerData) {
   }
 
   prog(97, 'Campus boundary...');
-  fence(-148,-90,148,-90,2); fence(-148,156,148,156,2);
-  fence(-148,-90,-148,156,2); fence(148,-90,148,156,2);
   // Campus boundary walls (solid - can't leave campus)
   solidBox(300,3,0.5,mk(0x888888,0.9),0,0,-91); // north
   solidBox(300,3,0.5,mk(0x888888,0.9),0,0,157);  // south
@@ -1738,11 +1762,6 @@ function initWorld3D(playerData) {
   solidBox(0.5,3,250,mk(0x888888,0.9),149,0,30);  // east
 
   // ── FRESHMAN ZONE BARRIERS ─────────────────────────────────
-  // Visual chain-link fence at east boundary (x=-64) — gap at gym east wall (z=-55 to -69)
-  fence(-64, -85, -64, -70, 2.5, 6);  // north segment
-  fence(-64, -54, -64, -22, 2.5, 10); // south segment
-  // South boundary fence (z=-23) — full width of restricted zone
-  fence(-138, -23, -64, -23, 2.5, 12);
   // Corner post / restriction sign
   var rSign1 = mkLabel('SENIORS & JUNIORS ONLY', 8);
   rSign1.position.set(-64, 3.5, -55);
@@ -1837,7 +1856,7 @@ function initWorld3D(playerData) {
     var el = document.getElementById('notif');
     el.textContent = msg;
     el.style.display = 'block';
-    ntimer = 4.5;
+    ntimer = 9.0; // long enough to read comfortably
   }
   // Expose for cross-file use (game.js club fair hints, etc.)
   window.MYTH_SHOW_NOTIF = showN;
@@ -2419,7 +2438,7 @@ function initWorld3D(playerData) {
     // ── Bio class trigger — enter bio room south of gym ──
     if (window.MYTH_CLUB_CHOICE !== undefined && window.MYTH_CLUB_CHOICE !== null &&
         !window.MYTH_BIO_TRIGGERED && !window.MYTH_ORIENTATION_ACTIVE) {
-      if (px >= -103 && px <= -81 && pz >= -43 && pz <= -29) {
+      if (px >= -108 && px <= -86 && pz >= -43 && pz <= -29) {
         window.MYTH_BIO_TRIGGERED = true;
         window.MYTH_ORIENTATION_ACTIVE = true;
         if (document.pointerLockElement === canvas) document.exitPointerLock();
