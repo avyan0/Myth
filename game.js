@@ -1072,7 +1072,7 @@ const CLUB_DATA = {
     desc:       'Build robots, write code that moves metal, compete nationally.',
     flavor:     'Meetings every Tuesday and Thursday in Room F3.',
     joinDeltas: { gpa: -0.2, friendships: 1.5, relationships: -1.3, extracurriculars: 2.0 },
-    missDeltas: { gpa: -0.1, friendships: -0.5, extracurriculars: -0.5 },
+    missDeltas: {},
   },
   football: {
     name:       'FOOTBALL TEAM',
@@ -1080,7 +1080,7 @@ const CLUB_DATA = {
     desc:       'Practice every day after school. Friday night lights. The whole school watches.',
     flavor:     'Tryouts this week. Practice on the field.',
     joinDeltas: { gpa: -0.5, friendships: 1.8, sports: 2.0, intelligence: -1.6, extracurriculars: 1.2 },
-    missDeltas: { sports: -0.8, friendships: -0.6, happiness: -0.4 },
+    missDeltas: {},
   },
   none: {
     name:       'NO COMMITMENT',
