@@ -2470,6 +2470,27 @@ function initWorld3D(playerData) {
       }
     }
 
+    // ── Sophomore class proximity nav ──
+    if (window.MYTH_SOPH_NAV_TARGET && !window.MYTH_ORIENTATION_ACTIVE) {
+      var _snt = window.MYTH_SOPH_NAV_TARGET;
+      var _sntDx = px - _snt.x, _sntDz = pz - _snt.z;
+      if (Math.sqrt(_sntDx*_sntDx + _sntDz*_sntDz) < _snt.r) {
+        window.MYTH_SOPH_NAV_TARGET = null;
+        var _hint = document.getElementById('soph-nav-hint');
+        if (_hint) _hint.style.display = 'none';
+        window.MYTH_ORIENTATION_ACTIVE = true;
+        if (document.pointerLockElement === canvas) document.exitPointerLock();
+        var _classFns = {
+          apcsa:   [window.showAPCSA_Class1,    window.showAPCSA_Final],
+          physics: [window.showPhysics_Class1,  window.showPhysics_FieldTrip],
+          studies: [window.showStudies_Class1,   window.showStudies_Class2],
+        };
+        window.MYTH_SOPH_ON_DONE = _snt.done;
+        var _fn = _classFns[_snt.course] && _classFns[_snt.course][_snt.classNum - 1];
+        if (_fn) setTimeout(_fn, 200);
+      }
+    }
+
     // ── Football field first-visit flag ──
     if (!window.MYTH_FRESHMAN_RESTRICTION && typeof Engine !== 'undefined' && Engine.hasFlag &&
         !Engine.hasFlag('football_field_visited') &&

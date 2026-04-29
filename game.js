@@ -951,6 +951,80 @@ function wireGameButtons() {
     updateHUD();
     safeEventCheck();
   });
+
+  // Pause toggle — HUD button + [P] key
+  const pauseBtn    = document.getElementById('hud-pause-btn');
+  const resumeBtn   = document.getElementById('po-resume-btn');
+  if (pauseBtn)  pauseBtn.addEventListener('click',  () => _togglePause());
+  if (resumeBtn) resumeBtn.addEventListener('click', () => _togglePause());
+  document.addEventListener('keydown', e => {
+    if ((e.key === 'p' || e.key === 'P') && !window.MYTH_ORIENTATION_ACTIVE) _togglePause();
+  });
+}
+
+// ── Pause overlay ─────────────────────────────────────
+let _paused = false;
+function _togglePause() {
+  _paused = !_paused;
+  const overlay = document.getElementById('pause-overlay');
+  if (!overlay) return;
+
+  if (_paused) {
+    window.MYTH_ORIENTATION_ACTIVE = true;
+    if (document.pointerLockElement) document.exitPointerLock();
+
+    // Populate player info
+    const infoEl = document.getElementById('po-player-info');
+    if (infoEl) {
+      const grpLabels = { mob: 'SOGYAG', balance: 'XOBX', grind: 'SACUL' };
+      const prsLabels = {
+        grinder:'THE GRINDER', social:'SOCIAL BUTTERFLY',
+        athlete:'THE ATHLETE', charmer:'THE CHARMER',
+        observer:'THE OBSERVER', rebel:'THE REBEL',
+        empath:'THE EMPATH', wildcard:'THE WILDCARD',
+      };
+      infoEl.innerHTML = `
+        <div class="po-name">${player.name || '—'}</div>
+        <div class="po-tags">
+          <span class="po-tag">${grpLabels[player.friendGroup] || '—'}</span>
+          <span class="po-tag">${prsLabels[player.personality] || '—'}</span>
+          ${player.height ? `<span class="po-tag">${player.height}</span>` : ''}
+        </div>
+        ${player.secret ? `<div class="po-secret">🔒 ${player.secret.label}</div>` : ''}
+      `;
+    }
+
+    // Populate stats
+    const statsEl = document.getElementById('po-stats');
+    const s = (typeof Engine !== 'undefined' && Engine.getState) ? (Engine.getState()?.stats ?? player.stats) : player.stats;
+    if (statsEl && s) {
+      statsEl.innerHTML = Object.entries(s).map(([key, val]) => {
+        const isGpa = key === 'gpa';
+        const pct   = isGpa ? val / 4 * 100 : val / 10 * 100;
+        const disp  = isGpa ? val.toFixed(2) : val.toFixed(1);
+        const col   = pct >= 70 ? '#F7B731' : pct >= 40 ? '#6BCB77' : '#FC7B54';
+        return `
+          <div class="po-stat-row">
+            <span class="po-stat-name">${STAT_LABELS[key] || key.toUpperCase()}</span>
+            <div class="po-stat-bar"><div style="height:100%;border-radius:2px;background:${col};width:${Math.min(pct,100)}%"></div></div>
+            <span class="po-stat-num" style="color:${col}">${disp}</span>
+          </div>`;
+      }).join('');
+    }
+
+    overlay.classList.add('open');
+    G.from('#pause-overlay .po-inner', { opacity: 0, y: 20, duration: 0.4, ease: 'power2.out' });
+  } else {
+    G.to('#pause-overlay .po-inner', {
+      opacity: 0, y: -10, duration: 0.25, ease: 'power2.in',
+      onComplete: () => {
+        overlay.classList.remove('open');
+        document.querySelector('#pause-overlay .po-inner').style = '';
+        window.MYTH_ORIENTATION_ACTIVE = false;
+        if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
+      },
+    });
+  }
 }
 
 // ── Stat change notification toast ───────────────────
@@ -1278,6 +1352,7 @@ function _bioClose(gpaDelta, gradeLabel, colorHex) {
 
 // ── Scenario A: Power Outage ──────────────────────────────────────────────
 function showBioOutage() {
+  window.MYTH_BIO_SCENARIO = 'outage';
   window.MYTH_POWER_OUTAGE = true;
   const overlay = document.getElementById('bio-overlay');
   const inner   = overlay.querySelector('.bio-inner');
@@ -1323,6 +1398,7 @@ function showBioOutage() {
 
 // ── Scenario B: Pig Practical ─────────────────────────────────────────────
 function showBioPractical() {
+  window.MYTH_BIO_SCENARIO = 'practical';
   const overlay = document.getElementById('bio-overlay');
   const inner   = overlay.querySelector('.bio-inner');
   let score = 0, stationIdx = 0, _answered = false;
@@ -1436,6 +1512,7 @@ function showBioPractical() {
 
 // ── Scenario C: Chemical Incident ─────────────────────────────────────────
 function showBioChemical() {
+  window.MYTH_BIO_SCENARIO = 'chemical';
   const overlay = document.getElementById('bio-overlay');
   const inner   = overlay.querySelector('.bio-inner');
 
@@ -1698,6 +1775,7 @@ function showPEBombThreat() {
 
     // Branch B — disobey
     function runPhase2_run() {
+      window.MYTH_PE_DISOBEYED = true;
       const scene = document.getElementById('threat-scene');
       if (scene) scene.classList.add('run-flash');
       const beats = [
@@ -1815,7 +1893,20 @@ function showPEBombThreat() {
         function _donePO() {
           if (_fp) return; _fp = true;
           document.removeEventListener('keydown', _pokh);
-          showPEResult(true);
+          // Close the PE overlay and go straight to the year-end recap
+          window.MYTH_BOMB_THREAT_ACTIVE = false;
+          window.MYTH_BOMB_CLEAR         = true;
+          window.MYTH_PE_DONE            = true;
+          G.to(overlay, {
+            opacity: 0, duration: 0.5, ease: 'power2.in',
+            onComplete: () => {
+              overlay.classList.remove('open');
+              overlay.classList.remove('threat-fullscreen');
+              overlay.style.opacity = '';
+              window.MYTH_ORIENTATION_ACTIVE = false;
+              showFreshmanYearEnd();
+            },
+          });
         }
         function _pokh(e) { if (e.key === 'Enter') _donePO(); }
         document.addEventListener('keydown', _pokh);
@@ -2501,10 +2592,8 @@ function _sophHide(cb) {
 
 // ── Freshman year end + class/EC selection ────────────
 window.showFreshmanYearEnd = function() {
-  window.MYTH_SOPH_CLASS = null;
-  window.MYTH_SOPH_EC    = null;
 
-  // ── Step 1: Freshman year narrative summary ──────────────
+  // ── Freshman year narrative recap ─────────────────────────
   const now    = (typeof Engine !== 'undefined' && Engine.getState) ? (Engine.getState()?.stats ?? {}) : {};
   const start  = window.MYTH_START_STATS || {};
   const ec     = window.MYTH_CLUB_CHOICE === 'robotics' ? 'Robotics Club' :
@@ -2512,105 +2601,206 @@ window.showFreshmanYearEnd = function() {
   const gpa    = now.gpa || 0;
   const gpaLabel = gpa >= 3.8 ? 'Honors Freshman' : gpa >= 3.0 ? 'Solid Year' : gpa >= 2.0 ? 'Getting By' : 'Rough Start';
   const disobeyed = window.MYTH_PE_DISOBEYED;
-
   const statOrder = ['gpa','friendships','relationships','sports','intelligence','extracurriculars','happiness'];
   function summaryRow(key) {
-    const s0 = start[key] ?? (now[key] || 0);
-    const s1 = now[key] || 0;
-    const d  = +(s1 - s0).toFixed(2);
-    const arrow = d > 0 ? `<span style="color:#6BCB77">▲ +${d}</span>` :
-                  d < 0 ? `<span style="color:#FC7B54">▼ ${d}</span>`  :
-                          `<span style="color:#888">—</span>`;
+    const s0 = start[key] ?? (now[key] || 0), s1 = now[key] || 0, d = +(s1-s0).toFixed(2);
+    const arrow = d > 0 ? `<span style="color:#6BCB77">▲ +${d}</span>` : d < 0 ? `<span style="color:#FC7B54">▼ ${d}</span>` : `<span style="color:#888">—</span>`;
     const label = (typeof STAT_LABELS !== 'undefined' ? STAT_LABELS[key] : null) || key.toUpperCase();
     const pct = key === 'gpa' ? (s1/4)*100 : (s1/10)*100;
     const col = pct >= 70 ? '#F7B731' : pct >= 40 ? '#6BCB77' : '#FC7B54';
-    return `<div class="yr-stat-row">
-      <span class="yr-stat-label">${label}</span>
-      <div class="yr-stat-bar-wrap"><div class="yr-stat-bar" style="width:${Math.round(pct)}%;background:${col}"></div></div>
-      <span class="yr-stat-val">${s1.toFixed(key==='gpa'?2:1)}</span>
-      <span class="yr-stat-delta">${arrow}</span>
-    </div>`;
+    return `<div class="yr-stat-row"><span class="yr-stat-label">${label}</span><div class="yr-stat-bar-wrap"><div class="yr-stat-bar" style="width:${Math.round(pct)}%;background:${col}"></div></div><span class="yr-stat-val">${s1.toFixed(key==='gpa'?2:1)}</span><span class="yr-stat-delta">${arrow}</span></div>`;
   }
+
+  const _bioRecapLine = {
+    outage:   "Bio class. Mrs. Alvarez handed out the rubrics. Then every light in the building died at once. Storm knocked the whole grid. Automatic A — you never touched a scalpel.",
+    practical:"Bio class. Formaldehyde. Five fetal pigs on steel trays. You walked station to station and answered questions under timed conditions. You figured out what you were made of.",
+    chemical: "Bio class. A lab tech mixed the wrong bottles. Pale gas rolled off the trays. Jaylen Rodriguez hit the floor. You made it to the courtyard with streaming eyes. Automatic A — and a story you'll tell for years.",
+  }[window.MYTH_BIO_SCENARIO] || "Bio class. Whatever happened in that room, you survived it.";
 
   _sophShow(`
     <div class="soph-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN YEAR — RECAP</div>
     <h1 class="soph-title" style="font-size:2.6rem;margin-bottom:6px">YEAR ONE.</h1>
     <div class="soph-scene" style="max-width:560px;margin:0 auto 18px">
-      <p style="font-size:1.2rem;line-height:1.8;color:#f0ece4">
-        Bio class. The smell of formaldehyde. A cat on a steel tray. You held the scalpel.
-        You figured out what you were made of — at least a little.
-      </p>
-      <p style="font-size:1.2rem;line-height:1.8;color:#f0ece4;margin-top:10px">
-        PE. A PA announcement that didn't sound like a drill.
-        Forty-one minutes on a cold gym floor.
-        ${disobeyed ? 'You ran. Principal\'s office. Monday morning. It went on the record.' : 'You stayed. Coach Williams\' voice was flat. You breathed through it.'}
-      </p>
-      <p style="font-size:1.15rem;line-height:1.8;color:#c8c0b0;margin-top:10px">
-        EC: <strong style="color:#ffd700">${ec}</strong>
-        &nbsp;·&nbsp; Final verdict: <strong style="color:#ffd700">${gpaLabel}</strong>
-      </p>
+      <p style="font-size:1.2rem;line-height:1.8;color:#f0ece4">${_bioRecapLine}</p>
+      <p style="font-size:1.2rem;line-height:1.8;color:#f0ece4;margin-top:10px">PE. A PA announcement that didn't sound like a drill. Forty-one minutes on a cold gym floor. ${disobeyed ? "You ran. Principal's office. Monday morning. It went on the record." : "You stayed. Coach Williams' voice was flat. You breathed through it."}</p>
+      <p style="font-size:1.15rem;line-height:1.8;color:#c8c0b0;margin-top:10px">EC: <strong style="color:#ffd700">${ec}</strong> &nbsp;·&nbsp; Verdict: <strong style="color:#ffd700">${gpaLabel}</strong></p>
     </div>
-    <div class="yr-stats" style="width:100%;max-width:520px;margin:0 auto">
-      ${statOrder.map(summaryRow).join('')}
-    </div>
-    <div class="soph-nav" style="margin-top:32px">
-      <button class="btn-primary" id="soph-summary-next">SOPHOMORE YEAR →</button>
-    </div>
+    <div class="yr-stats" style="width:100%;max-width:520px;margin:0 auto">${statOrder.map(summaryRow).join('')}</div>
+    <div class="soph-nav" style="margin-top:32px"><button class="btn-primary" id="soph-summary-next">SOPHOMORE YEAR →</button></div>
   `);
-  document.getElementById('soph-summary-next').addEventListener('click', _showSophSelection, { once: true });
+  document.getElementById('soph-summary-next').addEventListener('click', _showCourseSelect, { once: true });
 
-  // ── Step 2: Class + EC selection ─────────────────────────
-  function _showSophSelection() {
+  // ── Pick 2 courses (no EC) ────────────────────────────────
+  function _showCourseSelect() {
+    const chosen = new Set();
+    function render() {
+      const courses = [
+        { id:'apcsa',   label:'AP COMPUTER SCIENCE A', desc:'Code, problem-solve, survive Mr. Chen\'s grading. High stress. High reward.' },
+        { id:'physics', label:'AP PHYSICS 1',           desc:'Ms. Torres. Egg drops and a surprise field trip. Hands-on. Unpredictable.' },
+        { id:'studies', label:'STUDIES PERIOD',          desc:'Structured free period. More people. More drama. Easier on the GPA.' },
+      ];
+      _sophShow(`
+        <div class="soph-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; SOPHOMORE YEAR</div>
+        <h1 class="soph-title">PICK YOUR CLASSES.</h1>
+        <div class="soph-scene"><p>You get to choose two courses this year. Choose wisely — you'll actually have to show up.</p></div>
+        <div class="soph-grade-choice-grid" id="soph-course-grid" style="grid-template-columns:1fr 1fr 1fr">
+          ${courses.map(c => `<div class="soph-grade-card${chosen.has(c.id)?' selected':''}" data-pick="${c.id}">
+            <div class="sgc-label">${c.label}</div><div class="sgc-desc">${c.desc}</div>
+            ${chosen.has(c.id) ? `<div style="color:#6BCB77;font-size:.75rem;margin-top:6px;font-weight:700">✓ SELECTED</div>` : ''}
+          </div>`).join('')}
+        </div>
+        <div class="soph-nav" style="margin-top:28px">
+          <span class="soph-progress">${chosen.size}/2 selected</span>
+          <button class="btn-primary" id="soph-start-btn" ${chosen.size<2?'disabled':''}>START SOPHOMORE YEAR →</button>
+        </div>
+      `);
+      document.getElementById('soph-course-grid').querySelectorAll('.soph-grade-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const id = card.dataset.pick;
+          if (chosen.has(id)) chosen.delete(id);
+          else if (chosen.size < 2) chosen.add(id);
+          render();
+        });
+      });
+      if (chosen.size === 2) {
+        document.getElementById('soph-start-btn').addEventListener('click', () => {
+          const [c1, c2] = [...chosen];
+          Engine.setFlag('soph_class_' + c1); Engine.setFlag('soph_class_' + c2);
+          Engine.setFlag('freshman_year_complete');
+          Engine.forceGradeUp(); updateHUD();
+          _sophHide(() => {
+            window.MYTH_ORIENTATION_ACTIVE   = false;
+            window.MYTH_PE_DONE              = true;
+            window.MYTH_FRESHMAN_RESTRICTION = false;
+            refreshStatsSidebar();
+            _sophStep(0, c1, c2);
+          });
+        }, { once: true });
+      }
+    }
+    render();
+  }
+};
+
+// ════════════════════════════════════════════════════════
+//  SOPHOMORE YEAR SEQUENCE STATE MACHINE
+// ════════════════════════════════════════════════════════
+
+// Classroom locations in the 3D world (center of each building)
+const _SOPH_LOCS = {
+  apcsa:   { room: 'Room 214 — Building B', x: 12,  z: -74, r: 16 },
+  physics: { room: 'Room 203 — Science Wing', x: 76, z: -32, r: 16 },
+  studies: { room: 'Room 119 — Building C', x: -32, z: -54, r: 16 },
+};
+
+// Sequence: c1c1, c2c1, brawl, c1c2, psat, c2c2, fitness, end
+function _sophStep(idx, c1, c2) {
+  c1 = c1 || window._SOPH_C1; c2 = c2 || window._SOPH_C2;
+  window._SOPH_C1 = c1; window._SOPH_C2 = c2;
+  const next = () => _sophStep(idx + 1);
+  switch (idx) {
+    case 0: _goToClass(c1, 1, next); break;
+    case 1: _goToClass(c2, 1, next); break;
+    case 2: _sophBrawlPhase(next); break;
+    case 3: _goToClass(c1, 2, next); break;
+    case 4: _sophPSATPhase(next); break;
+    case 5: _goToClass(c2, 2, next); break;
+    case 6: _sophFitnessPhase(next); break;
+    default: if (window.showSophYearEnd) window.showSophYearEnd(); break;
+  }
+}
+
+function _goToClass(course, classNum, done) {
+  const loc = _SOPH_LOCS[course];
+  const hint = document.getElementById('soph-nav-hint');
+  if (hint) { hint.textContent = '📍 Head to ' + loc.room; hint.style.display = 'block'; }
+  window.MYTH_SOPH_NAV_TARGET = { x: loc.x, z: loc.z, r: loc.r, course, classNum, done };
+  window.MYTH_ORIENTATION_ACTIVE = false;
+}
+
+// Called by each class function's done button — checks for sequence callback first
+function _sophDone(...flags) {
+  flags.forEach(f => Engine.setFlag(f));
+  const cb = window.MYTH_SOPH_ON_DONE;
+  window.MYTH_SOPH_ON_DONE = null;
+  _sophHide(() => { if (cb) cb(); else safeEventCheck(); });
+}
+
+// ── Brawl Stars phase ─────────────────────────────────────
+function _sophBrawlPhase(done) {
+  window.MYTH_ORIENTATION_ACTIVE = true;
   _sophShow(`
-    <div class="soph-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; END OF FRESHMAN YEAR</div>
-    <h1 class="soph-title">SOPHOMORE YEAR.</h1>
+    <div class="soph-badge">PHONE NOTIFICATION</div>
+    <h1 class="soph-title" style="font-size:2rem">TOURNAMENT INVITE.</h1>
     <div class="soph-scene">
-      <p>The halls feel smaller somehow — or maybe you just got bigger. Summer passed. You're back. Time to pick your path.</p>
+      <p>A notification from the school's esports Discord. Okafor pinged everyone:</p>
+      <div class="soph-speech">"32-player regional Brawl Stars bracket — this weekend, open entry, real prize pool. I signed up. You should too."</div>
     </div>
-    <div class="soph-prompt">SELECT YOUR SOPHOMORE CLASS:</div>
-    <div class="soph-grade-choice-grid" id="soph-class-grid" style="grid-template-columns:1fr 1fr 1fr">
-      <div class="soph-grade-card" data-pick="apcsa"><div class="sgc-label">AP COMPUTER SCIENCE A</div><div class="sgc-desc">Code, problem-solve, survive Mr. Chen's grading. High stress. High reward.</div></div>
-      <div class="soph-grade-card" data-pick="physics"><div class="sgc-label">AP PHYSICS 1</div><div class="sgc-desc">Ms. Torres. Egg drops and a surprise field trip. Hands-on. Unpredictable.</div></div>
-      <div class="soph-grade-card" data-pick="studies"><div class="sgc-label">STUDIES PERIOD</div><div class="sgc-desc">Structured free period. More people. More drama. Easier on the GPA.</div></div>
-    </div>
-    <div style="height:28px"></div>
-    <div class="soph-prompt">SELECT YOUR EXTRACURRICULAR:</div>
-    <div class="soph-grade-choice-grid" id="soph-ec-grid" style="grid-template-columns:1fr 1fr 1fr">
-      <div class="soph-grade-card" data-pick="robotics"><div class="sgc-label">ROBOTICS TEAM</div><div class="sgc-desc">Build something real. Vasquez's room. Soldering irons and late nights.</div></div>
-      <div class="soph-grade-card" data-pick="football"><div class="sgc-label">VARSITY FOOTBALL</div><div class="sgc-desc">Coach Rivera. Sprints, weights, film. You've got the build for it.</div></div>
-      <div class="soph-grade-card" data-pick="brawlstars"><div class="sgc-label">ESPORTS CLUB</div><div class="sgc-desc">Brawl Stars competitive team. Tournaments, rankings, late-night scrims.</div></div>
-    </div>
-    <div class="soph-nav" style="margin-top:32px">
-      <span class="soph-progress">Choose one class and one EC to continue.</span>
-      <button class="btn-primary" id="soph-start-btn" disabled>START SOPHOMORE YEAR →</button>
+    <div class="soph-prompt">WHAT DO YOU DO?</div>
+    <div class="soph-choices" id="brawl-phase-choices">
+      <button class="soph-choice" id="brawl-yes"><span class="soph-choice-label">ENTER THE TOURNAMENT — "I'm in."</span><span class="soph-choice-hint">32-player single elimination. Rock Paper Scissors format.</span></button>
+      <button class="soph-choice" id="brawl-no"><span class="soph-choice-label">PASS — too much going on right now</span><span class="soph-choice-hint">You keep your evenings free. Stats reduced.</span></button>
     </div>
   `);
-  let classChoice = null, ecChoice = null;
-  function updateBtn() { const b = document.getElementById('soph-start-btn'); if (b) b.disabled = !(classChoice && ecChoice); }
-  document.getElementById('soph-class-grid').querySelectorAll('.soph-grade-card').forEach(c => {
-    c.addEventListener('click', () => { document.getElementById('soph-class-grid').querySelectorAll('.soph-grade-card').forEach(x => x.classList.remove('selected')); c.classList.add('selected'); classChoice = c.dataset.pick; updateBtn(); });
-  });
-  document.getElementById('soph-ec-grid').querySelectorAll('.soph-grade-card').forEach(c => {
-    c.addEventListener('click', () => { document.getElementById('soph-ec-grid').querySelectorAll('.soph-grade-card').forEach(x => x.classList.remove('selected')); c.classList.add('selected'); ecChoice = c.dataset.pick; updateBtn(); });
-  });
-  document.getElementById('soph-start-btn').addEventListener('click', () => {
-    if (!classChoice || !ecChoice) return;
-    window.MYTH_SOPH_CLASS = classChoice; window.MYTH_SOPH_EC = ecChoice;
-    Engine.setFlag('soph_class_' + classChoice);
-    Engine.setFlag('soph_ec_' + ecChoice);
-    Engine.setFlag('freshman_year_complete');
-    Engine.forceGradeUp(); updateHUD();
-    _sophHide(() => {
-      window.MYTH_ORIENTATION_ACTIVE   = false;
-      window.MYTH_PE_DONE              = true;
-      window.MYTH_FRESHMAN_RESTRICTION = false;
-      refreshStatsSidebar();
-      Engine.advancePeriod();
-      safeEventCheck();
-    });
-  });
-  } // end _showSophSelection
-};
+  document.getElementById('brawl-yes').onclick = () => {
+    window.MYTH_SOPH_ON_DONE = done;
+    window._brawlTournamentOnly();
+  };
+  document.getElementById('brawl-no').onclick = () => {
+    Engine.modifyStats({ stress: -1, extracurriculars: -1 }); _flushStatToast();
+    Engine.setFlag('brawl_tournament_declined');
+    _sophShow(`
+      <div class="soph-badge">PHONE</div>
+      <div class="soph-scene"><p>"Respect," Okafor texts back. "Next one." You pocket your phone. The bracket fills without you.</p></div>
+      <div class="soph-nav"><button class="btn-primary" id="soph-done">CONTINUE →</button></div>
+    `);
+    document.getElementById('soph-done').onclick = () => { Engine.setFlag('brawl_tournament_offered'); _sophHide(() => done && done()); };
+  };
+}
+
+// ── PSAT phase ────────────────────────────────────────────
+function _sophPSATPhase(done) {
+  window.MYTH_ORIENTATION_ACTIVE = true;
+  _sophShow(`
+    <div class="soph-badge">FRONT ENTRANCE — BULLETIN BOARD</div>
+    <h1 class="soph-title" style="font-size:2rem">PSAT.</h1>
+    <div class="soph-scene">
+      <p>There's a sign-up sheet on the bulletin board. <strong style="color:#ffd700">PSAT — Saturday, October 14th.</strong> It counts as practice for the SAT junior year. Some people blow it off. Others treat it like their life depends on it.</p>
+    </div>
+    <div class="soph-prompt">WHAT DO YOU DO?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="psat-study"><span class="soph-choice-label">STUDY HARD — make it count</span><span class="soph-choice-hint">Costs you now. Pays off when applying to college.</span></button>
+      <button class="soph-choice" id="psat-wing"><span class="soph-choice-label">WING IT — it's just practice anyway</span><span class="soph-choice-hint">Easier now. Harder when it actually counts.</span></button>
+    </div>
+  `);
+  document.getElementById('psat-study').onclick = () => {
+    Engine.modifyStats({ gpa: -1, happiness: -1, stress: +2, sleep: -1 }); _flushStatToast();
+    Engine.setFlag('psat_studied');
+    _sophShow(`
+      <div class="soph-badge">PSAT — RESULT</div>
+      <div class="soph-scene"><p>You spend three weekends on prep books. Your social life takes the hit. The test itself feels manageable. You won't know if it mattered for another two years — but it will.</p></div>
+      <div class="soph-nav"><button class="btn-primary" id="soph-done">CONTINUE →</button></div>
+    `);
+    document.getElementById('soph-done').onclick = () => { _sophHide(() => done && done()); };
+  };
+  document.getElementById('psat-wing').onclick = () => {
+    Engine.modifyStats({ happiness: +1, stress: -1 }); _flushStatToast();
+    Engine.setFlag('psat_skipped_prep');
+    _sophShow(`
+      <div class="soph-badge">PSAT — RESULT</div>
+      <div class="soph-scene"><p>You show up Saturday with a pencil and no prep. The reading section is rougher than expected. You bubble something for every question and leave early. It felt fine. It wasn't.</p></div>
+      <div class="soph-nav"><button class="btn-primary" id="soph-done">CONTINUE →</button></div>
+    `);
+    document.getElementById('soph-done').onclick = () => { _sophHide(() => done && done()); };
+  };
+}
+
+// ── Fitness phase ─────────────────────────────────────────
+function _sophFitnessPhase(done) {
+  window.MYTH_ORIENTATION_ACTIVE = true;
+  window.MYTH_SOPH_ON_DONE = done;
+  window.showFitnessJourney();
+}
 
 // ════════════════════════════════════════════════════════
 //  APCSA CLASS 1
@@ -2669,7 +2859,7 @@ function _apcsa1_beat5(narr) {
   _sophShow(`<div class="soph-badge">ROOM 214 · AP COMPUTER SCIENCE A</div>
     <div class="soph-scene"><p>${narr}</p><p>Chen's problem set is already in your bag.</p></div>
     <div class="soph-nav"><span class="soph-progress">5 / 5</span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
-  document.getElementById('soph-done').onclick = () => { Engine.setFlag('soph_apcsa1_done'); _sophHide(() => safeEventCheck()); };
+  document.getElementById('soph-done').onclick = () => _sophDone('soph_apcsa1_done');
 }
 
 // ════════════════════════════════════════════════════════
@@ -2749,7 +2939,7 @@ function _apcsa_final_finish() {
     <div class="soph-scene"><p>Chen collects the exams without a word. Marcus gives you a look on the way out: <em>how'd you do?</em> You shrug.</p></div>
     <div class="soph-stat-delta ${gpaD>0?'':'neg'}">GPA ${gpaD>0?'+':'±'}${gpaD} · ${_apcsa_correct} / 4 correct</div>
     <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
-  document.getElementById('soph-done').onclick = () => { Engine.setFlag('soph_apcsa_final_done'); _sophHide(() => safeEventCheck()); };
+  document.getElementById('soph-done').onclick = () => _sophDone('soph_apcsa_final_done');
 }
 function _apcsa_final_faint() {
   _sophShow(`<div class="soph-badge">ROOM 214 — HALLWAY</div>
@@ -2769,7 +2959,7 @@ function _apcsa_hospital() {
     <div class="soph-scene" style="color:#c0d0e8"><p>White ceiling. Beeping monitor. Your jaw feels like concrete. The doctor explains it plainly: you fainted at the fountain, hit the basin edge. Broken jaw. Four stitches. Wired for six weeks.</p><p>You didn't finish the exam. Chen gives you a make-up — district policy. But you're eating through a straw for a month and a half.</p></div></div>
     <div class="soph-stat-delta neg">GPA −1 · STRESS +3 · SLEEP −2</div>
     <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
-  document.getElementById('soph-done').onclick = () => { Engine.setFlag('soph_apcsa_final_done'); Engine.setFlag('soph_fainted'); _sophHide(() => safeEventCheck()); };
+  document.getElementById('soph-done').onclick = () => _sophDone('soph_apcsa_final_done', 'soph_fainted');
 }
 
 // ════════════════════════════════════════════════════════
@@ -2815,7 +3005,7 @@ function _robotics_beat4() {
     <div class="soph-speaker">MR. VASQUEZ</div><div class="soph-speech">"Tuesdays and Thursdays. Regionals is in February. Get comfortable."</div>
     <div class="soph-scene"><p>You stack the chassis parts. The room smells like solder. It's kind of a good smell.</p></div>
     <div class="soph-nav"><span class="soph-progress">4 / 4</span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
-  document.getElementById('soph-done').onclick = () => { Engine.setFlag('soph_robotics_done'); _sophHide(() => safeEventCheck()); };
+  document.getElementById('soph-done').onclick = () => _sophDone('soph_robotics_done');
 }
 
 // ════════════════════════════════════════════════════════
@@ -2864,7 +3054,7 @@ function _football_end(narr, delta) {
     <div class="soph-scene"><p>${narr}</p></div><div class="soph-stat-delta">${delta}</div>
     <div class="soph-scene"><p>Practice ends with conditioning — ten 100-yard gassers. By the showers you can barely lift your arms. But something about it felt right.</p></div>
     <div class="soph-nav"><span class="soph-progress">4 / 4</span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
-  document.getElementById('soph-done').onclick = () => { Engine.setFlag('soph_football_done'); _sophHide(() => safeEventCheck()); };
+  document.getElementById('soph-done').onclick = () => _sophDone('soph_football_done');
 }
 
 // ════════════════════════════════════════════════════════
@@ -2923,7 +3113,7 @@ function _studies1_beat5(narr) {
   _sophShow(`<div class="soph-badge">ROOM 119 · STUDIES PERIOD</div>
     <div class="soph-scene"><p>${narr}</p></div>
     <div class="soph-nav"><span class="soph-progress">5 / 5</span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
-  document.getElementById('soph-done').onclick = () => { Engine.setFlag('soph_studies1_done'); _sophHide(() => safeEventCheck()); };
+  document.getElementById('soph-done').onclick = () => _sophDone('soph_studies1_done');
 }
 
 // ════════════════════════════════════════════════════════
@@ -2960,7 +3150,7 @@ function _studies2_beat4() {
   _sophShow(`<div class="soph-badge">ROOM 119 · STUDIES PERIOD</div>
     <div class="soph-scene"><p>Bell rings. Jordan catches your eye from across the room and mouths: <em>"how was your group?"</em></p><p>You make a face. They laugh.</p></div>
     <div class="soph-nav"><span class="soph-progress">4 / 4</span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
-  document.getElementById('soph-done').onclick = () => { Engine.setFlag('soph_studies2_done'); _sophHide(() => safeEventCheck()); };
+  document.getElementById('soph-done').onclick = () => _sophDone('soph_studies2_done');
 }
 
 // ════════════════════════════════════════════════════════
@@ -3019,7 +3209,7 @@ function _phys1_drop() {
     <div class="soph-scene"><p>${survived?'"Excellent engineering. Full marks."':partial?'"Close. Cracked but intact for half credit."':'"Spectacular. Wrong kind. But still." The class laughs.'}</p></div>
     <div class="soph-stat-delta ${gpaD>=0?'':'neg'}">GPA ${gpaD>=0?'+':''}${gpaD} · +1 EC</div>
     <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
-  document.getElementById('soph-done').onclick = () => { Engine.setFlag('soph_physics1_done'); _sophHide(() => safeEventCheck()); };
+  document.getElementById('soph-done').onclick = () => _sophDone('soph_physics1_done');
 }
 
 // ════════════════════════════════════════════════════════
@@ -3087,7 +3277,7 @@ function _buildGAMap() {
   };
   document.getElementById('ga-done-btn').onclick = () => {
     Engine.modifyStats({happiness:2,stress:-1}); _flushStatToast();
-    Engine.setFlag('soph_physics_trip_done'); _sophHide(() => safeEventCheck());
+    _sophDone('soph_physics_trip_done');
   };
 }
 function _gaRRect(ctx,x,y,w,h,r) {
@@ -3122,7 +3312,7 @@ function _brawl_intro() {
   document.getElementById('brawl-no').onclick  = () => {
     Engine.modifyStats({extracurriculars:1,intelligence:1}); _flushStatToast();
     _sophShow(`<div class="soph-badge">ESPORTS CLUB — PRACTICE</div><div class="soph-scene"><p>Scrimmages for two hours. Solid practice.</p></div><div class="soph-stat-delta">+1 EC · +1 INT</div><div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
-    document.getElementById('soph-done').onclick = () => { Engine.setFlag('soph_brawl_done'); _sophHide(() => safeEventCheck()); };
+    document.getElementById('soph-done').onclick = () => _sophDone('soph_brawl_done');
   };
 }
 function _brawl_tournament(round, remaining) {
@@ -3149,7 +3339,7 @@ function _brawl_roundWin(round, remaining, pick, cpu) {
     <div class="soph-stat-delta">+1 EC · +1 INT · +1 FRIENDSHIPS</div>
     <div class="soph-nav"><span></span>${isFinal?`<button class="btn-primary" id="brawl-done">CLAIM VICTORY →</button>`:`<button class="btn-primary" id="brawl-next">NEXT ROUND →</button>`}</div>`);
   if (isFinal) {
-    document.getElementById('brawl-done').onclick = () => { Engine.modifyStats({extracurriculars:2,friendships:2,intelligence:2}); _flushStatToast(); Engine.setFlag('brawl_champion'); Engine.setFlag('soph_brawl_done'); _sophHide(() => safeEventCheck()); };
+    document.getElementById('brawl-done').onclick = () => { Engine.modifyStats({extracurriculars:2,friendships:2,intelligence:2}); _flushStatToast(); _sophDone('brawl_champion', 'soph_brawl_done'); };
   } else {
     document.getElementById('brawl-next').onclick = () => _brawl_tournament(nextRound, nextRemaining);
   }
@@ -3160,7 +3350,7 @@ function _brawl_roundLose(round, pick, cpu) {
     <div class="soph-scene"><p><strong style="color:#f7b731">${pick}</strong> loses to <strong style="color:#6bcb77">${cpu}</strong>. ${Math.log2(round)===0?'First round exit.':'You made it ' + Math.log2(round+1) + ' rounds in. That\'s something.'}</p></div>
     <div class="soph-stat-delta">+1 EC · +1 INT</div>
     <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
-  document.getElementById('soph-done').onclick = () => { Engine.setFlag('soph_brawl_done'); _sophHide(() => safeEventCheck()); };
+  document.getElementById('soph-done').onclick = () => _sophDone('soph_brawl_done');
 }
 
 // ════════════════════════════════════════════════════════
@@ -3176,7 +3366,7 @@ function _fitness_offer() {
       <button class="soph-choice" id="fit-no"><span class="soph-choice-label">NOT RIGHT NOW</span></button>
     </div>`);
   document.getElementById('fit-yes').onclick = _fitness_commitment;
-  document.getElementById('fit-no').onclick   = () => { _sophHide(() => safeEventCheck()); };
+  document.getElementById('fit-no').onclick   = () => _sophDone();
 }
 function _fitness_commitment() {
   _sophShow(`<div class="soph-badge">WESTBROOK HIGH · GYM</div>
@@ -3197,7 +3387,7 @@ function _fitness_workout(level) {
     <div class="soph-scene"><p>${o.narr}</p></div>
     <div class="soph-stat-delta">${Object.entries(o.stats).map(([k,v])=>`${v>0?'+':''}${v} ${STAT_LABELS[k]||k}`).join(' · ')}</div>
     <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
-  document.getElementById('soph-done').onclick = () => { Engine.setFlag('fitness_done'); _sophHide(() => safeEventCheck()); };
+  document.getElementById('soph-done').onclick = () => _sophDone('fitness_done');
 }
 
 // ════════════════════════════════════════════════════════
@@ -3218,6 +3408,6 @@ window.showSophYearEnd = function() {
   document.getElementById('soph-yr-done').onclick = () => {
     window.MYTH_START_STATS = Object.assign({}, Engine.getState().stats);
     Engine.setFlag('sophomore_year_complete'); Engine.forceGradeUp(); updateHUD();
-    _sophHide(() => safeEventCheck());
+    _sophHide(() => { refreshStatsSidebar(); showJuniorYear(); });
   };
 };
