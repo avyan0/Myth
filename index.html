@@ -265,6 +265,8 @@
     <div class="hud-divider"></div>
     <button class="hud-stats-toggle" id="hud-stats-btn">STATS ↗</button>
     <div class="hud-divider"></div>
+    <button class="hud-stats-toggle" id="hud-next-period-btn">NEXT PERIOD →</button>
+    <div class="hud-divider"></div>
     <button class="hud-stats-toggle" id="hud-pause-btn">[P] PAUSE</button>
   </div>
 
@@ -282,6 +284,8 @@
     <div id="ibox"><span id="itxt">Object</span><small id="ihelp">Press E for info · F for door</small></div>
     <!-- Notification -->
     <div id="notif"></div>
+    <!-- Stat change toast -->
+    <div id="stat-toast"></div>
     <!-- Crosshair -->
     <div id="cross"></div>
     <!-- Click-to-lock hint -->
@@ -389,6 +393,27 @@
 <!-- ─────────────────────────────── CLUB FAIR OVERLAY ───────────────────── -->
 <div id="club-fair-overlay" class="or-overlay">
   <div class="cf-inner or-inner"></div>
+</div>
+
+<!-- ─────────────────────────────── SOPHOMORE OVERLAY ────────────────────── -->
+<div id="soph-overlay" style="display:none">
+  <div class="soph-inner" id="soph-inner"></div>
+</div>
+
+<!-- ─────────────────────────────── CONTROLS OVERLAY ─────────────────────── -->
+<div id="controls-overlay" style="display:none">
+  <div class="ctrl-inner">
+    <div class="ctrl-title">CONTROLS</div>
+    <div class="ctrl-grid">
+      <div class="ctrl-row"><span class="ctrl-key">W A S D</span><span class="ctrl-desc">Move</span></div>
+      <div class="ctrl-row"><span class="ctrl-key">MOUSE</span><span class="ctrl-desc">Look around</span></div>
+      <div class="ctrl-row"><span class="ctrl-key">F</span><span class="ctrl-desc">Open / close door</span></div>
+      <div class="ctrl-row"><span class="ctrl-key">E</span><span class="ctrl-desc">Interact</span></div>
+      <div class="ctrl-row"><span class="ctrl-key">M</span><span class="ctrl-desc">Toggle map</span></div>
+      <div class="ctrl-row"><span class="ctrl-key">P</span><span class="ctrl-desc">Pause</span></div>
+    </div>
+    <div class="ctrl-hint">PRESS ANY KEY OR CLICK TO BEGIN</div>
+  </div>
 </div>
 
 <!-- ─────────────────────────────── PAUSE OVERLAY ────────────────────────── -->

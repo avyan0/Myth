@@ -788,3 +788,261 @@ const MYTH_EVENTS = [
 
 // Register all sample events
 EventManager.registerMany(MYTH_EVENTS);
+
+// ════════════════════════════════════════════════════════
+//  SOPHOMORE YEAR EVENT TRIGGERS
+// ════════════════════════════════════════════════════════
+EventManager.registerMany([
+
+  // Freshman year end — fires after week 8 to launch year-end overlay
+  {
+    id:       'freshman_year_end',
+    category: 'milestone',
+    title:    'End of Freshman Year',
+    once:     true,
+    trigger:  s => s.grade === 9 && s.week >= 8 && s.dayIndex === 4 && s.period.id === 'after_school',
+    scene: {
+      location: 'END OF YEAR',
+      setup: 'Freshman year is over. Summer is here.',
+      choices: [{
+        label: 'HEAD INTO SUMMER →',
+        outcome: { onResolve: () => setTimeout(window.showFreshmanYearEnd, 400) },
+      }],
+    },
+  },
+
+  // APCSA Class 1 — fires week 1 of grade 10
+  {
+    id:       'soph_apcsa_class1',
+    category: 'academic',
+    title:    'AP CS — First Class',
+    once:     true,
+    trigger:  s => s.grade === 10 && s.week === 1 && s.period.id === 'period_2' && Engine.hasFlag('soph_class_apcsa') && !Engine.hasFlag('soph_apcsa1_done'),
+    scene: {
+      location: 'ROOM 214',
+      setup: "Mr. Chen's class is starting. Room 214.",
+      choices: [{ label: 'TAKE YOUR SEAT →', outcome: { onResolve: () => setTimeout(window.showAPCSA_Class1, 400) } }],
+    },
+  },
+
+  // Studies Class 1 — fires week 1 of grade 10
+  {
+    id:       'soph_studies_class1',
+    category: 'academic',
+    title:    'Studies — First Class',
+    once:     true,
+    trigger:  s => s.grade === 10 && s.week === 1 && s.period.id === 'period_2' && Engine.hasFlag('soph_class_studies') && !Engine.hasFlag('soph_studies1_done'),
+    scene: {
+      location: 'ROOM 119',
+      setup: "Mr. Nguyen's studies period. Room 119.",
+      choices: [{ label: 'HEAD IN →', outcome: { onResolve: () => setTimeout(window.showStudies_Class1, 400) } }],
+    },
+  },
+
+  // Robotics EC — fires week 2 after class1 done
+  {
+    id:       'soph_robotics_ec',
+    category: 'athletic',
+    title:    'Robotics — First Session',
+    once:     true,
+    trigger:  s => s.grade === 10 && s.week === 2 && s.period.id === 'after_school' && Engine.hasFlag('soph_ec_robotics') && (Engine.hasFlag('soph_apcsa1_done') || Engine.hasFlag('soph_studies1_done')) && !Engine.hasFlag('soph_robotics_done'),
+    scene: {
+      location: 'ROOM 108',
+      setup: "First robotics session with Mr. Vasquez.",
+      choices: [{ label: 'HEAD TO ROOM 108 →', outcome: { onResolve: () => setTimeout(window.showRobotics_EC, 400) } }],
+    },
+  },
+
+  // Football EC — fires week 2 after class1 done
+  {
+    id:       'soph_football_ec',
+    category: 'athletic',
+    title:    'Football — First Practice',
+    once:     true,
+    trigger:  s => s.grade === 10 && s.week === 2 && s.period.id === 'after_school' && Engine.hasFlag('soph_ec_football') && (Engine.hasFlag('soph_apcsa1_done') || Engine.hasFlag('soph_studies1_done')) && !Engine.hasFlag('soph_football_done'),
+    scene: {
+      location: 'ATHLETIC FIELD',
+      setup: "First football practice with Coach Rivera.",
+      choices: [{ label: 'HEAD TO THE FIELD →', outcome: { onResolve: () => setTimeout(window.showFootball_EC, 400) } }],
+    },
+  },
+
+  // APCSA Final — fires week 3 after EC done
+  {
+    id:       'soph_apcsa_final',
+    category: 'academic',
+    title:    'AP CS — Final Exam',
+    once:     true,
+    trigger:  s => s.grade === 10 && s.week === 3 && s.period.id === 'period_2' && Engine.hasFlag('soph_class_apcsa') && (Engine.hasFlag('soph_robotics_done') || Engine.hasFlag('soph_football_done')) && !Engine.hasFlag('soph_apcsa_final_done'),
+    scene: {
+      location: 'ROOM 214',
+      setup: "Final exam. Room 214. Chen has already moved the desks apart.",
+      choices: [{ label: 'ENTER THE ROOM →', outcome: { onResolve: () => setTimeout(window.showAPCSA_Final, 400) } }],
+    },
+  },
+
+  // PSAT — fires week 2, grade 10, regardless of class choice
+  {
+    id:       'soph_psat',
+    category: 'academic',
+    title:    'PSAT Registration',
+    once:     true,
+    trigger:  s => s.grade === 10 && s.week === 2 && s.dayIndex === 0 && s.period.id === 'before_school',
+    scene: {
+      location: 'FRONT ENTRANCE',
+      setup: "There's a sign-up sheet on the bulletin board. PSAT — Saturday, October 14th. It counts as practice for the SAT junior year. Some people blow it off. Others treat it like their life depends on it. Your counselor said it's your call.",
+      choices: [
+        {
+          label: 'STUDY HARD FOR IT — make it count',
+          hint:  'Costs you now, pays off when applying to college',
+          outcome: {
+            statDeltas: { gpa: -1, happiness: -1, stress: +2, sleep: -1 },
+            flagsToSet: ['psat_studied'],
+            narrative: "You spend three weekends on prep books. Your social life takes the hit. The test itself feels manageable. You won't know if it mattered for another two years — but it will.",
+          },
+        },
+        {
+          label: "WING IT — it's just practice anyway",
+          hint:  'Easier now, harder when it actually counts',
+          outcome: {
+            statDeltas: { happiness: +1, stress: -1 },
+            flagsToSet: ['psat_skipped_prep'],
+            narrative: "You show up Saturday with a pencil and no prep. The reading section is rougher than expected. You bubble something for every question and leave early. It felt fine. It wasn't.",
+          },
+        },
+      ],
+    },
+  },
+
+  // Studies Class 2 — fires week 3 after EC done
+  {
+    id:       'soph_studies_class2',
+    category: 'academic',
+    title:    'Studies — Group Project',
+    once:     true,
+    trigger:  s => s.grade === 10 && s.week === 3 && s.period.id === 'period_2' && Engine.hasFlag('soph_class_studies') && (Engine.hasFlag('soph_robotics_done') || Engine.hasFlag('soph_football_done') || Engine.hasFlag('soph_brawl_done')) && !Engine.hasFlag('soph_studies2_done'),
+    scene: {
+      location: 'ROOM 119',
+      setup: "Studies period. Something about group assignments today.",
+      choices: [{ label: 'TAKE YOUR SEAT →', outcome: { onResolve: () => setTimeout(window.showStudies_Class2, 400) } }],
+    },
+  },
+
+  // Physics Class 1 — egg drop
+  {
+    id:       'soph_physics_class1',
+    category: 'academic',
+    title:    'AP Physics — Egg Drop',
+    once:     true,
+    trigger:  s => s.grade === 10 && s.week === 1 && s.period.id === 'period_2' && Engine.hasFlag('soph_class_physics') && !Engine.hasFlag('soph_physics1_done'),
+    scene: {
+      location: 'ROOM 203',
+      setup: "Ms. Torres is standing on a desk holding a raw egg. It's that kind of day.",
+      choices: [{ label: 'HEAD IN →', outcome: { onResolve: () => setTimeout(window.showPhysics_Class1, 400) } }],
+    },
+  },
+
+  // Physics Class 2 — Great America field trip
+  {
+    id:       'soph_physics_fieldtrip',
+    category: 'academic',
+    title:    'AP Physics — Field Trip',
+    once:     true,
+    trigger:  s => s.grade === 10 && s.week === 3 && s.period.id === 'period_2' && Engine.hasFlag('soph_class_physics') && (Engine.hasFlag('soph_robotics_done') || Engine.hasFlag('soph_football_done') || Engine.hasFlag('soph_brawl_done')) && !Engine.hasFlag('soph_physics_trip_done'),
+    scene: {
+      location: 'ROOM 203',
+      setup: "Torres announced a field trip. Great America. Friday. Physics lab — but also rides.",
+      choices: [{ label: 'BOARD THE BUS →', outcome: { onResolve: () => setTimeout(window.showPhysics_FieldTrip, 400) } }],
+    },
+  },
+
+  // Brawl Stars EC — fires week 2
+  {
+    id:       'soph_brawlstars_ec',
+    category: 'athletic',
+    title:    'Esports Club — First Session',
+    once:     true,
+    trigger:  s => s.grade === 10 && s.week === 2 && s.period.id === 'after_school' && Engine.hasFlag('soph_ec_brawlstars') && (Engine.hasFlag('soph_apcsa1_done') || Engine.hasFlag('soph_studies1_done') || Engine.hasFlag('soph_physics1_done')) && !Engine.hasFlag('soph_brawl_done'),
+    scene: {
+      location: 'ROOM 102',
+      setup: "Esports club after school. Okafor's room.",
+      choices: [{ label: 'HEAD IN →', outcome: { onResolve: () => setTimeout(window.showBrawlStars_EC, 400) } }],
+    },
+  },
+
+  // Fitness journey — fires week 2 grade 10
+  {
+    id:       'soph_fitness',
+    category: 'athletic',
+    title:    'The Gym',
+    once:     true,
+    trigger:  s => s.grade === 10 && s.week === 2 && s.dayIndex === 2 && s.period.id === 'after_school' && !Engine.hasFlag('fitness_done') && !Engine.hasFlag('fitness_started'),
+    scene: {
+      location: 'GYM',
+      setup: "Coach Rivera pulls you aside after PE. The weight room. He thinks you should be using it.",
+      choices: [{ label: 'HEAR HIM OUT →', outcome: { onResolve: () => setTimeout(window.showFitnessJourney, 400) } }],
+    },
+  },
+
+  // APCSA Final trigger fix — include brawl EC
+  {
+    id:       'soph_apcsa_final_v2',
+    category: 'academic',
+    title:    'AP CS — Final Exam',
+    once:     true,
+    trigger:  s => s.grade === 10 && s.week === 3 && s.period.id === 'period_2' && Engine.hasFlag('soph_class_apcsa') && (Engine.hasFlag('soph_robotics_done') || Engine.hasFlag('soph_football_done') || Engine.hasFlag('soph_brawl_done')) && !Engine.hasFlag('soph_apcsa_final_done'),
+    scene: {
+      location: 'ROOM 214',
+      setup: "Final exam. Room 214. Chen has already moved the desks apart.",
+      choices: [{ label: 'ENTER THE ROOM →', outcome: { onResolve: () => setTimeout(window.showAPCSA_Final, 400) } }],
+    },
+  },
+
+  // Brawl Stars tournament popup — fires after initial EC session, prompts big tournament
+  {
+    id:       'brawl_tournament_popup',
+    category: 'drama',
+    title:    'Tournament Invite',
+    once:     true,
+    trigger:  s => s.grade === 10 && Engine.hasFlag('soph_brawl_done') && !Engine.hasFlag('brawl_tournament_offered'),
+    scene: {
+      location: 'PHONE',
+      setup: "Okafor texts you during lunch. \"You've been grinding. There's a 32-player regional bracket this weekend — real prize pool, leaderboard points. I put your name in but it's your call. You've been playing well enough to win this.\"",
+      choices: [
+        {
+          label: 'ENTER THE TOURNAMENT — "I\'m in"',
+          hint: '32-player single elimination. Rock Paper Scissors format.',
+          outcome: {
+            flagsToSet: ['brawl_tournament_offered'],
+            onResolve: () => setTimeout(() => window.showBrawlStars_EC && window._brawlTournamentOnly(), 400),
+          },
+        },
+        {
+          label: 'PASS — too much going on right now',
+          hint: 'You miss out but keep your head clear.',
+          outcome: {
+            statDeltas: { stress: -1 },
+            flagsToSet: ['brawl_tournament_offered', 'brawl_tournament_declined'],
+            narrative: '"Respect," Okafor texts back. "Next one." You pocket your phone. The bracket fills without you.',
+          },
+        },
+      ],
+    },
+  },
+
+  // Sophomore year end — triggers after class 2 is done
+  {
+    id:       'soph_year_end',
+    category: 'milestone',
+    title:    'End of Sophomore Year',
+    once:     true,
+    trigger:  s => s.grade === 10 && s.week >= 4 && s.dayIndex === 4 && s.period.id === 'after_school' &&
+                   (Engine.hasFlag('soph_apcsa_final_done') || Engine.hasFlag('soph_studies2_done') || Engine.hasFlag('soph_physics_trip_done')),
+    scene: {
+      location: 'END OF YEAR',
+      setup: 'Sophomore year is done.',
+      choices: [{ label: 'END OF YEAR →', outcome: { onResolve: () => setTimeout(window.showSophYearEnd, 400) } }],
+    },
+  },
+
+]);

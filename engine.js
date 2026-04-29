@@ -140,11 +140,13 @@ const Engine = (function () {
   // ── Stats ────────────────────────────────────────────
   function modifyStat(key, delta) {
     if (!_state || _state.stats[key] === undefined) return;
+    const mult = (window.MYTH_STAT_MULT != null) ? window.MYTH_STAT_MULT : 1;
+    const scaled = Math.round(delta * mult * 10) / 10;
     const before = _state.stats[key];
     _state.stats[key] = key === 'gpa'
-      ? _clamp(before + delta, 0, 4)
-      : _clamp(before + delta, 0, 10);
-    _emit('stat_change', { key, before, after: _state.stats[key], delta });
+      ? _clamp(before + scaled, 0, 4)
+      : _clamp(before + scaled, 0, 10);
+    _emit('stat_change', { key, before, after: _state.stats[key], delta: scaled });
   }
 
   function modifyStats(deltas = {}) {
