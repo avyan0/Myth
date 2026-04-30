@@ -1617,12 +1617,15 @@ function showBioClassEvent() {
   `;
   G.from(inner, { opacity: 0, duration: 0.7 });
 
-  const scenarios = ['outage', 'practical', 'chemical'];
-  const chosen = scenarios[Math.floor(Math.random() * scenarios.length)];
+  // Pick from the two scenarios not played last — ensures equal rotation
+  const _allBio = ['outage', 'practical', 'chemical'];
+  const _bioPool = _allBio.filter(s => s !== window._MYTH_LAST_BIO_SCENARIO);
+  const chosen = _bioPool[Math.floor(Math.random() * _bioPool.length)];
+  window._MYTH_LAST_BIO_SCENARIO = chosen;
   setTimeout(() => {
-    if (chosen === 'outage')    showBioOutage();
+    if (chosen === 'outage')         showBioOutage();
     else if (chosen === 'practical') showBioPractical();
-    else                        showBioChemical();
+    else                             showBioChemical();
   }, 3000);
 }
 

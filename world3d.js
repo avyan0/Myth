@@ -929,32 +929,23 @@ function initWorld3D(playerData) {
     var gw = 42, gd = 32, gh = 14;
 
     // -- EXTERIOR SHELL ------------------------------------------
-    // West wall — solid, no door
-    solidBox(0.5, gh, gd, MT.wG, gx - gw/2 + 0.25, 0, gz);
-    // East wall — split with door gap at center (z=gz), opening 3.2 wide
+    // West wall — split with back door at center (opposite east entrance)
+    solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx - gw/2 + 0.25, 0, gz - (gd/4 + 0.8));
+    solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx - gw/2 + 0.25, 0, gz + (gd/4 + 0.8));
+    solidBox(0.5, gh - 3.2, 3.2, MT.wG, gx - gw/2 + 0.25, 3.2, gz);
+    // East wall — split with main entrance door at center (z=gz), opening 3.2 wide
     solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx + gw/2 - 0.25, 0, gz - (gd/4 + 0.8));
     solidBox(0.5, gh, (gd - 3.2) / 2, MT.wG, gx + gw/2 - 0.25, 0, gz + (gd/4 + 0.8));
     solidBox(0.5, gh - 3.2, 3.2, MT.wG, gx + gw/2 - 0.25, 3.2, gz);
-    // South wall — split with door at center (exit toward bio room / club fair)
-    solidBox((gw - 3.2) / 2, gh, 0.5, MT.wG, gx - (gw/4 + 0.8), 0, gz + gd/2 - 0.25);
-    solidBox((gw - 3.2) / 2, gh, 0.5, MT.wG, gx + (gw/4 + 0.8), 0, gz + gd/2 - 0.25);
-    solidBox(3.2, gh - 3.1, 0.5, MT.wG, gx, 3.1, gz + gd/2 - 0.25);
-    // South door mesh
-    var gymSDoor = new THREE.Mesh(new THREE.BoxGeometry(2.8, 3.1, 0.1), MT.dr);
-    gymSDoor.position.set(gx, 1.55, gz + gd/2 - 0.05);
-    gymSDoor.castShadow = true; SCN.add(gymSDoor);
-    var _gsdMin = new THREE.Vector3(gx - 1.4, 0, gz + gd/2 - 0.28);
-    var _gsdMax = new THREE.Vector3(gx + 1.4, 3.15, gz + gd/2 + 0.28);
-    var gymSDoorCol = new THREE.Box3(_gsdMin.clone(), _gsdMax.clone());
-    DOORS.push({ mesh: gymSDoor, open: false, cx: gx, cz: gz + gd/2 - 0.05,
-                 col: gymSDoorCol, origMin: _gsdMin.clone(), origMax: _gsdMax.clone(), wallAxis: 'z' });
-    // North wall split by tunnel - built inside bleacher section below
+    // South wall — solid (side door removed)
+    solidBox(gw, gh, 0.5, MT.wG, gx, 0, gz + gd/2 - 0.25);
+    // North wall — built inside bleacher section below
     // Roof
     solidBox(gw + 0.6, 0.8, gd + 0.6, MT.roofG, gx, gh, gz);
-    // East entrance exterior ramp/curb (no stairs — just a single flat step)
+    // East entrance exterior ramp/curb
     solidBox(0.9, 0.18, 5.5, MT.stt, gx + gw/2 + 0.65, 0, gz);
     addSurf(gx + gw/2 + 0.65, gz, 0.9, 5.5, 0.18);
-    // Door on east wall
+    // Door on east wall (main entrance)
     var gymDoor = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.1, 2.8), MT.dr);
     gymDoor.position.set(gx + gw/2 - 0.05, 1.55, gz);
     gymDoor.castShadow = true; SCN.add(gymDoor);
@@ -963,11 +954,24 @@ function initWorld3D(playerData) {
     var gymDoorCol = new THREE.Box3(_gdMin.clone(), _gdMax.clone());
     DOORS.push({ mesh: gymDoor, open: false, cx: gx + gw/2 - 0.05, cz: gz,
                  col: gymDoorCol, origMin: _gdMin.clone(), origMax: _gdMax.clone(), wallAxis: 'x' });
-    // High windows on west wall — full wall, no gap
+    // Door on west wall (back exit)
+    var gymWDoor = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.1, 2.8), MT.dr);
+    gymWDoor.position.set(gx - gw/2 + 0.05, 1.55, gz);
+    gymWDoor.castShadow = true; SCN.add(gymWDoor);
+    var _gwdMin = new THREE.Vector3(gx - gw/2 - 0.28, 0, gz - 1.4);
+    var _gwdMax = new THREE.Vector3(gx - gw/2 + 0.28, 3.15, gz + 1.4);
+    var gymWDoorCol = new THREE.Box3(_gwdMin.clone(), _gwdMax.clone());
+    DOORS.push({ mesh: gymWDoor, open: false, cx: gx - gw/2 + 0.05, cz: gz,
+                 col: gymWDoorCol, origMin: _gwdMin.clone(), origMax: _gwdMax.clone(), wallAxis: 'x' });
+    // West exterior step
+    solidBox(0.9, 0.18, 5.5, MT.stt, gx - gw/2 - 0.65, 0, gz);
+    addSurf(gx - gw/2 - 0.65, gz, 0.9, 5.5, 0.18);
+    // High windows on west wall — skip area near back door (gz ± 4.5)
     for (var ww = gz - gd/2 + 3; ww < gz + gd/2 - 2; ww += 4.5) {
+      if (Math.abs(ww - gz) < 4.5) continue;
       visBox(0.12, 1.8, 2.2, MT.win, gx - gw/2 - 0.02, gh*0.6, ww);
     }
-    // High windows on east wall — skip area near door gap (gz ± 3.5)
+    // High windows on east wall — skip area near door gap (gz ± 4.5)
     for (var ww2 = gz - gd/2 + 3; ww2 < gz + gd/2 - 2; ww2 += 4.5) {
       if (Math.abs(ww2 - gz) < 4.5) continue;
       visBox(0.12, 1.8, 2.2, MT.win, gx + gw/2 + 0.02, gh*0.6, ww2);
@@ -975,12 +979,9 @@ function initWorld3D(playerData) {
     // East entrance sign — visible from spawn
     var eastEntrSp = mkLabel('>> ENTER GYM  /  ORIENTATION <<', 18);
     eastEntrSp.position.set(gx + gw/2 + 2.0, gh * 0.55, gz);
-    // South exit sign (interior, above south door)
-    var exitSp = mkLabel('EXIT →  Bio Room / Club Fair', 14);
-    exitSp.position.set(gx, gh * 0.50, gz + gd/2 - 1.8);
-    // South exit sign (exterior)
-    var southExitSp = mkLabel('Gym South Exit', 12);
-    southExitSp.position.set(gx, gh * 0.45, gz + gd/2 + 1.5);
+    // West back exit sign (exterior)
+    var westExitSp = mkLabel('Gym Back Exit', 12);
+    westExitSp.position.set(gx - gw/2 - 2.0, gh * 0.45, gz);
 
     // -- GYM FLOOR ------------------------------------------------
     var gymFloorTex = makeTex(512, 512, function(c2, w2, h2) {
@@ -1595,8 +1596,7 @@ function initWorld3D(playerData) {
   NPCS.push({x:-100, z:-25, radius:5, label:'Campus Map',
     msg:'WESTBROOK HIGH SCHOOL\nMain campus beyond the gates — Buildings A through F, Cafeteria, Library.\nFreshmen: report to the gym (east entrance) for orientation first.'});
 
-  prog(54, 'Locker rooms and weight room...');
-  building(-92,-32,28,15,6,mk(0xd0c8b8),mk(0x607080),'Locker Rooms',1,'locker');
+  prog(54, 'Weight room...');
   building(-92,-12,22,13,6,mk(0xd0c8b8),mk(0x506070),'Weight Room',1,'wgt');
   NPCS.push({x:-92,z:-12,radius:6,label:'Weight Room',msg:'Weight Room - Bench press, squat racks, free weights. Open 6am-8pm.'});
 
@@ -2113,9 +2113,6 @@ function initWorld3D(playerData) {
     // Bio / Robotics Lab  (bx=-97,bz=-36,bw=22,bd=14)
     wr(-108, -43, 22, 14, '#2a5a8a');
     wlabel('BIO', -97, -36, '#a0c8ff', 8);
-    // Locker Rooms  (building(-92,-32,28,15))
-    wr(-106, -39.5, 28, 15, '#6a4040');
-    wlabel('LOCKER', -92, -32, '#e0aaaa', 8);
     // Weight Room  (building(-92,-12,22,13))
     wr(-103, -18.5, 22, 13, '#604040');
     wlabel('WEIGHTS', -92, -12, '#e0aaaa', 8);
