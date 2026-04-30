@@ -1020,7 +1020,9 @@ function _togglePause() {
     }
 
     overlay.classList.add('open');
-    G.from('#pause-overlay .po-inner', { opacity: 0, y: 20, duration: 0.4, ease: 'power2.out' });
+    const _poInner = overlay.querySelector('.po-inner');
+    G.killTweensOf(_poInner);
+    G.fromTo(_poInner, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' });
   } else {
     G.to('#pause-overlay .po-inner', {
       opacity: 0, y: -10, duration: 0.25, ease: 'power2.in',

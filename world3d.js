@@ -1856,14 +1856,7 @@ function initWorld3D(playerData) {
         }
       }
     }
-    if (e.code === 'KeyP') {
-      var po = document.getElementById('pause-overlay');
-      if (po) {
-        var nowOpen = po.classList.toggle('open');
-        if (nowOpen) populatePauseStats();
-        else if (locked) canvas.requestPointerLock();
-      }
-    }
+    // P key is handled entirely by game.js _togglePause() to avoid double-firing
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
       e.preventDefault();
       if (!sprintOn && sprintCooldown <= 0) {
@@ -2754,12 +2747,7 @@ function initWorld3D(playerData) {
   }
 
   // Wire pause resume button
-  var resumeBtn = document.getElementById('po-resume-btn');
-  if (resumeBtn) resumeBtn.addEventListener('click', function() {
-    var po = document.getElementById('pause-overlay');
-    if (po) po.classList.remove('open');
-    canvas.requestPointerLock();
-  });
+  // Resume button handled by game.js _togglePause — no duplicate listener needed here
 
   // Request pointer lock on canvas click (handles post-orientation re-lock)
   canvas.addEventListener('click', function() { if (!locked) canvas.requestPointerLock(); });
