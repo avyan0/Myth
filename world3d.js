@@ -2615,10 +2615,15 @@ function initWorld3D(playerData) {
     }
 
     // ── Sophomore class proximity nav ──
+    // Only fires when the player is INSIDE the target building's interior box.
+    // Uses minX/maxX/minZ/maxZ from _SOPH_LOCS so walking past a building never
+    // accidentally triggers the wrong class.
     if (window.MYTH_SOPH_NAV_TARGET && !window.MYTH_ORIENTATION_ACTIVE) {
       var _snt = window.MYTH_SOPH_NAV_TARGET;
-      var _sntDx = px - _snt.x, _sntDz = pz - _snt.z;
-      if (Math.sqrt(_sntDx*_sntDx + _sntDz*_sntDz) < _snt.r) {
+      var _inBox = (_snt.minX !== undefined)
+        ? (px >= _snt.minX && px <= _snt.maxX && pz >= _snt.minZ && pz <= _snt.maxZ)
+        : (Math.sqrt((px-_snt.x)*(px-_snt.x)+(pz-_snt.z)*(pz-_snt.z)) < _snt.r);
+      if (_inBox) {
         window.MYTH_SOPH_NAV_TARGET = null;
         var _hint = document.getElementById('soph-nav-hint');
         if (_hint) _hint.style.display = 'none';

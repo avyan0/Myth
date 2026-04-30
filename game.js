@@ -2693,7 +2693,6 @@ window.showFreshmanYearEnd = function() {
           const [c1, c2] = [...chosen];
           Engine.setFlag('soph_class_' + c1); Engine.setFlag('soph_class_' + c2);
           Engine.setFlag('freshman_year_complete');
-          Engine.forceGradeUp(); updateHUD();
           _sophHide(() => {
             window.MYTH_ORIENTATION_ACTIVE   = false;
             window.MYTH_PE_DONE              = true;
@@ -2712,13 +2711,20 @@ window.showFreshmanYearEnd = function() {
 //  SOPHOMORE YEAR SEQUENCE STATE MACHINE
 // ════════════════════════════════════════════════════════
 
-// Classroom locations in the 3D world (center of each building)
+// Classroom locations — r is for minimap display only.
+// minX/maxX/minZ/maxZ are the actual building interior bounds;
+// the class only triggers when the player steps inside this box.
 const _SOPH_LOCS = {
-  apcsa:    { room: 'Room 214 — Building B',     x: 12,  z: -74,  r: 16 },
-  physics:  { room: 'Room 203 — Science Wing',   x: 76,  z: -32,  r: 16 },
-  studies:  { room: 'Room 119 — Building C',     x: -32, z: -54,  r: 16 },
-  robotics: { room: 'Room 108 — Robotics Lab',   x: -97, z: -36,  r: 14 },
-  football: { room: 'Football Field',            x: -82, z: 102,  r: 18 },
+  apcsa:    { room: 'Room 214 — Building B',   x: 12,  z: -74,  r: 13,
+              minX: -1,   maxX: 25,  minZ: -81,  maxZ: -67 },
+  physics:  { room: 'Room 203 — Physics Wing', x: 76,  z: -32,  r: 12,
+              minX: 64,   maxX: 88,  minZ: -39,  maxZ: -25 },
+  studies:  { room: 'Room 119 — Building C',   x: -32, z: -54,  r: 13,
+              minX: -45,  maxX: -19, minZ: -60,  maxZ: -48 },
+  robotics: { room: 'Room 108 — Robotics Lab', x: -97, z: -36,  r: 11,
+              minX: -108, maxX: -86, minZ: -43,  maxZ: -29 },
+  football: { room: 'Football Field',          x: -82, z: 102,  r: 18,
+              minX: -140, maxX: -25, minZ:  65,  maxZ: 155 },
 };
 
 // Sequence: c1c1, c2c1, brawl, c1c2, psat, c2c2, fitness, end
