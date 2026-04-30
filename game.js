@@ -3617,24 +3617,43 @@ window.showFreshmanYearEnd = function() {
 //  SOPHOMORE YEAR SEQUENCE STATE MACHINE
 // ════════════════════════════════════════════════════════
 
-// Classroom locations — r is for minimap display only.
-// minX/maxX/minZ/maxZ are the actual building interior bounds;
-// the class only triggers when the player steps inside this box.
+// Classroom locations — r is minimap indicator radius only.
+// minX/maxX/minZ/maxZ = DOOR THRESHOLD zone: a narrow band (door-width ± 2,
+// 3 units deep just inside the doorway). Only fires when the player physically
+// walks through the door opening — not when passing by outside.
+//
+// South-door formula (standard building(bx,bz,w,d)):
+//   door center = (bx, bz+d/2)
+//   threshold   = minX:bx-2  maxX:bx+2  minZ:bz+d/2-3  maxZ:bz+d/2
+//
+// Bio west-door: door center = (-108, -36)
+//   threshold   = minX:-108  maxX:-105  minZ:-37.5  maxZ:-34.5
 const _SOPH_LOCS = {
-  apcsa:    { room: 'Room 214 — Building B',   x: 12,  z: -74,  r: 13,
-              minX: -1,   maxX: 25,  minZ: -81,  maxZ: -67 },
-  physics:  { room: 'Room 203 — Physics Wing', x: 76,  z: -32,  r: 12,
-              minX: 64,   maxX: 88,  minZ: -39,  maxZ: -25 },
-  studies:  { room: 'Room 119 — Building C',   x: -32, z: -54,  r: 13,
-              minX: -45,  maxX: -19, minZ: -60,  maxZ: -48 },
-  robotics: { room: 'Room 108 — Robotics Lab', x: -97, z: -36,  r: 11,
-              minX: -108, maxX: -86, minZ: -43,  maxZ: -29 },
-  football: { room: 'Football Field',          x: -82, z: 102,  r: 18,
-              minX: -140, maxX: -25, minZ:  65,  maxZ: 155 },
-  // ── Junior year classrooms (reuse same nav system) ──
-  calc_bc:     { room: 'Room 304 — Building D (Calc BC)',      x: 50,  z: -74, r: 13, minX: 37,  maxX: 63,  minZ: -81, maxZ: -67 },
-  apush:       { room: 'Room 201 — Admin Wing (APUSH)',        x: -32, z: -74, r: 13, minX: -47, maxX: -17, minZ: -81, maxZ: -67 },
-  dual_enroll: { room: 'Science E — De Anza (Dual Enrollment)',x: 12,  z: -54, r: 13, minX: 0,   maxX: 24,  minZ: -60, maxZ: -48 },
+  // building(12,-74,26,15)  → south door @ (12, -66.5)
+  apcsa:    { room: 'Room 214 — Building B',   x: 12,  z: -74, r: 13,
+              minX: 10,  maxX: 14,  minZ: -69.5, maxZ: -66.5 },
+  // building(76,-32,24,15)  → south door @ (76, -24.5)
+  physics:  { room: 'Room 203 — Physics Wing', x: 76,  z: -32, r: 12,
+              minX: 74,  maxX: 78,  minZ: -27.5, maxZ: -24.5 },
+  // building(-32,-54,26,13) → south door @ (-32, -47.5)
+  studies:  { room: 'Room 119 — Building C',   x: -32, z: -54, r: 13,
+              minX: -34, maxX: -30, minZ: -50.5, maxZ: -47.5 },
+  // bio room bx=-97 bw=22   → west door  @ (-108, -36)
+  robotics: { room: 'Room 108 — Robotics Lab', x: -97, z: -36, r: 11,
+              minX: -108,maxX: -105,minZ: -37.5, maxZ: -34.5 },
+  // open football field — keep wide zone
+  football: { room: 'Football Field',          x: -82, z: 102, r: 18,
+              minX: -140, maxX: -25, minZ: 65,  maxZ: 155 },
+  // ── Junior year (same door-threshold approach) ──
+  // building(50,-74,26,15)  → south door @ (50, -66.5)
+  calc_bc:     { room: 'Room 304 — Building D (Calc BC)',       x: 50,  z: -74, r: 13,
+                 minX: 48,  maxX: 52,  minZ: -69.5, maxZ: -66.5 },
+  // building(-32,-74,30,15) → south door @ (-32, -66.5)
+  apush:       { room: 'Room 201 — Admin Wing (APUSH)',         x: -32, z: -74, r: 13,
+                 minX: -34, maxX: -30, minZ: -69.5, maxZ: -66.5 },
+  // building(12,-54,24,13)  → south door @ (12, -47.5)
+  dual_enroll: { room: 'Science E — De Anza (Dual Enrollment)', x: 12,  z: -54, r: 13,
+                 minX: 10,  maxX: 14,  minZ: -50.5, maxZ: -47.5 },
 };
 
 // Sequence: c1c1, c2c1, brawl, c1c2, psat, c2c2, fitness, end
@@ -4550,10 +4569,22 @@ function _brawl_tournament(round, remaining) {
     <div class="soph-choices">${_RPS.map(o=>`<button class="soph-choice rps-btn" data-pick="${o}"><span class="soph-choice-label">${o}</span></button>`).join('')}</div>`);
   document.querySelectorAll('.rps-btn').forEach(b => {
     b.onclick = () => {
-      const r = _rpsWin(b.dataset.pick, cpu);
-      if (r==='win') _brawl_roundWin(round, remaining, b.dataset.pick, cpu);
-      else if (r==='tie') _brawl_tournament(round, remaining);
-      else _brawl_roundLose(round, b.dataset.pick, cpu);
+      const pick = b.dataset.pick;
+      const r = _rpsWin(pick, cpu);
+      if (r === 'win') {
+        _brawl_roundWin(round, remaining, pick, cpu);
+      } else if (r === 'tie') {
+        // Show tie feedback, then auto-rematch after 1.8s — no re-clicking required
+        _sophShow(`<div class="soph-badge">BRAWL STARS · ${names[round]||'ROUND '+round} — TIE</div>
+          <div class="soph-scene" style="text-align:center;padding:18px 0">
+            <div style="font-size:2rem;font-weight:bold;color:#f7b731">${pick} vs ${cpu}</div>
+            <div style="font-size:1.1rem;margin-top:10px;color:#c8bfa8">SUDDEN DEATH REMATCH</div>
+            <div style="font-size:0.85rem;margin-top:8px;color:#a09880">Replaying automatically…</div>
+          </div>`);
+        setTimeout(() => _brawl_tournament(round, remaining), 1800);
+      } else {
+        _brawl_roundLose(round, pick, cpu);
+      }
     };
   });
 }
