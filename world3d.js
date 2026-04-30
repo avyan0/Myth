@@ -2630,11 +2630,15 @@ function initWorld3D(playerData) {
         window.MYTH_ORIENTATION_ACTIVE = true;
         if (document.pointerLockElement === canvas) document.exitPointerLock();
         var _classFns = {
-          apcsa:    [window.showAPCSA_Class1,    window.showAPCSA_Final],
-          physics:  [window.showPhysics_Class1,  window.showPhysics_FieldTrip],
-          studies:  [window.showStudies_Class1,  window.showStudies_Class2],
-          robotics: [window.showRobotics_EC,     null],
-          football: [window.showFootball_EC,     null],
+          apcsa:       [window.showAPCSA_Class1,       window.showAPCSA_Final],
+          physics:     [window.showPhysics_Class1,     window.showPhysics_FieldTrip],
+          studies:     [window.showStudies_Class1,     window.showStudies_Class2],
+          robotics:    [window.showRobotics_EC,        null],
+          football:    [window.showFootball_EC,        null],
+          // Junior year
+          calc_bc:     [window.showCalcBC_Class1,      window.showCalcBC_Class2],
+          apush:       [window.showAPUSH_Class1,       window.showAPUSH_Class2],
+          dual_enroll: [window.showDualEnroll_Class1,  window.showDualEnroll_Class2],
         };
         window.MYTH_SOPH_ON_DONE = _snt.done;
         var _fn = _classFns[_snt.course] && _classFns[_snt.course][_snt.classNum - 1];

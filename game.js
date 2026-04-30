@@ -2296,128 +2296,1019 @@ function showSophomoreYearEnd() {
   },{once:true});
 }
 
-// ── JUNIOR YEAR ──────────────────────────────────────
+// ════════════════════════════════════════════════════════
+//  JUNIOR YEAR
+// ════════════════════════════════════════════════════════
 
 const JR_PATHS = [
-  { id:'calc_bc',     icon:'∫',  title:'CALC BC (THE CONLIN GRIND)',
-    desc:'All-nighters. Caffeine. Derivatives. B in the class, 5 on the AP exam.',
+  { id:'calc_bc',     icon:'∫',  title:'CALC BC — THE CONLIN GRIND',
+    desc:'Mr. Conlin is a legend and a nightmare. All-nighters. Two AP exams worth of material in one year.',
     deltas:{ gpa:-0.3, intelligence:2.5, extracurriculars:2.0, happiness:-1.5 } },
-  { id:'dual_enroll', icon:'🎓', title:'DUAL ENROLLMENT',
-    desc:'College courses at the local CC. Manageable workload, weighted GPA boost.',
+  { id:'dual_enroll', icon:'🎓', title:'DUAL ENROLLMENT @ DE ANZA',
+    desc:'Real college courses. Real professor. Real FOMO because you have homework on Friday night.',
     deltas:{ gpa:0.4, intelligence:1.2, extracurriculars:1.0 } },
-  { id:'apush',       icon:'🇺🇸',title:'APUSH',
-    desc:'You ace it. But every free period goes to notes. No breathing room.',
+  { id:'apush',       icon:'🇺🇸', title:'APUSH — MR. RIVERA',
+    desc:'Documents, DBQs, essays. Rivera says the AP exam is the real final. He means it.',
     deltas:{ gpa:0.2, friendships:-1.5, intelligence:1.5, happiness:-1.0 } }
 ];
 
 const JR_LIFE = [
   { id:'socialite', icon:'🚗', title:'THE SOCIALITE',
-    desc:"Driver's license, parking lot hangs, Prom. Social peak.",
+    desc:"Driver's license. First real party. Prom. This is your year socially.",
     deltas:{ gpa:-0.4, friendships:3.0, relationships:3.0, happiness:2.5 } },
   { id:'athlete',   icon:'🏈', title:'TRIPLE-THREAT ATHLETE',
-    desc:'Football · Baseball · Golf. Campus icon. Zero study time.',
+    desc:'Football · Baseball · Golf. One season at a time. Campus icon status.',
     deltas:{ gpa:-0.6, friendships:3.5, sports:4.0, intelligence:-1.0 } },
   { id:'body',      icon:'💪', title:'BODY TRANSFORMATION',
-    desc:'You hit the gym religiously. You get shredded. Confidence skyrockets.',
+    desc:'Push/Pull/Legs. Track macros. Come back after winter break and nobody recognizes you.',
     deltas:{ sports:3.0, happiness:2.5, relationships:1.0, extracurriculars:-1.0 } }
 ];
 
-const JR_MILESTONES = [
-  { icon:'📊', title:'THE SAT / ACT',
-    desc:'Mandatory stress-test. Weeks of practice problems.',
-    deltas:{ intelligence:1.0, happiness:-1.0 } },
-  { icon:'🏫', title:'COLLEGE SEARCH',
-    desc:'Browsing university brochures. The anxiety is creeping in.',
-    deltas:{ extracurriculars:0.5, happiness:-0.2 } }
-];
-
 function showJuniorYear() {
-  const overlay=_getYrOverlay();
-  const selected=new Set();
-
+  const overlay = _getYrOverlay();
+  const selected = new Set();
   function render() {
-    overlay.innerHTML=`
+    overlay.innerHTML = `
       <div class="ys-inner">
         <div class="ys-badge">WESTBROOK HIGH · JUNIOR YEAR</div>
-        <div class="ys-title">ACADEMIC PATHS</div>
+        <div class="ys-title">CHOOSE YOUR COURSES</div>
         <div class="ys-subtitle">Pick <strong>2 courses</strong> — these hit your transcript.</div>
         <div class="ys-grid">
-          ${JR_PATHS.map(p=>`
-            <div class="ys-card${selected.has(p.id)?' selected':''}" data-id="${p.id}">
+          ${JR_PATHS.map(p => `
+            <div class="ys-card${selected.has(p.id) ? ' selected' : ''}" data-id="${p.id}">
               <div class="ys-card-icon">${p.icon}</div>
               <div class="ys-card-title">${p.title}</div>
               <div class="ys-card-desc">${p.desc}</div>
               <div class="ys-chips">${statChips(p.deltas)}</div>
             </div>`).join('')}
         </div>
-        <button class="btn-primary ys-confirm" id="ys-confirm" ${selected.size<2?'disabled':''}>
+        <button class="btn-primary ys-confirm" id="ys-confirm" ${selected.size < 2 ? 'disabled' : ''}>
           LOCK IN ${selected.size}/2 →
         </button>
       </div>`;
-    overlay.querySelectorAll('.ys-card').forEach(card=>{
-      card.addEventListener('click',()=>{
-        const id=card.dataset.id;
-        if(selected.has(id)) selected.delete(id);
-        else if(selected.size<2) selected.add(id);
+    overlay.querySelectorAll('.ys-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = card.dataset.id;
+        if (selected.has(id)) selected.delete(id);
+        else if (selected.size < 2) selected.add(id);
         render();
       });
     });
-    const btn=document.getElementById('ys-confirm');
-    if(btn && selected.size===2) btn.addEventListener('click',()=>{
-      JR_PATHS.filter(p=>selected.has(p.id)).forEach(p=>applyDeltas(p.deltas));
-      showJuniorLifeEvent();
-    },{once:true});
+    const btn = document.getElementById('ys-confirm');
+    if (btn && selected.size === 2) btn.addEventListener('click', () => {
+      const [c1, c2] = [...selected];
+      window._JR_C1 = c1; window._JR_C2 = c2;
+      JR_PATHS.filter(p => selected.has(p.id)).forEach(p => applyDeltas(p.deltas));
+      showJuniorLifeEvent(c1, c2);
+    }, { once: true });
   }
   render();
 }
 
-function showJuniorLifeEvent() {
-  const overlay=_getYrOverlay();
-  let chosen=null;
-
+function showJuniorLifeEvent(c1, c2) {
+  const overlay = _getYrOverlay();
+  let chosen = null;
   function render() {
-    overlay.innerHTML=`
+    overlay.innerHTML = `
       <div class="ys-inner">
         <div class="ys-badge">JUNIOR YEAR · MAJOR LIFE FOCUS</div>
         <div class="ys-title">YOUR DEFINING YEAR</div>
-        <div class="ys-subtitle">Choose <strong>1</strong> — this is who you become.</div>
+        <div class="ys-subtitle">Choose <strong>1</strong> — this shapes who you become outside the classroom.</div>
         <div class="ys-grid">
-          ${JR_LIFE.map(p=>`
-            <div class="ys-card${chosen===p.id?' selected':''}" data-id="${p.id}">
+          ${JR_LIFE.map(p => `
+            <div class="ys-card${chosen === p.id ? ' selected' : ''}" data-id="${p.id}">
               <div class="ys-card-icon">${p.icon}</div>
               <div class="ys-card-title">${p.title}</div>
               <div class="ys-card-desc">${p.desc}</div>
               <div class="ys-chips">${statChips(p.deltas)}</div>
             </div>`).join('')}
         </div>
-        <button class="btn-primary ys-confirm" id="ys-confirm" ${!chosen?'disabled':''}>THIS IS ME →</button>
+        <button class="btn-primary ys-confirm" id="ys-confirm" ${!chosen ? 'disabled' : ''}>THIS IS ME →</button>
       </div>`;
-    overlay.querySelectorAll('.ys-card').forEach(card=>{
-      card.addEventListener('click',()=>{ chosen=card.dataset.id; render(); });
+    overlay.querySelectorAll('.ys-card').forEach(card => {
+      card.addEventListener('click', () => { chosen = card.dataset.id; render(); });
     });
-    const btn=document.getElementById('ys-confirm');
-    if(btn && chosen) btn.addEventListener('click',()=>{
-      applyDeltas(JR_LIFE.find(p=>p.id===chosen).deltas);
-      _jrMilestone(0);
-    },{once:true});
+    const btn = document.getElementById('ys-confirm');
+    if (btn && chosen) btn.addEventListener('click', () => {
+      applyDeltas(JR_LIFE.find(p => p.id === chosen).deltas);
+      window._JR_LIFE = chosen;
+      G.to(overlay, { opacity: 0, duration: 0.5, onComplete: () => {
+        overlay.style.display = 'none'; overlay.style.opacity = '';
+        window.MYTH_START_STATS = Object.assign({}, Engine.getState().stats);
+        if (typeof refreshStatsSidebar === 'function') refreshStatsSidebar();
+        _jrStep(0, c1, c2);
+      }});
+    }, { once: true });
   }
   render();
 }
 
-function _jrMilestone(idx) {
-  if(idx>=JR_MILESTONES.length){ showJuniorYearEnd(); return; }
-  const m=JR_MILESTONES[idx], overlay=_getYrOverlay();
-  overlay.innerHTML=`
-    <div class="ys-inner">
-      <div class="ys-badge">JUNIOR YEAR · MILESTONE</div>
-      <div class="ys-event-icon">${m.icon}</div>
-      <div class="ys-title" style="font-size:2.2rem">${m.title}</div>
-      <p class="ys-card-desc" style="max-width:460px;font-size:1rem;line-height:1.7;margin-top:8px">${m.desc}</p>
-      <div class="ys-chips" style="margin-top:16px;justify-content:center">${statChips(m.deltas)}</div>
-      <button class="btn-primary ys-confirm" id="ys-ev-next" style="margin-top:28px">CONTINUE →</button>
-    </div>`;
-  applyDeltas(m.deltas);
-  document.getElementById('ys-ev-next').addEventListener('click',()=>_jrMilestone(idx+1),{once:true});
+// ── Junior Year State Machine ─────────────────────────
+// c1-class1 → life-1 → c2-class1 → SAT → c1-class2 → life-2 → college-search → c2-class2 → life-3 → end
+function _jrStep(idx, c1, c2) {
+  c1 = c1 || window._JR_C1; c2 = c2 || window._JR_C2;
+  window._JR_C1 = c1; window._JR_C2 = c2;
+  const next = () => _jrStep(idx + 1, c1, c2);
+  switch (idx) {
+    case 0: _goToClass(c1, 1, next); break;
+    case 1: _jrLifeScene(1, next); break;
+    case 2: _goToClass(c2, 1, next); break;
+    case 3: _jrSATScene(next); break;
+    case 4: _goToClass(c1, 2, next); break;
+    case 5: _jrLifeScene(2, next); break;
+    case 6: _jrCollegeSearch(next); break;
+    case 7: _goToClass(c2, 2, next); break;
+    case 8: _jrLifeScene(3, next); break;
+    default: if (window.showJuniorYearEnd) window.showJuniorYearEnd(); break;
+  }
+}
+
+// Called by non-nav junior scenes (life events, SAT, college search)
+function _jrSceneDone(...flags) {
+  flags.forEach(f => Engine.setFlag(f));
+  window.MYTH_ORIENTATION_ACTIVE = false;
+  const done = window._JR_SCENE_DONE;
+  window._JR_SCENE_DONE = null;
+  _sophHide(() => { if (done) done(); });
+}
+
+// Dispatch life scenes to the right path
+function _jrLifeScene(sceneIdx, done) {
+  window.MYTH_ORIENTATION_ACTIVE = true;
+  window._JR_SCENE_DONE = done;
+  const path = window._JR_LIFE;
+  if (path === 'socialite') {
+    if (sceneIdx === 1) _jrSoc_driversTest();
+    else if (sceneIdx === 2) _jrSoc_party();
+    else _jrSoc_prom();
+  } else if (path === 'athlete') {
+    if (sceneIdx === 1) _jrAth_football();
+    else if (sceneIdx === 2) _jrAth_baseball();
+    else _jrAth_golf();
+  } else {
+    if (sceneIdx === 1) _jrBody_split();
+    else if (sceneIdx === 2) _jrBody_diet();
+    else _jrBody_progress();
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  JUNIOR CLASS — CALC BC
+// ════════════════════════════════════════════════════════
+let _calcScore = 0;
+window.showCalcBC_Class1 = function() { Engine.setFlag('jr_calcbc1_started'); _calcScore = 0; _calcbc1_beat1(); };
+function _calcbc1_beat1() {
+  _sophShow(`<div class="soph-badge">ROOM 304 — CALC BC · MR. CONLIN</div>
+    <h1 class="soph-title" style="font-size:1.9rem">CHAIN RULE THURSDAY.</h1>
+    <div class="soph-scene"><p>Conlin writes d/dx[sin(e^(x²))] on the board without saying a word. He turns around. He's looking for someone. He finds you.</p></div>
+    <div class="soph-speaker">MR. CONLIN</div><div class="soph-speech">"You. Board. Now."</div>
+    <div class="soph-prompt">HOW DO YOU APPROACH IT?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Work through it: cos(e^(x²)) · e^(x²) · 2x — chain rule outside in</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Power rule — multiply the exponents somehow</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Ask Conlin to repeat — you want to see all the steps first</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 1 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _calcScore += parseInt(b.dataset.pts); _calcbc1_beat2(); }; });
+}
+function _calcbc1_beat2() {
+  _sophShow(`<div class="soph-badge">ROOM 304 — CALC BC · MR. CONLIN</div>
+    <div class="soph-scene"><p>Conlin throws a bonus problem on the board: <strong>∫sec²(x)tan(x) dx</strong>. First person to solve it gets exempted from next week's quiz.</p></div>
+    <div class="soph-prompt">YOUR APPROACH?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">u-substitution: u = tan(x), du = sec²(x)dx — clean and fast</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Integration by parts — you know it works, just slower</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Skip it — not in the chapter, probably not on the exam</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 2 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _calcScore += parseInt(b.dataset.pts); _calcbc1_beat3(); }; });
+}
+function _calcbc1_beat3() {
+  _sophShow(`<div class="soph-badge">ROOM 304 — CALC BC · MR. CONLIN</div>
+    <div class="soph-scene"><p>40-problem set. 30 minutes. Conlin says "collaboration encouraged." Everyone scrambles to partner up.</p></div>
+    <div class="soph-prompt">WHAT DO YOU DO?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Work alone — you get into a zone and don't look up</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Partner with Marcus — solid at calc, good to check work</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Copy from the person next to you when you get stuck</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 3 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _calcScore += parseInt(b.dataset.pts); _calcbc1_result(); }; });
+}
+function _calcbc1_result() {
+  let grade, gpaD, stressD, col, conlinLine;
+  if (_calcScore >= 8) {
+    grade='A'; gpaD=3; stressD=-1; col='#6bcb77';
+    conlinLine='"You actually know what you\'re doing. Don\'t get comfortable."';
+  } else if (_calcScore >= 6) {
+    grade='B'; gpaD=1; stressD=0; col='#a8d8a0';
+    conlinLine='"Solid. Not impressive. Solid."';
+  } else if (_calcScore >= 4) {
+    grade='C'; gpaD=-1; stressD=2; col='#f7b731';
+    conlinLine='"You\'re lost. Come to tutoring or this will compound fast."';
+  } else {
+    grade='D'; gpaD=-2; stressD=3; col='#fc7b54';
+    conlinLine='"I genuinely don\'t know what happened in that head of yours today."';
+  }
+  Engine.modifyStats({ gpa: gpaD, stress: stressD, intelligence: 1 }); _flushStatToast();
+  _sophShow(`<div class="soph-badge">ROOM 304 — CALC BC · RESULT</div>
+    <div class="soph-scene" style="font-size:20px;text-align:center;padding:12px 0;color:${col};font-weight:bold">GRADE: ${grade} &nbsp;·&nbsp; Score ${_calcScore}/9</div>
+    <div class="soph-speaker">MR. CONLIN</div><div class="soph-speech">${conlinLine}</div>
+    <div class="soph-stat-delta ${gpaD>=0?'':'neg'}">GPA ${gpaD>=0?'+':''}${gpaD} · Stress ${stressD>=0?'+':''}${stressD} · +1 INT</div>
+    <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+  document.getElementById('soph-done').onclick = () => _sophDone('jr_calcbc1_done');
+}
+
+window.showCalcBC_Class2 = function() { Engine.setFlag('jr_calcbc2_started'); _calcScore = 0; _calcbc2_beat1(); };
+function _calcbc2_beat1() {
+  _sophShow(`<div class="soph-badge">ROOM 304 — CALC BC · AP FREE RESPONSE</div>
+    <h1 class="soph-title" style="font-size:1.9rem">FREE RESPONSE FRIDAY.</h1>
+    <div class="soph-scene"><p>Conlin hands out a full AP free response simulation. 45 minutes. <em>"This is your final practice. Treat it like the exam."</em></p></div>
+    <div class="soph-prompt">WHERE DO YOU START?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Part A — build momentum, show all work clearly</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Part B first — get the hard calculator section out of the way</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Skip around — do the ones you recognize first</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 1 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _calcScore += parseInt(b.dataset.pts); _calcbc2_beat2(); }; });
+}
+function _calcbc2_beat2() {
+  _sophShow(`<div class="soph-badge">ROOM 304 — CALC BC · AP FREE RESPONSE</div>
+    <div class="soph-scene"><p>You hit it: <strong>∫arctan(x) dx</strong>. You remember seeing this once. Barely.</p></div>
+    <div class="soph-prompt">WHAT DO YOU DO?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Integration by parts: u=arctan(x), dv=dx — work it out carefully</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Best guess from memory: x·arctan(x) − ½ln(1+x²) + C</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Skip it and move on — time management over one problem</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 2 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _calcScore += parseInt(b.dataset.pts); _calcbc2_beat3(); }; });
+}
+function _calcbc2_beat3() {
+  _sophShow(`<div class="soph-badge">ROOM 304 — CALC BC · AP FREE RESPONSE</div>
+    <div class="soph-scene"><p>Five minutes left. Two problems still untouched. Your hand is cramping.</p></div>
+    <div class="soph-prompt">FINAL FIVE MINUTES:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Partial credit run — write setup equations and label everything</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Go back and verify your completed work — lock in clean points</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Rush through both — sloppy but you tried</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 3 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _calcScore += parseInt(b.dataset.pts); _calcbc2_result(); }; });
+}
+function _calcbc2_result() {
+  let grade, gpaD, stressD, col, conlinLine;
+  if (_calcScore >= 8) {
+    grade='A'; gpaD=3; stressD=-1; col='#6bcb77';
+    conlinLine='"That\'s a 5 on the AP. Maybe. Don\'t tell anyone I said that."';
+  } else if (_calcScore >= 6) {
+    grade='B'; gpaD=1; stressD=0; col='#a8d8a0';
+    conlinLine='"Passing. You\'re passing. In Calc BC that means something."';
+  } else if (_calcScore >= 4) {
+    grade='C'; gpaD=-1; stressD=2; col='#f7b731';
+    conlinLine='"Study the fundamentals again. Seriously. Start over if you have to."';
+  } else {
+    grade='D/F'; gpaD=-3; stressD=3; col='#fc7b54';
+    conlinLine='"I don\'t know how to help you if you won\'t help yourself."';
+  }
+  Engine.modifyStats({ gpa: gpaD, stress: stressD, intelligence: 2 }); _flushStatToast();
+  _sophShow(`<div class="soph-badge">ROOM 304 — CALC BC · FINAL RESULT</div>
+    <div class="soph-scene" style="font-size:20px;text-align:center;padding:12px 0;color:${col};font-weight:bold">GRADE: ${grade} &nbsp;·&nbsp; Score ${_calcScore}/9</div>
+    <div class="soph-speaker">MR. CONLIN</div><div class="soph-speech">${conlinLine}</div>
+    <div class="soph-stat-delta ${gpaD>=0?'':'neg'}">GPA ${gpaD>=0?'+':''}${gpaD} · Stress ${stressD>=0?'+':''}${stressD} · +2 INT</div>
+    <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+  document.getElementById('soph-done').onclick = () => _sophDone('jr_calcbc2_done');
+}
+
+// ════════════════════════════════════════════════════════
+//  JUNIOR CLASS — APUSH
+// ════════════════════════════════════════════════════════
+let _apushScore = 0;
+window.showAPUSH_Class1 = function() { Engine.setFlag('jr_apush1_started'); _apushScore = 0; _apush1_beat1(); };
+function _apush1_beat1() {
+  _sophShow(`<div class="soph-badge">ROOM 201 — APUSH · MR. RIVERA</div>
+    <h1 class="soph-title" style="font-size:1.9rem">THE DBQ.</h1>
+    <div class="soph-scene"><p>Rivera drops 7 primary source documents on your desk. The prompt: <em>"Evaluate the extent to which Reconstruction changed American society from 1865–1877."</em> You have 15 minutes to read. Then you write for 45.</p></div>
+    <div class="soph-prompt">HOW DO YOU APPROACH THE DOCUMENTS?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Read all 7 carefully — annotate source, purpose, and point of view for each</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Skim 5, read 2 fully — try to catch the main arguments</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Read the last paragraph of each — thesis and conclusion</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 1 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _apushScore += parseInt(b.dataset.pts); _apush1_beat2(); }; });
+}
+function _apush1_beat2() {
+  _sophShow(`<div class="soph-badge">ROOM 201 — APUSH · MR. RIVERA</div>
+    <div class="soph-scene"><p>Time to write your thesis. Rivera says a strong thesis earns points even if the body paragraphs struggle.</p></div>
+    <div class="soph-prompt">YOUR THESIS APPROACH:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Complex argument addressing multiple causes with qualifications and counterarguments</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Simple, clear claim — easy to defend consistently throughout</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Broad overview of the period — technically accurate, says nothing specific</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 2 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _apushScore += parseInt(b.dataset.pts); _apush1_beat3(); }; });
+}
+function _apush1_beat3() {
+  _sophShow(`<div class="soph-badge">ROOM 201 — APUSH · MR. RIVERA</div>
+    <div class="soph-scene"><p>8 minutes left. One body paragraph still unwritten. You're behind.</p></div>
+    <div class="soph-prompt">WHAT DO YOU DO?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Strong topic sentence + cite 2 docs with analysis — partial but clean</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Write as fast as you can — quantity over quality</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Go back and clean up the paragraphs you already wrote</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 3 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _apushScore += parseInt(b.dataset.pts); _apush1_result(); }; });
+}
+function _apush1_result() {
+  let grade, gpaD, stressD, col, riveraLine;
+  if (_apushScore >= 8) {
+    grade='A'; gpaD=3; stressD=-1; col='#6bcb77';
+    riveraLine='"Strong thesis. Strong sourcing. This is how the DBQ is supposed to look."';
+  } else if (_apushScore >= 6) {
+    grade='B+'; gpaD=2; stressD=0; col='#a8d8a0';
+    riveraLine='"Good argument. Your analysis could go deeper. Work on that."';
+  } else if (_apushScore >= 4) {
+    grade='C'; gpaD=-1; stressD=2; col='#f7b731';
+    riveraLine='"The documents were there. You didn\'t use them. Why were they there?"';
+  } else {
+    grade='D'; gpaD=-2; stressD=3; col='#fc7b54';
+    riveraLine='"You need to come in before school. This needs serious work before the AP."';
+  }
+  Engine.modifyStats({ gpa: gpaD, stress: stressD, intelligence: 1 }); _flushStatToast();
+  _sophShow(`<div class="soph-badge">ROOM 201 — APUSH · DBQ RESULT</div>
+    <div class="soph-scene" style="font-size:20px;text-align:center;padding:12px 0;color:${col};font-weight:bold">GRADE: ${grade} &nbsp;·&nbsp; Score ${_apushScore}/9</div>
+    <div class="soph-speaker">MR. RIVERA</div><div class="soph-speech">${riveraLine}</div>
+    <div class="soph-stat-delta ${gpaD>=0?'':'neg'}">GPA ${gpaD>=0?'+':''}${gpaD} · Stress ${stressD>=0?'+':''}${stressD} · +1 INT</div>
+    <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+  document.getElementById('soph-done').onclick = () => _sophDone('jr_apush1_done');
+}
+
+window.showAPUSH_Class2 = function() { Engine.setFlag('jr_apush2_started'); _apushScore = 0; _apush2_beat1(); };
+function _apush2_beat1() {
+  _sophShow(`<div class="soph-badge">ROOM 201 — APUSH · GROUP LEQ PROJECT</div>
+    <h1 class="soph-title" style="font-size:1.9rem">THE GROUP LEQ.</h1>
+    <div class="soph-scene"><p>Rivera assigns groups of 4 for the Long Essay Question project. You get Jordan, Marcus, and a kid named Derek who doesn't speak in class. Rivera says this counts for 20% of your grade.</p></div>
+    <div class="soph-prompt">YOUR ROLE IN THE GROUP:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Take the lead — you map out the argument structure and assign sections</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Handle the primary sources — you know how to find strong evidence</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Let someone else lead — you'll contribute when asked</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 1 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _apushScore += parseInt(b.dataset.pts); _apush2_beat2(); }; });
+}
+function _apush2_beat2() {
+  _sophShow(`<div class="soph-badge">ROOM 201 — APUSH · GROUP LEQ PROJECT</div>
+    <div class="soph-scene"><p>Jordan finds a Frederick Douglass speech that perfectly supports your thesis. Marcus says it might be too controversial for Rivera. You decide:</p></div>
+    <div class="soph-prompt">USE THE CONTROVERSIAL SOURCE?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Use it — analyze it fully and address the counterargument directly</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">No — find something safer that Rivera will definitely accept</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Include it as a footnote — hedge your bets</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 2 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _apushScore += parseInt(b.dataset.pts); _apush2_beat3(); }; });
+}
+function _apush2_beat3() {
+  _sophShow(`<div class="soph-badge">ROOM 201 — APUSH · PRESENTATION DAY</div>
+    <div class="soph-scene"><p>Your group presents to the class. It's your section: historical context. 4 minutes in front of everyone.</p></div>
+    <div class="soph-prompt">YOUR DELIVERY:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">You practiced it cold — deliver from memory, make eye contact</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Read from your notes — not great, but accurate</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Wing it — you know this period, you'll figure it out up there</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 3 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _apushScore += parseInt(b.dataset.pts); _apush2_result(); }; });
+}
+function _apush2_result() {
+  let grade, gpaD, stressD, col, riveraLine;
+  if (_apushScore >= 8) {
+    grade='A'; gpaD=3; stressD=-1; col='#6bcb77';
+    riveraLine='"Best group presentation this period. The sourcing was exceptional."';
+  } else if (_apushScore >= 6) {
+    grade='B'; gpaD=2; stressD=0; col='#a8d8a0';
+    riveraLine='"Strong. Presentation could be more confident, but the writing was there."';
+  } else if (_apushScore >= 4) {
+    grade='C+'; gpaD=-1; stressD=2; col='#f7b731';
+    riveraLine='"You had the pieces. The argument never fully came together. Try again on the AP."';
+  } else {
+    grade='D'; gpaD=-2; stressD=3; col='#fc7b54';
+    riveraLine='"I expected more. Significantly more."';
+  }
+  Engine.modifyStats({ gpa: gpaD, stress: stressD, intelligence: 1, friendships: 1 }); _flushStatToast();
+  _sophShow(`<div class="soph-badge">ROOM 201 — APUSH · GROUP LEQ RESULT</div>
+    <div class="soph-scene" style="font-size:20px;text-align:center;padding:12px 0;color:${col};font-weight:bold">GRADE: ${grade} &nbsp;·&nbsp; Score ${_apushScore}/9</div>
+    <div class="soph-speaker">MR. RIVERA</div><div class="soph-speech">${riveraLine}</div>
+    <div class="soph-stat-delta ${gpaD>=0?'':'neg'}">GPA ${gpaD>=0?'+':''}${gpaD} · Stress ${stressD>=0?'+':''}${stressD} · +1 INT · +1 Friends</div>
+    <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+  document.getElementById('soph-done').onclick = () => _sophDone('jr_apush2_done');
+}
+
+// ════════════════════════════════════════════════════════
+//  JUNIOR CLASS — DUAL ENROLLMENT
+// ════════════════════════════════════════════════════════
+let _deScore = 0;
+window.showDualEnroll_Class1 = function() { Engine.setFlag('jr_de1_started'); _deScore = 0; _de1_beat1(); };
+function _de1_beat1() {
+  _sophShow(`<div class="soph-badge">SCIENCE E — DE ANZA · ENGLISH 1A · PROF. KIM</div>
+    <h1 class="soph-title" style="font-size:1.9rem">THE ARGUMENTATIVE ESSAY.</h1>
+    <div class="soph-scene"><p>Prof. Kim is not a high school teacher. She doesn't remind you twice. <em>"Five pages. Argumentative. Cited sources. Due in three weeks. Good luck."</em></p></div>
+    <div class="soph-prompt">YOUR TOPIC:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">School choice and education equity — complex argument, rich in available research</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Social media and teen mental health — accessible, comfortable territory</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Why homework should be eliminated — low effort ceiling at college level</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 1 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _deScore += parseInt(b.dataset.pts); _de1_beat2(); }; });
+}
+function _de1_beat2() {
+  _sophShow(`<div class="soph-badge">SCIENCE E — DE ANZA · ENGLISH 1A · RESEARCH PHASE</div>
+    <div class="soph-scene"><p>Prof. Kim says Wikipedia is not a source. "It's a starting point at best." The library database login is on the board.</p></div>
+    <div class="soph-prompt">YOUR RESEARCH METHOD:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">JSTOR + peer-reviewed articles — proper academic sourcing from the start</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Google Scholar + credible news sources — solid but not fully academic</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Personal experience and one article from The Atlantic</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 2 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _deScore += parseInt(b.dataset.pts); _de1_beat3(); }; });
+}
+function _de1_beat3() {
+  _sophShow(`<div class="soph-badge">SCIENCE E — DE ANZA · ENGLISH 1A · REVISION</div>
+    <div class="soph-scene"><p>Prof. Kim offers one round of feedback before the deadline. Most students skip it.</p></div>
+    <div class="soph-prompt">YOUR REVISION APPROACH:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Submit draft a week early — incorporate her feedback, revise twice</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Proofread carefully the night before and submit on time</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Submit as-is — you ran out of time</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 3 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _deScore += parseInt(b.dataset.pts); _de1_result(); }; });
+}
+function _de1_result() {
+  let grade, gpaD, stressD, col, kimLine;
+  if (_deScore >= 8) {
+    grade='A'; gpaD=3; stressD=-1; col='#6bcb77';
+    kimLine='"This is college-level work. I mean that."';
+  } else if (_deScore >= 6) {
+    grade='B+'; gpaD=2; stressD=0; col='#a8d8a0';
+    kimLine='"Good argument. Sources could be stronger. You know what to fix."';
+  } else if (_deScore >= 4) {
+    grade='C'; gpaD=-1; stressD=2; col='#f7b731';
+    kimLine='"The argument is there, but it\'s buried under weak sourcing."';
+  } else {
+    grade='D'; gpaD=-2; stressD=3; col='#fc7b54';
+    kimLine='"This reads like a high school paper. We are at a college. Retry."';
+  }
+  Engine.modifyStats({ gpa: gpaD, stress: stressD, intelligence: 1 }); _flushStatToast();
+  _sophShow(`<div class="soph-badge">DE ANZA — ENGLISH 1A · RESULT</div>
+    <div class="soph-scene" style="font-size:20px;text-align:center;padding:12px 0;color:${col};font-weight:bold">GRADE: ${grade} &nbsp;·&nbsp; Score ${_deScore}/9</div>
+    <div class="soph-speaker">PROF. KIM</div><div class="soph-speech">${kimLine}</div>
+    <div class="soph-stat-delta ${gpaD>=0?'':'neg'}">GPA ${gpaD>=0?'+':''}${gpaD} · Stress ${stressD>=0?'+':''}${stressD} · +1 INT</div>
+    <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+  document.getElementById('soph-done').onclick = () => _sophDone('jr_de1_done');
+}
+
+window.showDualEnroll_Class2 = function() { Engine.setFlag('jr_de2_started'); _deScore = 0; _de2_beat1(); };
+function _de2_beat1() {
+  _sophShow(`<div class="soph-badge">SCIENCE E — DE ANZA · PSYCHOLOGY 1 · PROF. KIM</div>
+    <h1 class="soph-title" style="font-size:1.9rem">THE RESEARCH PAPER.</h1>
+    <div class="soph-scene"><p>Prof. Kim's Psychology 1 final: a 7-page research paper on a psychological phenomenon. "Your topic, your methodology, your argument. Don't ask me what to write about."</p></div>
+    <div class="soph-prompt">YOUR RESEARCH TOPIC:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Implicit bias in academic evaluation — ambitious, rich peer-reviewed literature</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">The Bystander Effect — well-documented, clean sources, safe argument</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Dream interpretation — personal examples, very sparse academic research</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 1 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _deScore += parseInt(b.dataset.pts); _de2_beat2(); }; });
+}
+function _de2_beat2() {
+  _sophShow(`<div class="soph-badge">SCIENCE E — DE ANZA · PSYCHOLOGY 1 · METHODOLOGY</div>
+    <div class="soph-scene"><p>Prof. Kim says methodology is 30% of the grade. "How you study something matters as much as what you found."</p></div>
+    <div class="soph-prompt">YOUR METHODOLOGY:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Literature review and meta-analysis of existing published studies</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Interview De Anza's psychology faculty — a real primary source</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Survey your 15 classmates — small sample, but real data you collected</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 2 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _deScore += parseInt(b.dataset.pts); _de2_beat3(); }; });
+}
+function _de2_beat3() {
+  _sophShow(`<div class="soph-badge">SCIENCE E — DE ANZA · PSYCHOLOGY 1 · SUBMISSION</div>
+    <div class="soph-scene"><p>Due date: Sunday 11:59 PM. It's Sunday afternoon.</p></div>
+    <div class="soph-prompt">HOW DO YOU SUBMIT?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Double-check every APA citation, proofread twice, submit at 6 PM</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Hit submit on time, citations are correct, you checked once</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Submit at 12:07 AM — 10% late penalty per Kim's syllabus</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Step 3 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _deScore += parseInt(b.dataset.pts); _de2_result(); }; });
+}
+function _de2_result() {
+  let grade, gpaD, stressD, col, kimLine;
+  if (_deScore >= 8) {
+    grade='A'; gpaD=3; stressD=-1; col='#6bcb77';
+    kimLine='"This is publishable at a community college level. Genuinely."';
+  } else if (_deScore >= 6) {
+    grade='B'; gpaD=2; stressD=0; col='#a8d8a0';
+    kimLine='"Strong work. The methodology section was particularly good."';
+  } else if (_deScore >= 4) {
+    grade='C+'; gpaD=-1; stressD=2; col='#f7b731';
+    kimLine='"You have the ideas. The execution wasn\'t there this time."';
+  } else {
+    grade='D'; gpaD=-2; stressD=3; col='#fc7b54';
+    kimLine='"I\'m not sure what happened here. Come see me during office hours."';
+  }
+  Engine.modifyStats({ gpa: gpaD, stress: stressD, intelligence: 2 }); _flushStatToast();
+  _sophShow(`<div class="soph-badge">DE ANZA — PSYCHOLOGY 1 · RESULT</div>
+    <div class="soph-scene" style="font-size:20px;text-align:center;padding:12px 0;color:${col};font-weight:bold">GRADE: ${grade} &nbsp;·&nbsp; Score ${_deScore}/9</div>
+    <div class="soph-speaker">PROF. KIM</div><div class="soph-speech">${kimLine}</div>
+    <div class="soph-stat-delta ${gpaD>=0?'':'neg'}">GPA ${gpaD>=0?'+':''}${gpaD} · Stress ${stressD>=0?'+':''}${stressD} · +2 INT</div>
+    <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+  document.getElementById('soph-done').onclick = () => _sophDone('jr_de2_done');
+}
+
+// ════════════════════════════════════════════════════════
+//  JUNIOR SAT SCENE
+// ════════════════════════════════════════════════════════
+let _satScore = 0;
+function _jrSATScene(done) {
+  window.MYTH_ORIENTATION_ACTIVE = true;
+  window._JR_SCENE_DONE = done;
+  _satScore = 0;
+  _sat_beat1();
+}
+function _sat_beat1() {
+  _sophShow(`<div class="soph-badge">CUPERTINO HIGH SCHOOL — TESTING CENTER</div>
+    <h1 class="soph-title">THE SAT.</h1>
+    <div class="soph-scene"><p>6:45 AM. You're holding your admission ticket and two #2 pencils. Around you: 200 other kids who look equally miserable. The proctor says <em>"You may begin."</em></p></div>
+    <div class="soph-prompt">HOW DID YOU PREPARE THE LAST 48 HOURS?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Full practice tests + targeted review of your weak areas</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Key formulas and strategy tips — focused prep</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Nothing special — you'll figure it out in there</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">SAT · Section 1 of 4</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _satScore += parseInt(b.dataset.pts); _sat_beat2(); }; });
+}
+function _sat_beat2() {
+  _sophShow(`<div class="soph-badge">SAT — READING SECTION · 52 QUESTIONS · 65 MIN</div>
+    <div class="soph-scene"><p>The first passage is an 1840s letter from a senator about land policy. Dense. Slow. You have 5 minutes left and you're on question 47 of 52.</p></div>
+    <div class="soph-prompt">HOW DO YOU HANDLE THE DENSE PASSAGE?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Focus on the main idea per paragraph — answer in order, stay methodical</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Skim each answer choice and aggressively eliminate wrong ones</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Answer the specific detail questions and skip the analysis ones</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">SAT · Section 2 of 4</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _satScore += parseInt(b.dataset.pts); _sat_beat3(); }; });
+}
+function _sat_beat3() {
+  _sophShow(`<div class="soph-badge">SAT — MATH NO CALCULATOR · 20 QUESTIONS · 25 MIN</div>
+    <div class="soph-scene"><p>Problem 17: a system of equations you haven't seen this exact setup of. Your brain stalls. You have 6 minutes left for 4 problems.</p></div>
+    <div class="soph-prompt">YOUR APPROACH:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Set up the equations and trust the algebra — work through it</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Back-solve: plug in the answer choices one by one</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Flag it, move on, come back if time allows</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">SAT · Section 3 of 4</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _satScore += parseInt(b.dataset.pts); _sat_beat4(); }; });
+}
+function _sat_beat4() {
+  _sophShow(`<div class="soph-badge">SAT — MATH CALCULATOR · 38 QUESTIONS · 55 MIN</div>
+    <div class="soph-scene"><p>15 minutes left. 8 questions remaining. You can do this — or you can spiral. The kid next to you is already turning in their test.</p></div>
+    <div class="soph-prompt">FINAL STRETCH:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Mark your gut instinct, move through systematically — no second-guessing</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Focus only on the ones you're confident about — lock in clean points</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Rush through everything — probably get some right by volume</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">SAT · Section 4 of 4</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _satScore += parseInt(b.dataset.pts); _sat_result(); }; });
+}
+function _sat_result() {
+  let scoreRange, intD, stressD, gpaD, col, narr;
+  if (_satScore >= 11) {
+    scoreRange='1550–1600'; intD=4; stressD=-2; gpaD=1; col='#6bcb77';
+    narr='The scores come back three weeks later. You stare at the number. Your mom stares at it longer. National Merit consideration. You screenshot it.';
+  } else if (_satScore >= 8) {
+    scoreRange='1450–1549'; intD=3; stressD=-1; gpaD=0; col='#a8d8a0';
+    narr='Strong score. Really strong. Every UC and most private schools consider this competitive. You feel good about it for exactly one day before you start thinking about retaking.';
+  } else if (_satScore >= 5) {
+    scoreRange='1350–1449'; intD=2; stressD=1; gpaD=0; col='#f7b731';
+    narr='Solid score. You\'re in range for a lot of schools. But you know it could be better. A retake might be worth it.';
+  } else {
+    scoreRange='<1350'; intD=1; stressD=3; gpaD=-1; col='#fc7b54';
+    narr='Below where you wanted. The test felt off from the start. A retake is probably the move. Your counselor is going to bring it up.';
+  }
+  Engine.modifyStats({ intelligence: intD, stress: stressD, gpa: gpaD }); _flushStatToast();
+  _sophShow(`<div class="soph-badge">SAT — RESULTS</div>
+    <h1 class="soph-title" style="color:${col};font-size:2.2rem">${scoreRange}</h1>
+    <div class="soph-scene"><p>${narr}</p></div>
+    <div class="soph-stat-delta ${gpaD>=0?'':'neg'}">+${intD} INT · Stress ${stressD>=0?'+':''}${stressD}${gpaD!==0?' · GPA '+(gpaD>0?'+':'')+gpaD:''}</div>
+    <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+  document.getElementById('soph-done').onclick = () => _jrSceneDone('jr_sat_done');
+}
+
+// ════════════════════════════════════════════════════════
+//  JUNIOR COLLEGE SEARCH SCENE
+// ════════════════════════════════════════════════════════
+function _jrCollegeSearch(done) {
+  window.MYTH_ORIENTATION_ACTIVE = true;
+  window._JR_SCENE_DONE = done;
+  _college_beat1();
+}
+function _college_beat1() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — COLLEGE COUNSELING</div>
+    <h1 class="soph-title" style="font-size:1.9rem">COLLEGE SEARCH.</h1>
+    <div class="soph-scene"><p>October of junior year. Every teacher suddenly brings up college. Your parents ask about it at dinner. Naviance and Fiske Guide are open on every tab. Your counselor, Mr. Okonkwo, sits down across from you.</p></div>
+    <div class="soph-speaker">MR. OKONKWO</div><div class="soph-speech">"Let's build your list. You need reaches, matches, and safeties. No all-reaches. No all-safeties. Where do you want to go?"</div>
+    <div class="soph-prompt">HOW DO YOU BUILD YOUR LIST?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Mix of reaches (Stanford/MIT), matches (UCSD/Davis), and safeties (SJSU/CSULB) — balanced</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">All reaches — you're swinging for the top, nothing else matters</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">Mostly safeties — play it safe, no stress, guaranteed acceptance</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">College Search · Phase 1 of 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { window._collegeScore = (window._collegeScore||0) + parseInt(b.dataset.pts); _college_beat2(); }; });
+}
+function _college_beat2() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — COLLEGE SEARCH · CAMPUS VISIT</div>
+    <div class="soph-scene"><p>You have one free Saturday. Okonkwo says campus visits matter — you need to actually feel the place before you commit four years of your life to it.</p></div>
+    <div class="soph-prompt">WHERE DO YOU GO?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Road trip to UCSD — you've never been to San Diego, you need to see if it clicks</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Visit UC Berkeley — 45 minutes away and it should feel like home by now</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Skip it — you can get the full feel from YouTube tours and Reddit</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">College Search · Phase 2 of 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { window._collegeScore = (window._collegeScore||0) + parseInt(b.dataset.pts); _college_beat3(); }; });
+}
+function _college_beat3() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — COLLEGE COUNSELING · COMMON APP ESSAY</div>
+    <div class="soph-scene"><p>The Common App essay. 650 words. Okonkwo says admissions officers read thousands of these. <em>"The ones they remember are honest."</em></p></div>
+    <div class="soph-prompt">YOUR ESSAY ANGLE:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">The real story — the one that makes you a little vulnerable but is completely you</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Academic journey and growth — safe, well-structured, respectable</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Start and delete it six times — miss Okonkwo's draft deadline entirely</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">College Search · Phase 3 of 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { window._collegeScore = (window._collegeScore||0) + parseInt(b.dataset.pts); _college_result(); }; });
+}
+function _college_result() {
+  const cs = window._collegeScore || 0;
+  window._collegeScore = 0;
+  let intD, happyD, stressD, narr;
+  if (cs >= 8) {
+    intD=2; happyD=2; stressD=-1;
+    narr='Okonkwo looks over your list and nods. "This is a thoughtful list. You did this right." The essay draft makes him go quiet for a second. "This is good. This is really good."';
+  } else if (cs >= 5) {
+    intD=1; happyD=1; stressD=1;
+    narr='The list is solid. The essay needs another draft, Okonkwo says, but the bones are there. You leave feeling cautiously okay about it.';
+  } else {
+    intD=0; happyD=-1; stressD=3;
+    narr='Okonkwo gives you the look. The serious one. "You have to take this seriously. This is not something you can wing." You leave feeling behind. Because you are.';
+  }
+  Engine.modifyStats({ intelligence: intD, happiness: happyD, stress: stressD }); _flushStatToast();
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — COLLEGE COUNSELING · OUTCOME</div>
+    <div class="soph-scene"><p>${narr}</p></div>
+    <div class="soph-scene"><p style="color:#c8bfa8;font-size:13px">Senior year applications open in August. You have a head start — or you don't. Either way, it's coming.</p></div>
+    <div class="soph-stat-delta">+${intD} INT · Happiness ${happyD>=0?'+':''}${happyD} · Stress ${stressD>=0?'+':''}${stressD}</div>
+    <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+  document.getElementById('soph-done').onclick = () => _jrSceneDone('jr_college_done');
+}
+
+// ════════════════════════════════════════════════════════
+//  LIFE PATH — SOCIALITE
+// ════════════════════════════════════════════════════════
+let _drivingScore = 0;
+function _jrSoc_driversTest() {
+  _drivingScore = 0;
+  _sophShow(`<div class="soph-badge">CUPERTINO DMV — 8:15 AM</div>
+    <h1 class="soph-title">THE DRIVER'S TEST.</h1>
+    <div class="soph-scene"><p>The DMV examiner — mid-50s, clipboard, no expression — gets in the passenger seat. Your hands are at 10 and 2. The car smells like anxiety.</p></div>
+    <div class="soph-prompt">HOW DID YOU PREPARE LAST NIGHT?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Studied the DMV handbook cover to cover — every sign, every rule</span></button>
+      <button class="soph-choice" data-pts="2"><span class="soph-choice-label">Hour of drive practice on local streets with your older sibling</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Nothing — you've been driving fine for months, it'll be fine</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Driver's Test · Step 1 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _drivingScore += parseInt(b.dataset.pts); _jrSoc_driving2(); }; });
+}
+function _jrSoc_driving2() {
+  _sophShow(`<div class="soph-badge">CUPERTINO DMV — PARALLEL PARKING</div>
+    <div class="soph-scene"><p>The examiner points to a spot between two orange cones. <em>"Parallel park here."</em> The lane is narrow. A small crowd has somehow gathered.</p></div>
+    <div class="soph-prompt">YOUR TECHNIQUE:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">Three-point check — slow and methodical — you nail the alignment</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">One shot — close enough to the curb, no adjustment needed (hopefully)</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">Rush it, bump the curb, immediately apologize to the examiner</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Driver's Test · Step 2 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _drivingScore += parseInt(b.dataset.pts); _jrSoc_driving3(); }; });
+}
+function _jrSoc_driving3() {
+  _sophShow(`<div class="soph-badge">CUPERTINO DMV — EXAMINER QUESTION</div>
+    <div class="soph-scene"><p>As you pull back into the lot, the examiner looks up from his clipboard. <em>"At a 4-way stop where two cars arrive at the same time — who goes first?"</em></p></div>
+    <div class="soph-prompt">YOUR ANSWER:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" data-pts="3"><span class="soph-choice-label">"First-to-arrive goes. If simultaneous, yield to the car on your right."</span></button>
+      <button class="soph-choice" data-pts="1"><span class="soph-choice-label">"I think you yield to the right? I'm pretty sure."</span></button>
+      <button class="soph-choice" data-pts="0"><span class="soph-choice-label">"I'm honestly not certain." (said out loud to a DMV examiner)</span></button>
+    </div><div class="soph-nav"><span class="soph-progress">Driver's Test · Step 3 / 3</span></div>`);
+  document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _drivingScore += parseInt(b.dataset.pts); _jrSoc_drivingResult(); }; });
+}
+function _jrSoc_drivingResult() {
+  const passed = _drivingScore >= 4;
+  const perfect = _drivingScore >= 7;
+  if (passed) {
+    Engine.modifyStats({ happiness: perfect?3:2, relationships: perfect?2:1, friendships: 1 }); _flushStatToast();
+    Engine.setFlag('jr_drivers_license');
+    _sophShow(`<div class="soph-badge">CUPERTINO DMV — RESULT</div>
+      <h1 class="soph-title" style="color:#6bcb77">YOU PASSED.</h1>
+      <div class="soph-scene"><p>${perfect ? 'Examiner: "No deductions. Clean test." He almost smiles. You call your mom before you\'re out of the parking lot.' : 'Examiner: "Passed. Watch the curb next time." You take the paper and leave fast before he changes his mind.'}</p></div>
+      <div class="soph-scene"><p>The photo is terrible. You look genuinely shocked. You keep it in your wallet for the rest of junior year.</p></div>
+      <div class="soph-stat-delta">Happiness +${perfect?3:2} · Relationships +${perfect?2:1} · +1 Friends</div>
+      <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+  } else {
+    Engine.modifyStats({ happiness: -2, stress: 3 }); _flushStatToast();
+    _sophShow(`<div class="soph-badge">CUPERTINO DMV — RESULT</div>
+      <h1 class="soph-title" style="color:#fc7b54">YOU FAILED.</h1>
+      <div class="soph-scene"><p>The examiner circles three things on his clipboard. He says "not today" with the energy of someone who has said "not today" 11,000 times.</p></div>
+      <div class="soph-scene"><p>You schedule a retake two weeks out. You study the handbook properly this time. You pass. The photo is still terrible.</p></div>
+      <div class="soph-stat-delta neg">Happiness −2 · Stress +3</div>
+      <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+  }
+  document.getElementById('soph-done').onclick = () => _jrSceneDone('jr_soc_drivers_done');
+}
+
+function _jrSoc_party() {
+  _sophShow(`<div class="soph-badge">FRIDAY NIGHT — WESTBROOK · 10:00 PM</div>
+    <h1 class="soph-title" style="font-size:1.9rem">FIRST REAL PARTY.</h1>
+    <div class="soph-scene"><p>Kai's house. Parents are out of town. Word spread on Friday morning and now there are 40 people in a house meant for six. The music is loud enough to feel it in your chest.</p></div>
+    <div class="soph-prompt">HOW DO YOU SHOW UP?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="party-a"><span class="soph-choice-label">With your three closest friends — safety in numbers, you know who you're with</span></button>
+      <button class="soph-choice" id="party-b"><span class="soph-choice-label">Solo — you want to actually meet new people tonight</span></button>
+      <button class="soph-choice" id="party-c"><span class="soph-choice-label">Fashionably late — you let the crowd warm up first</span></button>
+    </div>`);
+  document.getElementById('party-a').onclick = () => { Engine.modifyStats({friendships:2,happiness:2}); _flushStatToast(); _jrSoc_party2(); };
+  document.getElementById('party-b').onclick = () => { Engine.modifyStats({friendships:3,stress:1}); _flushStatToast(); _jrSoc_party2(); };
+  document.getElementById('party-c').onclick = () => { Engine.modifyStats({happiness:1,relationships:1}); _flushStatToast(); _jrSoc_party2(); };
+}
+function _jrSoc_party2() {
+  _sophShow(`<div class="soph-badge">FRIDAY NIGHT — WESTBROOK · 11:15 PM</div>
+    <div class="soph-scene"><p>By 11 PM things are rowdy. Someone knocked over a lamp. Kai looks like he's reconsidering his life choices.</p></div>
+    <div class="soph-prompt">WHAT DO YOU DO?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="party2-a"><span class="soph-choice-label">Find your people — lock into your zone, enjoy the vibe on your terms</span></button>
+      <button class="soph-choice" id="party2-b"><span class="soph-choice-label">Step outside for air — read the situation and check back in</span></button>
+      <button class="soph-choice" id="party2-c"><span class="soph-choice-label">Try to vibe with everyone — you're everywhere tonight</span></button>
+    </div>`);
+  document.getElementById('party2-a').onclick = () => { Engine.modifyStats({happiness:2,stress:-1}); _flushStatToast(); _jrSoc_party3(); };
+  document.getElementById('party2-b').onclick = () => { Engine.modifyStats({stress:-1,selfAwareness:2}); _flushStatToast(); _jrSoc_party3(); };
+  document.getElementById('party2-c').onclick = () => { Engine.modifyStats({friendships:3,stress:2}); _flushStatToast(); _jrSoc_party3(); };
+}
+function _jrSoc_party3() {
+  _sophShow(`<div class="soph-badge">FRIDAY NIGHT — 1:30 AM</div>
+    <div class="soph-scene"><p>You told your parents 1 AM. It's 1:30. You could stay — the night's still going. Or you could do what you said you'd do.</p></div>
+    <div class="soph-prompt">WHAT DO YOU DO?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="party3-a"><span class="soph-choice-label">Leave now — you said 1, and you keep your word</span></button>
+      <button class="soph-choice" id="party3-b"><span class="soph-choice-label">Text "on my way" and actually leave 20 minutes later</span></button>
+      <button class="soph-choice" id="party3-c"><span class="soph-choice-label">Stay until 2 and deal with whatever comes next</span></button>
+    </div>`);
+  document.getElementById('party3-a').onclick = () => { Engine.modifyStats({relationships:2,sleep:1}); _flushStatToast(); _jrSceneDone('jr_soc_party_done'); };
+  document.getElementById('party3-b').onclick = () => { Engine.modifyStats({happiness:1,relationships:-1}); _flushStatToast(); _jrSceneDone('jr_soc_party_done'); };
+  document.getElementById('party3-c').onclick = () => { Engine.modifyStats({happiness:2,sleep:-1,relationships:-2}); _flushStatToast(); _jrSceneDone('jr_soc_party_done'); };
+}
+
+function _jrSoc_prom() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — JUNIOR PROM</div>
+    <h1 class="soph-title">PROM NIGHT.</h1>
+    <div class="soph-scene"><p>The theme is "A Night in Paris." The gym has been transformed in a way that would not fool anyone who has actually been to Paris. But you're here. It counts.</p></div>
+    <div class="soph-prompt">WHO ARE YOU GOING WITH?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="prom-a"><span class="soph-choice-label">You asked your crush. They said yes. You've been nervous for two weeks straight.</span></button>
+      <button class="soph-choice" id="prom-b"><span class="soph-choice-label">Going with a squad of 6 close friends — no complications, just fun</span></button>
+      <button class="soph-choice" id="prom-c"><span class="soph-choice-label">Solo — you'll have a great time on your own terms</span></button>
+    </div>`);
+  document.getElementById('prom-a').onclick = () => { Engine.modifyStats({happiness:3,stress:1,relationships:3}); _flushStatToast(); _jrSoc_prom2(); };
+  document.getElementById('prom-b').onclick = () => { Engine.modifyStats({friendships:3,happiness:2,stress:-1}); _flushStatToast(); _jrSoc_prom2(); };
+  document.getElementById('prom-c').onclick = () => { Engine.modifyStats({selfAwareness:2,happiness:2}); _flushStatToast(); _jrSoc_prom2(); };
+}
+function _jrSoc_prom2() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — PROM · ARRIVALS</div>
+    <div class="soph-scene"><p>The parking lot is a chaos of rented cars and phone cameras. Everyone's trying to get the photo before it rains. It doesn't rain.</p></div>
+    <div class="soph-prompt">HOW DID YOU GET HERE?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="prom2-a"><span class="soph-choice-label">Split a limo with 8 people — honestly cheaper and way more fun</span></button>
+      <button class="soph-choice" id="prom2-b"><span class="soph-choice-label">Fancy Uber — just you, clean and simple</span></button>
+      <button class="soph-choice" id="prom2-c"><span class="soph-choice-label">Parents drop you off — they insisted on photos and you let them</span></button>
+    </div>`);
+  document.getElementById('prom2-a').onclick = () => { Engine.modifyStats({happiness:3,friendships:2}); _flushStatToast(); _jrSoc_prom3(); };
+  document.getElementById('prom2-b').onclick = () => { Engine.modifyStats({happiness:2}); _flushStatToast(); _jrSoc_prom3(); };
+  document.getElementById('prom2-c').onclick = () => { Engine.modifyStats({happiness:1,relationships:2}); _flushStatToast(); _jrSoc_prom3(); };
+}
+function _jrSoc_prom3() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — PROM · THE NIGHT</div>
+    <div class="soph-scene"><p>The lights are low. The DJ is decent. There are four hours of this left and you're exactly where you're supposed to be.</p></div>
+    <div class="soph-prompt">HOW DO YOU SPEND IT?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="prom3-a"><span class="soph-choice-label">Center of the dance floor all night — you don't sit down once</span></button>
+      <button class="soph-choice" id="prom3-b"><span class="soph-choice-label">Roam the whole venue — photos, long conversations, see everyone</span></button>
+      <button class="soph-choice" id="prom3-c"><span class="soph-choice-label">The slow dance under the lights. A few real moments. That's the memory.</span></button>
+    </div>`);
+  document.getElementById('prom3-a').onclick = () => { Engine.modifyStats({happiness:3,athleticism:1}); _flushStatToast(); _jrSceneDone('jr_soc_prom_done'); };
+  document.getElementById('prom3-b').onclick = () => { Engine.modifyStats({friendships:3,happiness:2}); _flushStatToast(); _jrSceneDone('jr_soc_prom_done'); };
+  document.getElementById('prom3-c').onclick = () => { Engine.modifyStats({happiness:3,relationships:2,selfAwareness:1}); _flushStatToast(); _jrSceneDone('jr_soc_prom_done'); };
+}
+
+// ════════════════════════════════════════════════════════
+//  LIFE PATH — TRIPLE-THREAT ATHLETE
+// ════════════════════════════════════════════════════════
+function _jrAth_football() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — STATE PLAYOFF · 4TH QUARTER</div>
+    <h1 class="soph-title" style="font-size:1.9rem">FOOTBALL.</h1>
+    <div class="soph-scene"><p>Down by 4. Two minutes left. 3rd and 8. The QB is looking your way. The route opens up perfectly.</p></div>
+    <div class="soph-prompt">WHAT DO YOU DO WITH THE BALL?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="fb-a"><span class="soph-choice-label">Catch, set your feet hard, and fight for every yard to the first down</span></button>
+      <button class="soph-choice" id="fb-b"><span class="soph-choice-label">Catch and cut — you see a lane and you take it, aiming for the end zone</span></button>
+      <button class="soph-choice" id="fb-c"><span class="soph-choice-label">Draw the pass interference — strategically let it go and take the free play</span></button>
+    </div>`);
+  document.getElementById('fb-a').onclick = () => { Engine.modifyStats({sports:3,athleticism:2}); _flushStatToast(); _jrAth_football2(); };
+  document.getElementById('fb-b').onclick = () => { Engine.modifyStats({sports:2,athleticism:3,stress:1}); _flushStatToast(); _jrAth_football2(); };
+  document.getElementById('fb-c').onclick = () => { Engine.modifyStats({intelligence:2,sports:1}); _flushStatToast(); _jrAth_football2(); };
+}
+function _jrAth_football2() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — STATE PLAYOFF · FINAL DRIVE</div>
+    <div class="soph-scene"><p>Running back breaks through the line. It's just you between him and the end zone. The whole season on the line.</p></div>
+    <div class="soph-prompt">THE TACKLE:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="fb2-a"><span class="soph-choice-label">Lower your shoulder — clean, fundamental, hard stop</span></button>
+      <button class="soph-choice" id="fb2-b"><span class="soph-choice-label">Go for the strip — risky, but if you pop the ball out it's over</span></button>
+      <button class="soph-choice" id="fb2-c"><span class="soph-choice-label">Force him toward the sideline — take the safe angle, don't give up the score</span></button>
+    </div>`);
+  document.getElementById('fb2-a').onclick = () => { Engine.modifyStats({athleticism:3,sports:2}); _flushStatToast(); _jrSceneDone('jr_ath_football_done'); };
+  document.getElementById('fb2-b').onclick = () => { Engine.modifyStats({sports:3,athleticism:1,stress:1}); _flushStatToast(); _jrSceneDone('jr_ath_football_done'); };
+  document.getElementById('fb2-c').onclick = () => { Engine.modifyStats({sports:2,athleticism:2,relationships:1}); _flushStatToast(); _jrSceneDone('jr_ath_football_done'); };
+}
+
+function _jrAth_baseball() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — CIF SEMIFINAL · BOTTOM 7TH</div>
+    <h1 class="soph-title" style="font-size:1.9rem">BASEBALL.</h1>
+    <div class="soph-scene"><p>2 outs, runner on 2nd. You're up. The pitcher is dealing — 4 up, 4 down. The third base coach gives you the sign: green light. Your call.</p></div>
+    <div class="soph-prompt">AT THE PLATE:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="bb-a"><span class="soph-choice-label">Sit on a fastball — wait for your pitch, swing for contact</span></button>
+      <button class="soph-choice" id="bb-b"><span class="soph-choice-label">Work the count — take some pitches, make him come to you</span></button>
+      <button class="soph-choice" id="bb-c"><span class="soph-choice-label">First pitch aggression — it's coming in hot and you're ready</span></button>
+    </div>`);
+  document.getElementById('bb-a').onclick = () => { Engine.modifyStats({sports:2,athleticism:2}); _flushStatToast(); _jrAth_baseball2(); };
+  document.getElementById('bb-b').onclick = () => { Engine.modifyStats({sports:2,intelligence:2}); _flushStatToast(); _jrAth_baseball2(); };
+  document.getElementById('bb-c').onclick = () => { Engine.modifyStats({sports:3,athleticism:2}); _flushStatToast(); _jrAth_baseball2(); };
+}
+function _jrAth_baseball2() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — CIF SEMIFINAL · 5TH INNING</div>
+    <div class="soph-scene"><p>Shallow pop fly into no man's land between you and the shortstop. You're both going full speed. Somebody has to call it.</p></div>
+    <div class="soph-prompt">WHAT DO YOU DO?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="bb2-a"><span class="soph-choice-label">"I GOT IT" — you call it loud and commit all the way</span></button>
+      <button class="soph-choice" id="bb2-b"><span class="soph-choice-label">Back off — let the shortstop call it, you trust him</span></button>
+      <button class="soph-choice" id="bb2-c"><span class="soph-choice-label">Both go for it — whoever gets there first</span></button>
+    </div>`);
+  document.getElementById('bb2-a').onclick = () => { Engine.modifyStats({sports:2,athleticism:2}); _flushStatToast(); _jrSceneDone('jr_ath_baseball_done'); };
+  document.getElementById('bb2-b').onclick = () => { Engine.modifyStats({relationships:2,sports:1}); _flushStatToast(); _jrSceneDone('jr_ath_baseball_done'); };
+  document.getElementById('bb2-c').onclick = () => { Engine.modifyStats({athleticism:3,stress:2}); _flushStatToast(); _jrSceneDone('jr_ath_baseball_done'); };
+}
+
+function _jrAth_golf() {
+  _sophShow(`<div class="soph-badge">PALO ALTO GOLF COURSE — BAY AREA INVITATIONAL</div>
+    <h1 class="soph-title" style="font-size:1.9rem">GOLF.</h1>
+    <div class="soph-scene"><p>170 yards out. Pin is tucked right, hazard left. Wind is off the bay. This is the shot that decides the round.</p></div>
+    <div class="soph-prompt">CLUB SELECTION:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="golf-a"><span class="soph-choice-label">7-iron to the fat part of the green — take the smart angle, two-putt for par</span></button>
+      <button class="soph-choice" id="golf-b"><span class="soph-choice-label">6-iron at the pin — you've been hitting this all day, go for it</span></button>
+      <button class="soph-choice" id="golf-c"><span class="soph-choice-label">Lay up short of the green — pitch on, eliminate the hazard risk entirely</span></button>
+    </div>`);
+  document.getElementById('golf-a').onclick = () => { Engine.modifyStats({sports:2,selfAwareness:2}); _flushStatToast(); _jrAth_golf2(); };
+  document.getElementById('golf-b').onclick = () => { Engine.modifyStats({sports:3,stress:1}); _flushStatToast(); _jrAth_golf2(); };
+  document.getElementById('golf-c').onclick = () => { Engine.modifyStats({sports:1,selfAwareness:3}); _flushStatToast(); _jrAth_golf2(); };
+}
+function _jrAth_golf2() {
+  _sophShow(`<div class="soph-badge">PALO ALTO GOLF COURSE — FINAL HOLE</div>
+    <div class="soph-scene"><p>Last hole. You're tied for the lead. Your playing partner looks rattled. You're not rattled. Or you're pretending not to be. Same thing.</p></div>
+    <div class="soph-prompt">YOUR APPROACH:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="golf2-a"><span class="soph-choice-label">Stick to your routine — same pre-shot you've done all day, trust the reps</span></button>
+      <button class="soph-choice" id="golf2-b"><span class="soph-choice-label">Visualize the perfect shot in full detail, then pull the trigger</span></button>
+      <button class="soph-choice" id="golf2-c"><span class="soph-choice-label">Aggressive line — cut the corner, hero shot, take the tournament</span></button>
+    </div>`);
+  document.getElementById('golf2-a').onclick = () => { Engine.modifyStats({sports:3,selfAwareness:2}); _flushStatToast(); _jrSceneDone('jr_ath_golf_done'); };
+  document.getElementById('golf2-b').onclick = () => { Engine.modifyStats({sports:2,selfAwareness:3}); _flushStatToast(); _jrSceneDone('jr_ath_golf_done'); };
+  document.getElementById('golf2-c').onclick = () => { Engine.modifyStats({sports:3,stress:2}); _flushStatToast(); _jrSceneDone('jr_ath_golf_done'); };
+}
+
+// ════════════════════════════════════════════════════════
+//  LIFE PATH — BODY TRANSFORMATION
+// ════════════════════════════════════════════════════════
+const _SPLIT_CORRECT = { 'Bench Press':'push','Overhead Press':'push','Tricep Pushdowns':'push','Barbell Row':'pull','Pull-ups':'pull','Bicep Curls':'pull','Squat':'legs','Romanian Deadlift':'legs','Leg Press':'legs' };
+function _jrBody_split() {
+  window._splitAssign = {};
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH GYM — DAY 1</div>
+    <h1 class="soph-title" style="font-size:1.7rem">BUILD YOUR SPLIT.</h1>
+    <div class="soph-scene"><p>You've decided on Push/Pull/Legs — the classic hypertrophy split. Now you have to actually build it. Assign each exercise to the right training day.</p></div>
+    <div id="split-board" style="display:grid;gap:7px;margin:14px 0"></div>
+    <div style="font-size:11px;color:#a0a090;margin-bottom:10px">Click the buttons to assign each exercise to PUSH, PULL, or LEGS.</div>
+    <div class="soph-nav"><span class="soph-progress">Assign all 9 exercises</span><button class="btn-primary" id="split-submit" disabled>SUBMIT SPLIT →</button></div>`);
+  const board = document.getElementById('split-board');
+  Object.keys(_SPLIT_CORRECT).forEach(ex => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;';
+    row.innerHTML = `<span style="width:160px;font-size:13px;color:#e8dfc8">${ex}</span>
+      <button class="soph-choice" data-ex="${ex}" data-day="push" style="padding:5px 10px;font-size:11px;min-height:0;flex:1">PUSH</button>
+      <button class="soph-choice" data-ex="${ex}" data-day="pull" style="padding:5px 10px;font-size:11px;min-height:0;flex:1">PULL</button>
+      <button class="soph-choice" data-ex="${ex}" data-day="legs" style="padding:5px 10px;font-size:11px;min-height:0;flex:1">LEGS</button>`;
+    board.appendChild(row);
+    row.querySelectorAll('button').forEach(btn => {
+      btn.onclick = () => {
+        window._splitAssign[ex] = btn.dataset.day;
+        row.querySelectorAll('button').forEach(b => b.style.background = '');
+        btn.style.background = 'rgba(107,203,119,0.35)';
+        const done = Object.keys(window._splitAssign).length === 9;
+        const sub = document.getElementById('split-submit');
+        if (sub) sub.disabled = !done;
+      };
+    });
+  });
+  document.getElementById('split-submit').onclick = _jrBody_splitResult;
+}
+function _jrBody_splitResult() {
+  let correct = 0;
+  Object.entries(window._splitAssign).forEach(([ex, day]) => { if (_SPLIT_CORRECT[ex] === day) correct++; });
+  let gpaD, physD, narr;
+  if (correct >= 8) {
+    gpaD=0; physD=3;
+    narr=`Perfect split. ${correct}/9 correct. You actually know what you're doing. Push day is chest, shoulders, tris. Pull is back and bis. Legs is everything that keeps you from getting called out.`;
+  } else if (correct >= 6) {
+    gpaD=0; physD=2;
+    narr=`${correct}/9 correct — solid understanding, a couple of misplacements. You fix them during warm-up and move on. Good enough to make real progress.`;
+  } else if (correct >= 4) {
+    gpaD=0; physD=1;
+    narr=`${correct}/9 correct. Your split is functional but inefficient. You'll make gains, just slower. You realize halfway through week 2 that you had Romanian Deadlift on push day.`;
+  } else {
+    gpaD=0; physD=0;
+    narr=`${correct}/9 correct. Your split is... a lot. Biceps on push day. Squats mid-pull session. You spend two weeks hitting the wrong muscles on the wrong days before looking it up.`;
+  }
+  Engine.modifyStats({ physique: physD, athleticism: 1 }); _flushStatToast();
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH GYM — WEEK 1 REVIEW</div>
+    <div class="soph-scene"><p>${narr}</p></div>
+    <div class="soph-stat-delta">+${physD} Physique · +1 Athleticism</div>
+    <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+  document.getElementById('soph-done').onclick = () => _jrSceneDone('jr_body_split_done');
+}
+
+function _jrBody_diet() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — MONTH 2 · NUTRITION</div>
+    <h1 class="soph-title" style="font-size:1.9rem">WHAT ARE YOU EATING?</h1>
+    <div class="soph-scene"><p>The gym is easy. The kitchen is where transformations actually happen. You need a plan.</p></div>
+    <div class="soph-prompt">WEEKLY NUTRITION APPROACH:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="diet-a"><span class="soph-choice-label">Meal prep every Sunday — chicken, rice, broccoli, repeat. Consistent, boring, effective.</span></button>
+      <button class="soph-choice" id="diet-b"><span class="soph-choice-label">Track macros with a flexible diet — hit your numbers, eat what you want</span></button>
+      <button class="soph-choice" id="diet-c"><span class="soph-choice-label">Eat whatever, just make sure to hit protein goals at minimum</span></button>
+    </div>`);
+  document.getElementById('diet-a').onclick = () => { Engine.modifyStats({physique:3,happiness:-1,stress:1}); _flushStatToast(); _jrBody_diet2(); };
+  document.getElementById('diet-b').onclick = () => { Engine.modifyStats({physique:2,happiness:2}); _flushStatToast(); _jrBody_diet2(); };
+  document.getElementById('diet-c').onclick = () => { Engine.modifyStats({physique:1,happiness:2}); _flushStatToast(); _jrBody_diet2(); };
+}
+function _jrBody_diet2() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH GYM — WEEK 8 CHECK-IN</div>
+    <div class="soph-scene"><p>8 weeks in. You've been consistent — or you've been trying to be. Someone at school asks you how many times you've been to the gym this week.</p></div>
+    <div class="soph-prompt">YOUR CONSISTENCY OVER 8 WEEKS:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="diet2-a"><span class="soph-choice-label">Missed 2 sessions total — essentially perfect attendance</span></button>
+      <button class="soph-choice" id="diet2-b"><span class="soph-choice-label">Hit every upper body session, skipped a few leg days</span></button>
+      <button class="soph-choice" id="diet2-c"><span class="soph-choice-label">Inconsistent — a full week here, a gap week there</span></button>
+    </div>`);
+  document.getElementById('diet2-a').onclick = () => { Engine.modifyStats({physique:3,athleticism:2}); _flushStatToast(); _jrSceneDone('jr_body_diet_done'); };
+  document.getElementById('diet2-b').onclick = () => { Engine.modifyStats({physique:2,athleticism:1}); _flushStatToast(); _jrSceneDone('jr_body_diet_done'); };
+  document.getElementById('diet2-c').onclick = () => { Engine.modifyStats({physique:1}); _flushStatToast(); _jrSceneDone('jr_body_diet_done'); };
+}
+
+function _jrBody_progress() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — MONTH 4 · RECOVERY</div>
+    <h1 class="soph-title" style="font-size:1.9rem">THE PROGRESS CHECK.</h1>
+    <div class="soph-scene"><p>4 months in. You can see the change in the mirror — and so can other people. But the gains are starting to slow, and your body needs to recover.</p></div>
+    <div class="soph-prompt">YOUR RECOVERY APPROACH:</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="prog-a"><span class="soph-choice-label">8 hours sleep + active recovery days — you take this as seriously as the lifts</span></button>
+      <button class="soph-choice" id="prog-b"><span class="soph-choice-label">Push through every day — no rest days, more is more</span></button>
+      <button class="soph-choice" id="prog-c"><span class="soph-choice-label">Rest days when your body tells you — you listen to it</span></button>
+    </div>`);
+  document.getElementById('prog-a').onclick = () => { Engine.modifyStats({physique:2,sleep:2}); _flushStatToast(); _jrBody_progress2(); };
+  document.getElementById('prog-b').onclick = () => { Engine.modifyStats({physique:1,athleticism:2,stress:2}); _flushStatToast(); _jrBody_progress2(); };
+  document.getElementById('prog-c').onclick = () => { Engine.modifyStats({physique:2,sleep:1}); _flushStatToast(); _jrBody_progress2(); };
+}
+function _jrBody_progress2() {
+  _sophShow(`<div class="soph-badge">WESTBROOK HIGH — AFTER SCHOOL</div>
+    <div class="soph-scene"><p>Someone who hasn't seen you in two months stops you in the hallway. <em>"Wait — you look different."</em> They mean it as a compliment. You know it is one.</p></div>
+    <div class="soph-prompt">WHAT DO YOU SAY?</div>
+    <div class="soph-choices">
+      <button class="soph-choice" id="prog2-a"><span class="soph-choice-label">Tell them everything — full program, diet, split, timeline</span></button>
+      <button class="soph-choice" id="prog2-b"><span class="soph-choice-label">Just smile and say "consistency" — true, simple, and kind of legendary</span></button>
+      <button class="soph-choice" id="prog2-c"><span class="soph-choice-label">"Want to train together sometime?" — you offer immediately</span></button>
+    </div>`);
+  document.getElementById('prog2-a').onclick = () => { Engine.modifyStats({relationships:2,friendships:1}); _flushStatToast(); _jrSceneDone('jr_body_progress_done'); };
+  document.getElementById('prog2-b').onclick = () => { Engine.modifyStats({selfAwareness:3,happiness:2}); _flushStatToast(); _jrSceneDone('jr_body_progress_done'); };
+  document.getElementById('prog2-c').onclick = () => { Engine.modifyStats({relationships:3,friendships:2}); _flushStatToast(); _jrSceneDone('jr_body_progress_done'); };
 }
 
 function showJuniorYearEnd() {
@@ -2725,6 +3616,10 @@ const _SOPH_LOCS = {
               minX: -108, maxX: -86, minZ: -43,  maxZ: -29 },
   football: { room: 'Football Field',          x: -82, z: 102,  r: 18,
               minX: -140, maxX: -25, minZ:  65,  maxZ: 155 },
+  // ── Junior year classrooms (reuse same nav system) ──
+  calc_bc:     { room: 'Room 304 — Building D (Calc BC)',      x: 50,  z: -74, r: 13, minX: 37,  maxX: 63,  minZ: -81, maxZ: -67 },
+  apush:       { room: 'Room 201 — Admin Wing (APUSH)',        x: -32, z: -74, r: 13, minX: -47, maxX: -17, minZ: -81, maxZ: -67 },
+  dual_enroll: { room: 'Science E — De Anza (Dual Enrollment)',x: 12,  z: -54, r: 13, minX: 0,   maxX: 24,  minZ: -60, maxZ: -48 },
 };
 
 // Sequence: c1c1, c2c1, brawl, c1c2, psat, c2c2, fitness, end
@@ -2988,21 +3883,92 @@ function _apcsa_final_finish() {
 function _apcsa_final_faint() {
   _sophShow(`<div class="soph-badge">ROOM 214 — HALLWAY</div>
     <div class="soph-scene"><p>You set your pencil down. The hallway is empty. Your shoes squeak on the linoleum. The fountain is right there. Cool water.</p><p>It feels good. For about two seconds.</p></div>
+    <div class="soph-scene" style="color:#fc7b54"><p>Then the floor tilts. Your vision narrows to a pinhole. Your knees don't respond.</p></div>
     <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">NEXT →</button></div>`);
   document.getElementById('soph-next').onclick = () => {
-    G.to('#soph-inner', { opacity: 0, duration: 1.2, ease: 'power2.in', onComplete: () => {
-      document.getElementById('soph-inner').innerHTML = `<div style="text-align:center;padding:80px 0;font-family:monospace;color:rgba(255,255,255,0.08);font-size:13px;letter-spacing:.18em">. . .</div>`;
-      G.to('#soph-inner', { opacity: 1, duration: 0.6, delay: 0.8, onComplete: () => setTimeout(_apcsa_hospital, 1400) });
+    G.to('#soph-inner', { opacity: 0, duration: 1.6, ease: 'power2.in', onComplete: () => {
+      const inner = document.getElementById('soph-inner');
+      inner.innerHTML = `<div style="text-align:center;padding:80px 0;font-family:monospace;color:rgba(255,255,255,0.06);font-size:11px;letter-spacing:.22em">. . .</div>`;
+      G.set(inner, {opacity:1,y:0});
+      G.fromTo(inner, {opacity:0}, {opacity:1, duration:0.5, delay:1.2,
+        onComplete: () => setTimeout(_apcsa_ambulance_scene, 900)});
     }});
   };
 }
+
+let _ambInterval = null;
+function _apcsa_ambulance_scene() {
+  const inner = document.getElementById('soph-inner');
+  G.killTweensOf(inner); G.set(inner, {opacity:1, y:0});
+  inner.innerHTML = `
+    <div class="soph-badge">WESTBROOK HIGH — EAST HALLWAY</div>
+    <div class="amb-scene" id="amb-scene-box">
+      <div class="amb-flash" id="amb-flash-el"></div>
+      <div class="amb-text">
+        <p>A student found you face-down near the fountain. You hit the basin edge on the way down.</p>
+      </div>
+    </div>
+    <div id="amb-beats" style="font-size:14px;line-height:1.85;color:#c8bfa8;min-height:120px"></div>
+  `;
+
+  const beats = [
+    { ms: 600,  txt: '📢  "SOMEONE CALL THE NURSE! NOW!"' },
+    { ms: 1800, txt: 'Two teachers sprint down the hallway from opposite ends.' },
+    { ms: 3200, txt: '🚑  Sirens outside. Getting louder. Red and blue through the windows.' },
+    { ms: 4600, txt: 'Paramedics push through the double doors with a gurney. The hallway clears in seconds.' },
+    { ms: 6100, txt: '"Jaw fracture — possible. Pulse stable." Neck brace. Backboard. You can\'t feel your face.' },
+    { ms: 7800, txt: '🚑  The exam room empties out to watch through the glass. Chen stands in the doorway, not moving.' },
+    { ms: 9400, txt: 'Ambulance doors. Cold air. The siren starts again. Then everything goes very quiet.' },
+  ];
+
+  const beatsDiv = document.getElementById('amb-beats');
+  if (_ambInterval) clearInterval(_ambInterval);
+  _ambInterval = setInterval(() => {
+    const el = document.getElementById('amb-flash-el');
+    if (!el) { clearInterval(_ambInterval); _ambInterval = null; return; }
+    el.style.animationPlayState = 'running';
+  }, 100);
+
+  beats.forEach(b => setTimeout(() => {
+    const div = document.getElementById('amb-beats');
+    if (!div) return;
+    const p = document.createElement('p');
+    p.className = 'amb-beat'; p.textContent = b.txt;
+    div.appendChild(p);
+  }, b.ms));
+
+  setTimeout(() => {
+    if (_ambInterval) { clearInterval(_ambInterval); _ambInterval = null; }
+    const el = document.getElementById('amb-flash-el');
+    if (el) el.classList.add('stopped');
+    G.to(inner, { opacity:0, duration:1.4, delay:0.4, ease:'power2.in', onComplete: () => {
+      inner.innerHTML = `<div style="text-align:center;padding:70px 0;font-family:monospace;color:rgba(180,200,255,0.1);font-size:11px;letter-spacing:.24em">. . . . .</div>`;
+      G.set(inner, {opacity:1, y:0});
+      G.fromTo(inner, {opacity:0}, {opacity:1, duration:0.6, delay:1.5,
+        onComplete: () => setTimeout(_apcsa_hospital, 600)});
+    }});
+  }, 11500);
+}
+
 function _apcsa_hospital() {
   Engine.modifyStats({ stress:3, sleep:-2, gpa:-1 }); _flushStatToast();
-  _sophShow(`<div class="soph-badge">VALLEY MEDICAL CENTER · ROOM 7</div><h1 class="soph-title" style="color:#b8d0f0">YOU WAKE UP.</h1>
-    <div class="soph-hospital"><div class="soph-hospital-title">VALLEY MEDICAL CENTER</div>
-    <div class="soph-scene" style="color:#c0d0e8"><p>White ceiling. Beeping monitor. Your jaw feels like concrete. The doctor explains it plainly: you fainted at the fountain, hit the basin edge. Broken jaw. Four stitches. Wired for six weeks.</p><p>You didn't finish the exam. Chen gives you a make-up — district policy. But you're eating through a straw for a month and a half.</p></div></div>
-    <div class="soph-stat-delta neg">GPA −1 · STRESS +3 · SLEEP −2</div>
-    <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+  _sophShow(`
+    <div class="soph-badge">VALLEY MEDICAL CENTER · ROOM 7</div>
+    <h1 class="soph-title" style="color:#b8d0f0;font-size:2.4rem">YOU WAKE UP.</h1>
+    <div class="soph-hospital">
+      <div class="soph-hospital-title">VALLEY MEDICAL CENTER</div>
+      <div class="monitor-line">
+        <span class="monitor-pulse">♥</span>
+        <span>PULSE &nbsp;72 BPM &nbsp;·&nbsp; BP 118/76 &nbsp;·&nbsp; O₂ 98%</span>
+      </div>
+      <div class="soph-scene" style="color:#c0d0e8;margin-top:14px">
+        <p>White ceiling. The monitor beeps every second, steady. Your jaw feels like poured concrete and you can't open it. An IV line runs into your left arm.</p>
+        <p>The doctor leans in. "Mandibular fracture. You hit the basin edge. Four stitches, jaw wired shut — six weeks minimum. Soft foods only. No talking above a whisper."</p>
+        <p>You didn't finish the exam. Chen posts a make-up on the portal — district policy — but you're eating through a straw for a month and a half and every person in that hallway saw it happen.</p>
+      </div>
+    </div>
+    <div class="soph-stat-delta neg" style="margin-top:14px">GPA −1 &nbsp;·&nbsp; STRESS +3 &nbsp;·&nbsp; SLEEP −2</div>
+    <div class="soph-nav" style="margin-top:24px"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
   document.getElementById('soph-done').onclick = () => _sophDone('soph_apcsa_final_done', 'soph_fainted');
 }
 
@@ -3390,16 +4356,39 @@ function _phys1_build3() {
   document.querySelectorAll('#soph-inner .soph-choice').forEach(b => { b.onclick = () => { _eggScore += parseInt(b.dataset.pts); _phys1_drop(); }; });
 }
 function _phys1_drop() {
-  const survived = _eggScore >= 6, partial = _eggScore >= 4;
-  const gpaD = survived ? 2 : partial ? 1 : -1;
-  Engine.modifyStats({ gpa: gpaD, stress: survived ? -1 : 1, extracurriculars: 1 }); _flushStatToast();
+  // Harsher grading: max=9, thresholds tightened
+  // 9 = perfect, 7-8 = good, 5-6 = marginal, 3-4 = poor, 2 = catastrophic
+  let grade, gpaD, stressD, resultColor, resultLine, torresLine;
+  if (_eggScore === 9) {
+    grade='PERFECT'; gpaD=2; stressD=-1; resultColor='#6bcb77';
+    resultLine='✓ EGG SURVIVED — FLAWLESS.';
+    torresLine='"Textbook execution. Full marks. Both of them."';
+  } else if (_eggScore >= 7) {
+    grade='GOOD'; gpaD=1; stressD=0; resultColor='#a8d8a0';
+    resultLine='✓ EGG SURVIVED — MINOR HAIRLINE CRACK.';
+    torresLine='"Survived, technically. Some energy transfer at impact. Decent."';
+  } else if (_eggScore >= 5) {
+    grade='MARGINAL'; gpaD=0; stressD=1; resultColor='#f7b731';
+    resultLine='~ EGG CRACKED — PARTIAL CREDIT ONLY.';
+    torresLine='"Cracked. Your cushioning was insufficient. Half marks."';
+  } else if (_eggScore >= 3) {
+    grade='POOR'; gpaD=-1; stressD=2; resultColor='#fc9d5a';
+    resultLine='✗ EGG BROKEN — MINIMAL CREDIT.';
+    torresLine='"That\'s a failed design. You get one point for showing up."';
+  } else {
+    grade='CATASTROPHIC'; gpaD=-2; stressD=3; resultColor='#fc7b54';
+    resultLine='✗ EGG DESTROYED ON IMPACT.';
+    torresLine='"Did you even try? Zero. Log it as a learning experience." The class winces.';
+  }
+  Engine.modifyStats({ gpa: gpaD, stress: stressD, extracurriculars: 1 }); _flushStatToast();
   _sophShow(`<div class="soph-badge">ROOM 203 — EGG DROP · THE DROP</div>
-    <div class="soph-scene"><p>Torres lines everyone up at the balcony. Three seconds of freefall.</p></div>
-    <div class="soph-scene" style="font-size:22px;text-align:center;padding:12px 0;color:${survived?'#6bcb77':partial?'#f7b731':'#fc7b54'}">
-      ${survived ? '✓ EGG SURVIVED.' : partial ? '~ EGG CRACKED — PARTIAL CREDIT.' : '✗ EGG DESTROYED.'}
+    <div class="soph-scene"><p>Torres lines everyone up at the second-floor balcony. She counts down. Three seconds of silence.</p></div>
+    <div class="soph-scene" style="font-size:20px;text-align:center;padding:14px 0;color:${resultColor};font-weight:bold;letter-spacing:0.04em">
+      ${resultLine}
     </div>
-    <div class="soph-scene"><p>${survived?'"Excellent engineering. Full marks."':partial?'"Close. Cracked but intact for half credit."':'"Spectacular. Wrong kind. But still." The class laughs.'}</p></div>
-    <div class="soph-stat-delta ${gpaD>=0?'':'neg'}">GPA ${gpaD>=0?'+':''}${gpaD} · +1 EC</div>
+    <div class="soph-scene"><p style="color:#c8bfa8;font-size:13px;font-style:italic">Score: ${_eggScore}/9</p></div>
+    <div class="soph-speaker">MS. TORRES</div><div class="soph-speech">${torresLine}</div>
+    <div class="soph-stat-delta ${gpaD>=0?'':'neg'}">GPA ${gpaD>=0?'+':''}${gpaD} · Stress ${stressD>=0?'+':''}${stressD} · +1 EC</div>
     <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
   document.getElementById('soph-done').onclick = () => _sophDone('soph_physics1_done');
 }
@@ -3415,11 +4404,12 @@ function _fieldtrip_intro() {
   document.getElementById('soph-next').onclick = _fieldtrip_park;
 }
 function _fieldtrip_park() {
+  _gaVisited = new Set();
   _sophShow(`<div class="soph-badge">GREAT AMERICA — SANTA CLARA, CA</div><h1 class="soph-title" style="color:#f7b731">YOU'RE HERE.</h1>
-    <div class="soph-scene"><p>Torres gives you a worksheet and says "meet at the front gate at 3:45, no exceptions." Then she basically lets you go.</p></div>
+    <div class="soph-scene"><p>Torres gives you a worksheet and says <em>"meet at the front gate at 3:45, no exceptions."</em> Then she basically lets you go.</p></div>
     <div style="margin:18px 0"><canvas id="ga-map" width="520" height="300" style="border:1px solid rgba(200,180,120,0.3);border-radius:6px;display:block;cursor:pointer;max-width:100%"></canvas></div>
-    <div id="ga-ride-info" style="min-height:50px;font-size:13px;color:#c8bfa8;padding:6px 0"></div>
-    <div class="soph-nav"><span class="soph-progress">Click a ride to visit it (visit at least 2).</span><button class="btn-primary" id="ga-done-btn" disabled>HEAD BACK →</button></div>`);
+    <div id="ga-ride-info" style="min-height:54px;font-size:13px;color:#c8bfa8;padding:6px 0"></div>
+    <div class="soph-nav"><span class="soph-progress" id="ga-count-label">Click a ride to visit it.</span><button class="btn-primary" id="ga-done-btn" disabled>HEAD BACK →</button></div>`);
   _buildGAMap();
 }
 const GA_RIDES = [
@@ -3462,15 +4452,44 @@ function _buildGAMap() {
     const hit = GA_RIDES.find(r => mx>=r.x&&mx<=r.x+r.w&&my>=r.y&&my<=r.y+r.h);
     if (!hit || _gaVisited.has(hit.id)) return;
     const info = document.getElementById('ga-ride-info');
-    if (info) info.innerHTML = `<strong style="color:#f7b731">${hit.label}</strong> — ${hit.desc}<br><span style="color:#6bcb77;font-size:11px;font-family:monospace">${Object.entries(hit.stats).map(([k,v])=>`${v>0?'+':''}${v} ${STAT_LABELS[k]||k}`).join(' · ')}</span>`;
     Object.entries(hit.stats).forEach(([k,v]) => Engine.modifyStat(k,v)); _flushStatToast();
     _gaVisited.add(hit.id); draw();
-    const btn = document.getElementById('ga-done-btn'); if (btn && _gaVisited.size >= 2) btn.disabled = false;
+    const n = _gaVisited.size;
+    const label = document.getElementById('ga-count-label');
+    const btn = document.getElementById('ga-done-btn');
+    // Update info box
+    let warningHtml = '';
+    if (n === 4) {
+      warningHtml = `<div style="color:#f7b731;font-size:12px;margin-top:6px;font-weight:bold">⚠ One more and you might miss the bus. Torres said 3:45, no exceptions.</div>`;
+    } else if (n > 4) {
+      warningHtml = `<div style="color:#fc7b54;font-size:12px;margin-top:6px;font-weight:bold">🚌 You're WAY over time. The bus leaves in minutes.</div>`;
+    }
+    if (info) info.innerHTML = `<strong style="color:#f7b731">${hit.label}</strong> — ${hit.desc}<br><span style="color:#6bcb77;font-size:11px;font-family:monospace">${Object.entries(hit.stats).map(([k,v])=>`${v>0?'+':''}${v} ${STAT_LABELS[k]||k}`).join(' · ')}</span>${warningHtml}`;
+    // Update progress label
+    if (label) {
+      if (n <= 4) label.textContent = `${n} ride${n>1?'s':''} visited — looking good.`;
+      else label.innerHTML = `<span style="color:#fc7b54;font-weight:bold">${n} rides — you're running late!</span>`;
+    }
+    if (btn) btn.disabled = false;
   };
   document.getElementById('ga-done-btn').onclick = () => {
+    if (_gaVisited.size > 4) { _fieldtrip_missedbus(); return; }
     Engine.modifyStats({happiness:2,stress:-1}); _flushStatToast();
     _sophDone('soph_physics_trip_done');
   };
+}
+function _fieldtrip_missedbus() {
+  Engine.modifyStats({ happiness: -2, stress: 4, gpa: -1, relationships: -2 }); _flushStatToast();
+  _sophShow(`<div class="soph-badge">GREAT AMERICA — 4:07 PM</div>
+    <h1 class="soph-title" style="color:#fc7b54">YOU MISSED THE BUS.</h1>
+    <div class="soph-scene"><p>You sprint to the front gate — lungs burning, worksheet flying out of your hands. The parking lot is empty. The bus is gone.</p></div>
+    <div class="soph-scene"><p>A security guard points to a folded note taped to the gate post. <em>"Called your emergency contact. Ms. Torres."</em></p></div>
+    <div class="soph-speaker">MS. TORRES (via phone)</div>
+    <div class="soph-speech">"3:45. I said 3:45. I'm turning around, but this is going in your file. One more stunt like this and I'm pulling your lab grade entirely."</div>
+    <div class="soph-scene"><p>The ride home is silent. Torres doesn't say another word. You stare out the window with ${_gaVisited.size} rides worth of guilt and a dead phone battery.</p></div>
+    <div class="soph-stat-delta neg">GPA −1 · Stress +4 · Happiness −2 · Relationships −2</div>
+    <div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
+  document.getElementById('soph-done').onclick = () => _sophDone('soph_physics_trip_done', 'missed_bus');
 }
 function _gaRRect(ctx,x,y,w,h,r) {
   ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
