@@ -3493,16 +3493,29 @@ function showGraduation() {
 //  SOPHOMORE YEAR SYSTEM
 // ════════════════════════════════════════════════════════
 
+// Active Enter-key handler for soph-overlay — replaced on every _sophShow call
+let _sophEnterKH = null;
 function _sophShow(html) {
   const inner = document.getElementById('soph-inner');
-  G.killTweensOf(inner);                    // cancel any running hide/show on this element
-  G.set(inner, { opacity: 1, y: 0 });       // clear inline opacity=0 left by _sophHide
+  G.killTweensOf(inner);
+  G.set(inner, { opacity: 1, y: 0 });
   inner.innerHTML = html;
   const overlay = document.getElementById('soph-overlay');
   overlay.style.display = 'flex';
   G.fromTo(inner, { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' });
+
+  // Remove any previous Enter listener before attaching a fresh one
+  if (_sophEnterKH) { document.removeEventListener('keydown', _sophEnterKH); _sophEnterKH = null; }
+  _sophEnterKH = function(e) {
+    if (e.key !== 'Enter') return;
+    // Only fire on single-advance buttons — never auto-click choice buttons
+    const btn = inner.querySelector('#soph-done, #soph-next, #soph-yr-done');
+    if (btn && !btn.disabled) { e.preventDefault(); btn.click(); }
+  };
+  document.addEventListener('keydown', _sophEnterKH);
 }
 function _sophHide(cb) {
+  if (_sophEnterKH) { document.removeEventListener('keydown', _sophEnterKH); _sophEnterKH = null; }
   G.to('#soph-inner', { opacity: 0, y: -12, duration: 0.3, ease: 'power2.in', onComplete: () => {
     document.getElementById('soph-overlay').style.display = 'none';
     if (cb) cb();
