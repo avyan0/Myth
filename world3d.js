@@ -2102,55 +2102,48 @@ function initWorld3D(playerData) {
     // Trees
     wr(-128, 26, 42, 52, '#2d6635');
 
-    // Pool
-    wr(24, -54, 24, 17, '#1864a8');
+    // Pool / Aquatics Center
+    wr(24, -54.5, 24, 17, '#1864a8');
     wlabel('POOL', 36, -46, '#62c4f0', 9);
 
-    // ── Buildings ──
-    // Gym
+    // ── Buildings — positions match actual building() / buildGym() / IIFE calls ──
+    // Gym  (buildGym(-92,-62), w=42, d=32)
     wr(-113, -78, 42, 32, '#8a3030');
     wlabel('GYM', -92, -62, '#ffaaaa', 10);
-    // Locker rooms
-    wr(-106, -39, 28, 15, '#6a4040');
+    // Bio / Robotics Lab  (bx=-97,bz=-36,bw=22,bd=14)
+    wr(-108, -43, 22, 14, '#2a5a8a');
+    wlabel('BIO', -97, -36, '#a0c8ff', 8);
+    // Locker Rooms  (building(-92,-32,28,15))
+    wr(-106, -39.5, 28, 15, '#6a4040');
     wlabel('LOCKER', -92, -32, '#e0aaaa', 8);
-    // Weight room
-    wr(-103, -18, 22, 13, '#604040');
+    // Weight Room  (building(-92,-12,22,13))
+    wr(-103, -18.5, 22, 13, '#604040');
     wlabel('WEIGHTS', -92, -12, '#e0aaaa', 8);
 
-    // Academic buildings: color by type
-    // Bldg A row (Bio lab here)
-    var aRow = [[-81,-89,18,14],[-53,-89,18,14],[-23,-89,18,14],[7,-89,18,14],[35,-89,18,14]];
-    var aLabels = ['BLDG A', 'BLDG B', 'BIO', 'BLDG D', 'BLDG E'];
-    var aCols   = ['#3a6090','#3a6090','#2a5a8a','#3a6090','#3a6090'];
-    for (var ai = 0; ai < aRow.length; ai++) {
-      wr(aRow[ai][0], aRow[ai][1], aRow[ai][2], aRow[ai][3], aCols[ai]);
-      wlabel(aLabels[ai], aRow[ai][0]+9, aRow[ai][1]+7, '#a0c8ff', 8);
+    // North academic row: Admin A, Bldg B, Bldg D  (z=-74)
+    wr(-47, -81.5, 30, 15, '#3a6090'); wlabel('ADMIN',   -32, -74, '#a0c8ff', 8);
+    wr(-1,  -81.5, 26, 15, '#3a6090'); wlabel('BLDG B',   12, -74, '#a0c8ff', 8);
+    wr(37,  -81.5, 26, 15, '#3a6090'); wlabel('BLDG D',   50, -74, '#a0c8ff', 8);
+    // Mid academic row: Bldg C, Science E  (z=-54)
+    wr(-45, -60.5, 26, 13, '#3a6090'); wlabel('BLDG C',  -32, -54, '#a0c8ff', 8);
+    wr(0,   -60.5, 24, 13, '#4a7098'); wlabel('SCIENCE',  12, -54, '#a0c8ff', 8);
+    // F Buildings — 5 units at fbx=[-72,-44,-14,16,44], z=-32, 18×13
+    var _fbx2 = [-72,-44,-14,16,44];
+    for (var _fi2 = 0; _fi2 < 5; _fi2++) {
+      wr(_fbx2[_fi2]-9, -38.5, 18, 13, '#3a6090');
+      wlabel('F'+(_fi2+1), _fbx2[_fi2], -32, '#a0c8ff', 7);
     }
-    // B row
-    wr(-58,-69,26,14,'#3a6090'); wlabel('BLDG F', -45,-62,'#a0c8ff',8);
-    wr(-11,-69,24,14,'#3a6090'); wlabel('BLDG G',  1,-62,'#a0c8ff',8);
-    // C/D row (Lit class in first)
-    var cRow = [[-57,-30,28,16],[-11,-30,26,16],[21,-30,22,16],[55,-30,22,16]];
-    var cLabels = ['LIT','MATH','BLDG J','BLDG K'];
-    var cCols   = ['#4a3080','#3a4a90','#3a6090','#3a6090'];
-    for (var ci = 0; ci < cRow.length; ci++) {
-      wr(cRow[ci][0],cRow[ci][1],cRow[ci][2],cRow[ci][3],cCols[ci]);
-      wlabel(cLabels[ci], cRow[ci][0]+cRow[ci][2]/2, cRow[ci][1]+8, '#c0a8ff', 8);
-    }
-    // E row
-    var eRow = [[-81,-40,18,14],[-53,-40,18,14],[-23,-40,18,14],[7,-40,18,14],[35,-40,18,14]];
-    var eLabels = ['BLDG L','BLDG M','BLDG N','BLDG O','BLDG P'];
-    for (var ei = 0; ei < eRow.length; ei++) {
-      wr(eRow[ei][0],eRow[ei][1],eRow[ei][2],eRow[ei][3],'#3a6090');
-      wlabel(eLabels[ei], eRow[ei][0]+9, eRow[ei][1]+7, '#a0c8ff', 8);
-    }
-    // Library + Physics
-    wr(64,-65,24,17,'#806020'); wlabel('LIBRARY',76,-57,'#f0d070',9);
-    wr(64,-39,24,15,'#806020'); wlabel('PHYSICS',76,-32,'#f0d070',9);
-    // Cafeteria
-    wr(-20,-22,40,24,'#704a20'); wlabel('CAFETERIA',0,-10,'#f0c070',10);
-    // Theater
-    wr(41,-18,22,17,'#504020'); wlabel('THEATER',52,-10,'#f0d080',9);
+    // Library (76,-56,24,17) + Physics (76,-32,24,15)
+    wr(64, -64.5, 24, 17, '#806020'); wlabel('LIBRARY', 76, -56, '#f0d070', 9);
+    wr(64, -39.5, 24, 15, '#806020'); wlabel('PHYSICS', 76, -32, '#f0d070', 9);
+    // Cafeteria (0,-10,40,24)
+    wr(-20, -22, 40, 24, '#704a20'); wlabel('CAFETERIA', 0, -10, '#f0c070', 10);
+    // Theater (52,-10,22,17)  + Building G (82,-10,18,15)
+    wr(41, -18.5, 22, 17, '#504020'); wlabel('THEATER', 52, -10, '#f0d080', 9);
+    wr(73, -17.5, 18, 15, '#3a6090'); wlabel('BLDG G',  82, -10, '#a0c8ff', 8);
+    // Buildings H (-56,20,26,13) and I (-18,20,22,13)
+    wr(-69, 13.5, 26, 13, '#3a6090'); wlabel('BLDG H', -56, 20, '#a0c8ff', 8);
+    wr(-29, 13.5, 22, 13, '#3a6090'); wlabel('BLDG I', -18, 20, '#a0c8ff', 8);
 
     // Club fair marker
     if (!window.MYTH_CLUB_CHOICE && Engine && Engine.hasFlag && Engine.hasFlag('orientation_complete')) {
@@ -2186,20 +2179,49 @@ function initWorld3D(playerData) {
     ctx.lineTo(ahx - Math.sin(yaw + 2.4) * arLen * 0.3, ahz + Math.cos(yaw + 2.4) * arLen * 0.3);
     ctx.closePath(); ctx.fill();
 
-    // Highlight bio building (next destination) if club fair done but bio not yet triggered
+    // ── Destination highlights ──
+    var _hlNow = Date.now();
+    var _hlPulse = 0.5 + 0.5 * Math.sin(_hlNow * 0.0045);
+
+    // Highlight bio building (club fair done, bio not yet triggered)
     if (window.MYTH_CLUB_CHOICE !== null && window.MYTH_CLUB_CHOICE !== undefined &&
         !window.MYTH_BIO_TRIGGERED) {
-      ctx.strokeStyle = 'rgba(100,255,120,0.7)'; ctx.lineWidth = Math.max(1.5, 2 * sc);
-      ctx.beginPath(); ctx.arc(wx(-92), wz(-36), Math.max(5, 16 * sc), 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = 'rgba(100,255,120,0.1)';
-      ctx.beginPath(); ctx.arc(wx(-92), wz(-36), Math.max(5, 16 * sc), 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(100,255,120,' + (0.5 + 0.3 * _hlPulse).toFixed(2) + ')';
+      ctx.lineWidth = Math.max(1.5, 2 * sc);
+      ctx.beginPath(); ctx.arc(wx(-97), wz(-36), Math.max(5, (13 + 2 * _hlPulse) * sc), 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = 'rgba(100,255,120,' + (0.07 + 0.05 * _hlPulse).toFixed(2) + ')';
+      ctx.beginPath(); ctx.arc(wx(-97), wz(-36), Math.max(5, 13 * sc), 0, Math.PI * 2); ctx.fill();
     }
     // Highlight gym (PE) after bio done
     if (window.MYTH_BIO_DONE && !window.MYTH_PE_TRIGGERED) {
-      ctx.strokeStyle = 'rgba(255,160,60,0.7)'; ctx.lineWidth = Math.max(1.5, 2 * sc);
-      ctx.beginPath(); ctx.arc(wx(-92), wz(-62), Math.max(5, 22 * sc), 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = 'rgba(255,160,60,0.1)';
-      ctx.beginPath(); ctx.arc(wx(-92), wz(-62), Math.max(5, 22 * sc), 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,160,60,' + (0.5 + 0.3 * _hlPulse).toFixed(2) + ')';
+      ctx.lineWidth = Math.max(1.5, 2 * sc);
+      ctx.beginPath(); ctx.arc(wx(-92), wz(-62), Math.max(5, (20 + 3 * _hlPulse) * sc), 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,160,60,' + (0.07 + 0.05 * _hlPulse).toFixed(2) + ')';
+      ctx.beginPath(); ctx.arc(wx(-92), wz(-62), Math.max(5, 20 * sc), 0, Math.PI * 2); ctx.fill();
+    }
+    // Highlight EC/class nav target (sophomore year)
+    if (window.MYTH_SOPH_NAV_TARGET) {
+      var _snt = window.MYTH_SOPH_NAV_TARGET;
+      var _tr  = Math.max(4, _snt.r * sc);
+      // Outer pulsing ring
+      ctx.strokeStyle = 'rgba(80,220,255,' + (0.35 + 0.3 * _hlPulse).toFixed(2) + ')';
+      ctx.lineWidth = Math.max(1.5, 3 * sc);
+      ctx.beginPath(); ctx.arc(wx(_snt.x), wz(_snt.z), _tr + (3 * _hlPulse * sc || 2), 0, Math.PI * 2); ctx.stroke();
+      // Inner solid ring
+      ctx.strokeStyle = 'rgba(160,240,255,' + (0.65 + 0.3 * _hlPulse).toFixed(2) + ')';
+      ctx.lineWidth = Math.max(1, 2 * sc);
+      ctx.beginPath(); ctx.arc(wx(_snt.x), wz(_snt.z), _tr, 0, Math.PI * 2); ctx.stroke();
+      // Fill tint
+      ctx.fillStyle = 'rgba(80,220,255,' + (0.07 + 0.05 * _hlPulse).toFixed(2) + ')';
+      ctx.beginPath(); ctx.arc(wx(_snt.x), wz(_snt.z), _tr, 0, Math.PI * 2); ctx.fill();
+      // Label (full map only — too small on minimap)
+      if (showLabels) {
+        ctx.fillStyle = 'rgba(160,240,255,0.9)';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('★ GO HERE', wx(_snt.x), wz(_snt.z) - _tr - 4);
+      }
     }
   }
 

@@ -965,7 +965,7 @@ function wireGameButtons() {
   if (pauseBtn)  pauseBtn.addEventListener('click',  () => _togglePause());
   if (resumeBtn) resumeBtn.addEventListener('click', () => _togglePause());
   document.addEventListener('keydown', e => {
-    if ((e.key === 'p' || e.key === 'P') && !window.MYTH_ORIENTATION_ACTIVE) _togglePause();
+    if ((e.key === 'p' || e.key === 'P') && (!window.MYTH_ORIENTATION_ACTIVE || _paused)) _togglePause();
   });
 }
 
