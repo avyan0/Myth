@@ -3429,8 +3429,8 @@ function _srPickSemester(done) {
     <div class="soph-scene"><p>Apps are in. Second semester is here. You have a choice to make about who you're going to be for the next five months. Both paths are real. Only one of them is yours.</p></div>
     <div class="soph-prompt">SECOND SEMESTER APPROACH:</div>
     <div class="soph-choices">
-      <button class="soph-choice" id="sr-lockin-btn"><span class="soph-choice-label">🔒 THE LOCK-IN — Stay disciplined. Protect your GPA, your offers, your future.</span><span class="soph-choice-hint">Head to the Library. You know what you have to do.</span></button>
-      <button class="soph-choice" id="sr-senioritis-btn"><span class="soph-choice-label">😴 SENIORITIS — You're done caring. Ditch, coast, enjoy the chaos.</span><span class="soph-choice-hint">Head to the Cafeteria. It's basically your second home now.</span></button>
+      <button class="soph-choice" id="sr-lockin-btn"><span class="soph-choice-label"> THE LOCK-IN — Stay disciplined. Protect your GPA, your offers, your future.</span><span class="soph-choice-hint">Head to the Library. You know what you have to do.</span></button>
+      <button class="soph-choice" id="sr-senioritis-btn"><span class="soph-choice-label"> SENIORITIS — You're done caring. Ditch, coast, enjoy the chaos.</span><span class="soph-choice-hint">Head to the Cafeteria. It's basically your second home now.</span></button>
     </div>`);
   document.getElementById('sr-lockin-btn').onclick = () => {
     _sophHide(() => { _goToClass('sr_library', 1, done); });
@@ -3490,19 +3490,19 @@ function _srLock_beat3() {
 function _srLock_result() {
   let gpaD, intD, happyD, narr;
   if (_srLockScore >= 8) {
-    gpaD=0.6; intD=2; happyD=-1;
+    gpaD=0.3; intD=0.3; happyD=-0.1;
     narr = `Perfect execution. You locked in and you delivered. Every test was clean, every deadline was met. Semester GPA higher than any year prior. Mrs. Holloway congratulates you in the hallway. You nod and keep walking.`;
   } else if (_srLockScore >= 6) {
-    gpaD=0.4; intD=1; happyD=-1;
+    gpaD=0.2; intD=0.2; happyD=-0.1;
     narr = `Strong semester. You stayed disciplined in the stretches that mattered. A few cracks here and there — but the foundation held. You're walking away from senior year having protected what you built.`;
   } else if (_srLockScore >= 4) {
-    gpaD=0.2; intD=1; happyD=0;
+    gpaD=0.1; intD=0.2; happyD=0;
     narr = `Decent lock-in. You showed up, mostly. Not your best semester academically, but not a collapse either. The effort was real even if the execution was inconsistent.`;
   } else {
-    gpaD=0; intD=0; happyD=-1;
+    gpaD=0; intD=0; happyD=-0.1;
     narr = `You tried to lock in. You really did. But the distractions won more rounds than you did. The library table was yours in spirit. The grades don't fully reflect the intention.`;
   }
-  Engine.modifyStats({ gpa: gpaD, intelligence: intD, happiness: happyD, stress: -2 }); _flushStatToast();
+  Engine.modifyStats({ gpa: gpaD, intelligence: intD, happiness: happyD, stress: -0.3 }); _flushStatToast();
   _sophShow(`<div class="soph-badge">MONTA VISTA LIBRARY — END OF SEMESTER</div>
     <div class="soph-scene"><p>${narr}</p></div>
     <div class="soph-stat-delta">GPA +${gpaD} · INT +${intD} · Happy ${happyD} · Stress -2</div>
@@ -3560,16 +3560,16 @@ function _srSen_beat3() {
 function _srSen_result() {
   let gpaD, friendD, happyD, narr;
   if (_srSenScore >= 5) {
-    gpaD=-0.2; friendD=2; happyD=2;
+    gpaD=-0.2; friendD=0.2; happyD=0.2;
     narr = `Controlled senioritis. You dipped, you coasted, but you never fully crashed. You had fun, made memories, and somehow kept your GPA from collapsing completely. Everyone else is stress-crying. You're eating a sandwich.`;
   } else if (_srSenScore >= 3) {
-    gpaD=-0.4; friendD=2; happyD=2;
+    gpaD=-0.4; friendD=0.2; happyD=0.2;
     narr = `Classic senioritis. You gave up just enough to feel it. Some grades slipped, some friendships got stronger. You're going to look back at this semester as one of the best of your life, even if the transcript doesn't agree.`;
   } else {
-    gpaD=-0.7; friendD=1; happyD=1;
+    gpaD=-0.6; friendD=0.1; happyD=0.1;
     narr = `Full collapse. You basically stopped attending. Teachers stopped expecting you. Your GPA went somewhere it'll take years to come back from. But you did eat well, nap frequently, and maintain a consistently positive attitude about it all.`;
   }
-  Engine.modifyStats({ gpa: gpaD, friendships: friendD, happiness: happyD, stress: -3 }); _flushStatToast();
+  Engine.modifyStats({ gpa: gpaD, friendships: friendD, happiness: happyD, stress: -0.3 }); _flushStatToast();
   _sophShow(`<div class="soph-badge">CAFETERIA — END OF SEMESTER</div>
     <div class="soph-scene"><p>${narr}</p></div>
     <div class="soph-stat-delta">GPA ${gpaD} · +${friendD} Friends · +${happyD} Happy · Stress -3</div>
@@ -3592,21 +3592,21 @@ function _srSunrise_beat1() {
       <button class="soph-choice" id="sr-sun1-b"><span class="soph-choice-label">Bring your own — you came prepared with a hoodie and a beanie</span><span class="soph-choice-hint">Self-sufficient. Slightly intimidating energy.</span></button>
       <button class="soph-choice" id="sr-sun1-c"><span class="soph-choice-label">Stand near the edge. You're here. You're just not... committing.</span><span class="soph-choice-hint">Technically present. Emotionally unavailable.</span></button>
     </div>`);
-  document.getElementById('sr-sun1-a').onclick = () => { Engine.modifyStats({friendships:1,happiness:1}); _flushStatToast(); _srSunrise_beat2(); };
-  document.getElementById('sr-sun1-b').onclick = () => { Engine.modifyStats({happiness:1,selfAwareness:1}); _flushStatToast(); _srSunrise_beat2(); };
+  document.getElementById('sr-sun1-a').onclick = () => { Engine.modifyStats({friendships:0.1,happiness:0.1}); _flushStatToast(); _srSunrise_beat2(); };
+  document.getElementById('sr-sun1-b').onclick = () => { Engine.modifyStats({happiness:0.1,friendships:0.1}); _flushStatToast(); _srSunrise_beat2(); };
   document.getElementById('sr-sun1-c').onclick = () => { Engine.modifyStats({happiness:0}); _flushStatToast(); _srSunrise_beat2(); };
 }
 function _srSunrise_beat2() {
   _sophShow(`<div class="soph-badge">FOOTBALL FIELD — 5:45 AM</div>
-    <div class="soph-scene"><p>Principal Nakamura steps onto the field with a microphone. She's in a hoodie. First time you've ever seen her not in a blazer. She says: <em>"I don't do speeches at 5 AM. But I want you to know — I'm proud of this class."</em></p></div>
+    <div class="soph-scene"><p>Principal Ben steps onto the field with a microphone. He's in a hoodie. First time you've ever seen him not in a blazer. She says: <em>"I don't do speeches at 5 AM. But I want you to know — I'm proud of this class."</em></p></div>
     <div class="soph-prompt">YOUR REACTION:</div>
     <div class="soph-choices">
       <button class="soph-choice" id="sr-sun2-a"><span class="soph-choice-label">Actually feel it. Something about this hits different at 5 AM with everyone around you.</span><span class="soph-choice-hint">Unexpectedly sincere moment.</span></button>
       <button class="soph-choice" id="sr-sun2-b"><span class="soph-choice-label">Clap politely. Appreciate the effort. Move on.</span><span class="soph-choice-hint">Balanced. Present without being dramatic about it.</span></button>
       <button class="soph-choice" id="sr-sun2-c"><span class="soph-choice-label">Zone out — you're thinking about whether you left the stove on</span><span class="soph-choice-hint">Classic. You didn't leave the stove on.</span></button>
     </div>`);
-  document.getElementById('sr-sun2-a').onclick = () => { Engine.modifyStats({happiness:2,selfAwareness:1}); _flushStatToast(); _srSunrise_beat3(); };
-  document.getElementById('sr-sun2-b').onclick = () => { Engine.modifyStats({happiness:1}); _flushStatToast(); _srSunrise_beat3(); };
+  document.getElementById('sr-sun2-a').onclick = () => { Engine.modifyStats({happiness:0.2,selfAwareness:0.1}); _flushStatToast(); _srSunrise_beat3(); };
+  document.getElementById('sr-sun2-b').onclick = () => { Engine.modifyStats({happiness:0.1}); _flushStatToast(); _srSunrise_beat3(); };
   document.getElementById('sr-sun2-c').onclick = () => { Engine.modifyStats({happiness:0}); _flushStatToast(); _srSunrise_beat3(); };
 }
 function _srSunrise_beat3() {
@@ -3618,9 +3618,9 @@ function _srSunrise_beat3() {
       <button class="soph-choice" id="sr-sun3-b"><span class="soph-choice-label">Middle of the crowd — surrounded by your actual friends, genuinely happy</span><span class="soph-choice-hint">The photo captures exactly who you were.</span></button>
       <button class="soph-choice" id="sr-sun3-c"><span class="soph-choice-label">Volunteer to take the photo instead — someone has to do it</span><span class="soph-choice-hint">Selfless or avoidant. Possibly both.</span></button>
     </div>`);
-  document.getElementById('sr-sun3-a').onclick = () => { Engine.modifyStats({friendships:2,happiness:1}); _flushStatToast(); _srSunrise_result(); };
-  document.getElementById('sr-sun3-b').onclick = () => { Engine.modifyStats({friendships:1,happiness:2}); _flushStatToast(); _srSunrise_result(); };
-  document.getElementById('sr-sun3-c').onclick = () => { Engine.modifyStats({friendships:1,selfAwareness:1}); _flushStatToast(); _srSunrise_result(); };
+  document.getElementById('sr-sun3-a').onclick = () => { Engine.modifyStats({friendships:0.2,happiness:0.1}); _flushStatToast(); _srSunrise_result(); };
+  document.getElementById('sr-sun3-b').onclick = () => { Engine.modifyStats({friendships:0.1,happiness:0.2}); _flushStatToast(); _srSunrise_result(); };
+  document.getElementById('sr-sun3-c').onclick = () => { Engine.modifyStats({friendships:0.1,selfAwareness:0.1}); _flushStatToast(); _srSunrise_result(); };
 }
 function _srSunrise_result() {
   _sophShow(`<div class="soph-badge">FOOTBALL FIELD — 6:20 AM</div>
@@ -3644,8 +3644,8 @@ function _srHC_beat1() {
       <button class="soph-choice" id="sr-hc1-b"><span class="soph-choice-label">Clean and simple — dress shirt or dress, understated, reliable</span><span class="soph-choice-hint">You look good. You know it. That's enough.</span></button>
       <button class="soph-choice" id="sr-hc1-c"><span class="soph-choice-label">Whatever was in your closet — you remembered at 5 PM</span><span class="soph-choice-hint">You're here. That's technically what matters.</span></button>
     </div>`);
-  document.getElementById('sr-hc1-a').onclick = () => { Engine.modifyStats({relationships:1,happiness:2}); _flushStatToast(); _srHC_beat2(); };
-  document.getElementById('sr-hc1-b').onclick = () => { Engine.modifyStats({happiness:1}); _flushStatToast(); _srHC_beat2(); };
+  document.getElementById('sr-hc1-a').onclick = () => { Engine.modifyStats({relationships:0.1,happiness:0.2}); _flushStatToast(); _srHC_beat2(); };
+  document.getElementById('sr-hc1-b').onclick = () => { Engine.modifyStats({happiness:0.1}); _flushStatToast(); _srHC_beat2(); };
   document.getElementById('sr-hc1-c').onclick = () => { Engine.modifyStats({happiness:0}); _flushStatToast(); _srHC_beat2(); };
 }
 function _srHC_beat2() {
@@ -3657,9 +3657,9 @@ function _srHC_beat2() {
       <button class="soph-choice" id="sr-hc2-b"><span class="soph-choice-label">Dance on the edge of the group — close enough to feel it, room to breathe</span><span class="soph-choice-hint">Smart positioning. Good energy. No casualties.</span></button>
       <button class="soph-choice" id="sr-hc2-c"><span class="soph-choice-label">Watch from the sideline — you prefer being the person who watches the fun</span><span class="soph-choice-hint">Valid. You see everything from here.</span></button>
     </div>`);
-  document.getElementById('sr-hc2-a').onclick = () => { Engine.modifyStats({friendships:2,happiness:2}); _flushStatToast(); _srHC_beat3(); };
-  document.getElementById('sr-hc2-b').onclick = () => { Engine.modifyStats({friendships:1,happiness:1}); _flushStatToast(); _srHC_beat3(); };
-  document.getElementById('sr-hc2-c').onclick = () => { Engine.modifyStats({happiness:1}); _flushStatToast(); _srHC_beat3(); };
+  document.getElementById('sr-hc2-a').onclick = () => { Engine.modifyStats({friendships:0.2,happiness:0.2}); _flushStatToast(); _srHC_beat3(); };
+  document.getElementById('sr-hc2-b').onclick = () => { Engine.modifyStats({friendships:0.1,happiness:0.1}); _flushStatToast(); _srHC_beat3(); };
+  document.getElementById('sr-hc2-c').onclick = () => { Engine.modifyStats({happiness:0.1}); _flushStatToast(); _srHC_beat3(); };
 }
 function _srHC_beat3() {
   const now = _currentStats();
@@ -3672,9 +3672,9 @@ function _srHC_beat3() {
       <button class="soph-choice" id="sr-hc3-b"><span class="soph-choice-label">${hasDate ? 'Dance. Say nothing. Let the moment do the talking.' : 'Dance by yourself — unbothered, genuinely happy, kind of iconic'}</span><span class="soph-choice-hint">${hasDate ? 'Quiet and perfect.' : 'Main character energy. You\'re fine.'}</span></button>
       <button class="soph-choice" id="sr-hc3-c"><span class="soph-choice-label">${hasDate ? 'Laugh nervously and check your phone' : 'Go get some punch and wait for the next banger'}</span><span class="soph-choice-hint">${hasDate ? 'The moment dies. They remember.' : 'Pragmatic. Hydration is important.'}</span></button>
     </div>`);
-  document.getElementById('sr-hc3-a').onclick = () => { Engine.modifyStats({relationships: hasDate?2:1, happiness:2}); _flushStatToast(); _srHC_result(); };
-  document.getElementById('sr-hc3-b').onclick = () => { Engine.modifyStats({happiness:2, relationships: hasDate?1:0}); _flushStatToast(); _srHC_result(); };
-  document.getElementById('sr-hc3-c').onclick = () => { Engine.modifyStats({happiness:0, relationships: hasDate?-1:0}); _flushStatToast(); _srHC_result(); };
+  document.getElementById('sr-hc3-a').onclick = () => { Engine.modifyStats({relationships: hasDate?0.2:0.1, happiness:0.2}); _flushStatToast(); _srHC_result(); };
+  document.getElementById('sr-hc3-b').onclick = () => { Engine.modifyStats({happiness:0.2, relationships: hasDate?0.1:0}); _flushStatToast(); _srHC_result(); };
+  document.getElementById('sr-hc3-c').onclick = () => { Engine.modifyStats({happiness:0, relationships: hasDate?-0.1:0}); _flushStatToast(); _srHC_result(); };
 }
 function _srHC_result() {
   _sophShow(`<div class="soph-badge">MONTA VISTA GYM — 11:00 PM</div>
@@ -3691,9 +3691,9 @@ function _srPickTimeKiller(done) {
     <div class="soph-scene"><p>Senior year is almost over. You've got free time, leftover ambition, and absolutely nothing to lose. One more defining activity. Make it count.</p></div>
     <div class="soph-prompt">HOW DO YOU SPEND YOUR FINAL SEMESTER?</div>
     <div class="soph-choices">
-      <button class="soph-choice" id="sr-tk-gambler"><span class="soph-choice-label">📈 MARKET GAMBLER — You start trading event contracts on Kalshi. Free periods in the parking lot with a phone and a thesis.</span><span class="soph-choice-hint">Head to the Parking Lot.</span></button>
-      <button class="soph-choice" id="sr-tk-athlete"><span class="soph-choice-label">⛳ DUAL ATHLETE — Golf and Football. Finish your high school athletic career with something to say.</span><span class="soph-choice-hint">Head to the Athletic Complex.</span></button>
-      <button class="soph-choice" id="sr-tk-assassin"><span class="soph-choice-label">💧 SENIOR ASSASSIN — Water guns, elimination brackets, paranoia in the parking lot. The most fun you've had in four years.</span><span class="soph-choice-hint">Head to the Parking Lot.</span></button>
+      <button class="soph-choice" id="sr-tk-gambler"><span class="soph-choice-label"> MARKET GAMBLER — You start trading event contracts on Kalshi. Free periods in the parking lot with a phone and a thesis.</span><span class="soph-choice-hint">Head to the Parking Lot.</span></button>
+      <button class="soph-choice" id="sr-tk-athlete"><span class="soph-choice-label"> DUAL ATHLETE — Golf and Football. Finish your high school athletic career with something to say.</span><span class="soph-choice-hint">Head to the Athletic Complex.</span></button>
+      <button class="soph-choice" id="sr-tk-assassin"><span class="soph-choice-label"> SENIOR ASSASSIN — Water guns, elimination brackets, paranoia in the parking lot. The most fun you've had in four years.</span><span class="soph-choice-hint">Head to the Parking Lot.</span></button>
     </div>`);
   document.getElementById('sr-tk-gambler').onclick = () => {
     _sophHide(() => { _goToClass('sr_gambler', 1, done); });
@@ -3756,16 +3756,16 @@ function _srGamble_beat3() {
 function _srGamble_result() {
   let intD, happyD, stressD, narr;
   if (_srGambleScore >= 7) {
-    intD=3; happyD=2; stressD=1;
+    intD=0.3; happyD=0.2; stressD=0.1;
     narr = `You ended the semester up. Not rich, but decisively profitable — and more importantly, you understand risk management in a way most adults don't. Your models were better than your peers'. You don't tell people how much you made.`;
   } else if (_srGambleScore >= 5) {
-    intD=2; happyD=1; stressD=2;
+    intD=0.2; happyD=0.1; stressD=0.2;
     narr = `You broke even, maybe slightly up. You made good decisions when it mattered and a few bad ones when it didn't. The experience was worth more than the money. You'll be back.`;
   } else if (_srGambleScore >= 3) {
-    intD=2; happyD=0; stressD=3;
+    intD=0.2; happyD=0; stressD=0.3;
     narr = `You lost money. Not everything — but enough to sting. The lessons were expensive. You made every classic mistake in order: overconfidence, doubling down, revenge trading. You've now done it wrong so you'll know how to do it right.`;
   } else {
-    intD=1; happyD=-1; stressD=4;
+    intD=0.1; happyD=-0.1; stressD=0.4;
     narr = `You got wiped. Account zeroed. You learned more about your own psychology in three months than in four years of school. That's worth something. The money is not coming back.`;
   }
   Engine.modifyStats({ intelligence: intD, happiness: happyD, stress: stressD }); _flushStatToast();
@@ -3826,19 +3826,19 @@ function _srAth_beat3() {
 function _srAth_result() {
   let sportsD, athD, friendD, narr;
   if (_srAthScore >= 8) {
-    sportsD=3; athD=2; friendD=2;
+    sportsD=0.3; athD=0.2; friendD=0.2;
     narr = `Elite finishing season. Both sports, both coaches, both teams — you delivered. You leave high school with a legitimate athletic résumé and a very real conversation with Thompson about walk-on opportunities. Dual athlete. Actual.`;
   } else if (_srAthScore >= 6) {
-    sportsD=2; athD=2; friendD=1;
+    sportsD=0.2; athD=2; friendD=0.1;
     narr = `Strong final season across the board. You showed up and competed at both sports with real intent. No highlight reel moments, but consistent, coachable, committed. That's worth something.`;
   } else if (_srAthScore >= 4) {
-    sportsD=2; athD=1; friendD=1;
+    sportsD=0.2; athD=0.1; friendD=0.1;
     narr = `You participated. Both sports, some games, decent moments. Senior year athletics doesn't define you — but you finished what you started, and that's more than most people do.`;
   } else {
-    sportsD=1; athD=0; friendD=0;
+    sportsD=0.1; athD=0; friendD=0;
     narr = `You showed up to practice more than games and made some questionable strategic calls. Coach appreciated the effort even if the results were mixed. High school sports has a way of being more about the memories than the stats. You have some of both.`;
   }
-  Engine.modifyStats({ sports: sportsD, athleticism: athD, friendships: friendD }); _flushStatToast();
+  Engine.modifyStats({ sports: sportsD, happiness: athD, friendships: friendD }); _flushStatToast();
   _sophShow(`<div class="soph-badge">ATHLETIC COMPLEX — SEASON DONE</div>
     <div class="soph-scene"><p>${narr}</p></div>
     <div class="soph-stat-delta">+${sportsD} Sports · +${athD} Athleticism · +${friendD} Friends</div>
@@ -3896,19 +3896,19 @@ function _srAss_beat3() {
 function _srAss_result() {
   let friendD, happyD, narr;
   if (_srAssScore >= 8) {
-    friendD=3; happyD=3;
+    friendD=0.3; happyD=0.3;
     narr = `Top 8 finish. You played a clean, tactical game — studied your targets, respected safe zones, survived your own elimination attempts with reflexes and planning. The parking lot knew your name for three weeks. You'll be talked about in next year's bracket rules meeting.`;
   } else if (_srAssScore >= 6) {
-    friendD=2; happyD=2;
+    friendD=0.2; happyD=0.2;
     narr = `Top 16. You played smart, made a few great moves, and got unlucky once. The game consumed two solid weeks of your senior year and you regret nothing. You took down some legitimate opponents.`;
   } else if (_srAssScore >= 4) {
-    friendD=2; happyD=2;
+    friendD=0.2; happyD=0.2;
     narr = `Mid-bracket finish. You got a few, you got got eventually. The paranoia was real, the moments were funny, and the group chat during the tournament was genuinely the most entertainment you've had all year.`;
   } else {
-    friendD=1; happyD=1;
+    friendD=0.1; happyD=0.1;
     narr = `Early exit. You got eliminated in the first round by someone who had clearly been planning since October. It was humbling. But you got your target first, which means you can technically say you competed.`;
   }
-  Engine.modifyStats({ friendships: friendD, happiness: happyD, stress: -1 }); _flushStatToast();
+  Engine.modifyStats({ friendships: friendD, happiness: happyD, stress: -0.1 }); _flushStatToast();
   _sophShow(`<div class="soph-badge">PARKING LOT — TOURNAMENT COMPLETE</div>
     <div class="soph-scene"><p>${narr}</p></div>
     <div class="soph-stat-delta">+${friendD} Friends · +${happyD} Happy · Stress -1</div>
@@ -3943,13 +3943,13 @@ function _grad_gpa() {
         <button class="soph-choice" id="grad-speech-yes"><span class="soph-choice-label">Walk to the podium. You've been writing this speech in your head for four years.</span></button>
         <button class="soph-choice" id="grad-speech-no"><span class="soph-choice-label">Decline. You bow slightly and sit back down. Let the moment speak for itself.</span></button>
       </div>`);
-    document.getElementById('grad-speech-yes').onclick = () => { Engine.modifyStats({intelligence:1,happiness:2,selfAwareness:2}); _flushStatToast(); _grad_friendships(); };
-    document.getElementById('grad-speech-no').onclick  = () => { Engine.modifyStats({happiness:1,selfAwareness:3}); _flushStatToast(); _grad_friendships(); };
+    document.getElementById('grad-speech-yes').onclick = () => { Engine.modifyStats({intelligence:0.1,happiness:0.2,selfAwareness:0.2}); _flushStatToast(); _grad_friendships(); };
+    document.getElementById('grad-speech-no').onclick  = () => { Engine.modifyStats({happiness:0.1,selfAwareness:0.3}); _flushStatToast(); _grad_friendships(); };
   } else if (gpa >= 3.5) {
     _sophShow(`<div class="soph-badge">HONOR ROLL · GPA ${gpa.toFixed(2)}</div>
       <div class="soph-scene"><p>Your name is called for Academic Honors. You walk across the stage and the principal shakes your hand. The cord around your neck means something. You earned it.</p></div>
       <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">CONTINUE →</button></div>`);
-    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({intelligence:1,happiness:1}); _flushStatToast(); _grad_friendships(); };
+    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({intelligence:0.1,happiness:0.1}); _flushStatToast(); _grad_friendships(); };
   } else if (gpa >= 3.0) {
     _sophShow(`<div class="soph-badge">GRADUATED · GPA ${gpa.toFixed(2)}</div>
       <div class="soph-scene"><p>You walk across the stage. Name called, diploma handed over, handshake, photo. You did it — solidly, without drama. Your GPA is respectable. You won't be talking about it at reunions, but it does its job.</p></div>
@@ -3959,12 +3959,12 @@ function _grad_gpa() {
     _sophShow(`<div class="soph-badge">GRADUATED — BARELY · GPA ${gpa.toFixed(2)}</div>
       <div class="soph-scene"><p>You walk across the stage. Your name is called. Someone claps. You accept the diploma without making eye contact with any of the teachers who emailed your parents this year. You made it. Nobody is impressed, but you made it.</p></div>
       <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">CONTINUE →</button></div>`);
-    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({gpa:0,stress:1}); _grad_friendships(); };
+    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({gpa:0,stress:0.1}); _grad_friendships(); };
   } else {
     _sophShow(`<div class="soph-badge">WALKED — GPA ${gpa.toFixed(2)}</div>
       <div class="soph-scene"><p>You received your diploma in a separate envelope two days before the ceremony. You walk in the ceremony for appearances. You don't make eye contact with the principal. She doesn't offer hers. This is a moment you'll spend years working past.</p></div>
       <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">CONTINUE →</button></div>`);
-    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-2,stress:2}); _grad_friendships(); };
+    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-0.2,stress:0.2}); _grad_friendships(); };
   }
 }
 
@@ -3976,25 +3976,25 @@ function _grad_friendships() {
       <div class="soph-scene"><p>After the ceremony, your group pulls you aside. The trip is real — everyone's in. The only question is where you're all going.</p></div>
       <div class="soph-prompt">WHERE DOES THE SQUAD GO?</div>
       <div class="soph-choices">
-        <button class="soph-choice" id="trip-a"><span class="soph-choice-label">🌊 Cabo San Lucas — beach resort, warm water, all-inclusive chaos</span></button>
-        <button class="soph-choice" id="trip-b"><span class="soph-choice-label">🗽 New York City — rooftop bars, Times Square, the whole thing</span></button>
-        <button class="soph-choice" id="trip-c"><span class="soph-choice-label">🎰 Las Vegas — everyone's 18, the poker floor is technically legal</span></button>
-        <button class="soph-choice" id="trip-d"><span class="soph-choice-label">🗼 Europe — London, Paris, Amsterdam, two weeks</span></button>
+        <button class="soph-choice" id="trip-a"><span class="soph-choice-label">Cabo San Lucas — beach resort, warm water, all-inclusive chaos</span></button>
+        <button class="soph-choice" id="trip-b"><span class="soph-choice-label">New York City — rooftop bars, Times Square, the whole thing</span></button>
+        <button class="soph-choice" id="trip-c"><span class="soph-choice-label">Las Vegas — everyone's 18, the poker floor is technically legal</span></button>
+        <button class="soph-choice" id="trip-d"><span class="soph-choice-label">Europe — London, Paris, Amsterdam, two weeks</span></button>
       </div>`);
-    document.getElementById('trip-a').onclick = () => { Engine.modifyStats({happiness:3,friendships:2}); _flushStatToast(); _grad_relationships(); };
-    document.getElementById('trip-b').onclick = () => { Engine.modifyStats({happiness:3,intelligence:1,friendships:1}); _flushStatToast(); _grad_relationships(); };
-    document.getElementById('trip-c').onclick = () => { Engine.modifyStats({happiness:2,friendships:2,stress:1}); _flushStatToast(); _grad_relationships(); };
-    document.getElementById('trip-d').onclick = () => { Engine.modifyStats({happiness:3,intelligence:2,friendships:2}); _flushStatToast(); _grad_relationships(); };
+    document.getElementById('trip-a').onclick = () => { Engine.modifyStats({happiness:0.3,friendships:0.2}); _flushStatToast(); _grad_relationships(); };
+    document.getElementById('trip-b').onclick = () => { Engine.modifyStats({happiness:0.3,intelligence:0.1,friendships:0.1}); _flushStatToast(); _grad_relationships(); };
+    document.getElementById('trip-c').onclick = () => { Engine.modifyStats({happiness:0.2,friendships:0.2,stress:0.1}); _flushStatToast(); _grad_relationships(); };
+    document.getElementById('trip-d').onclick = () => { Engine.modifyStats({happiness:0.3,intelligence:0.2,friendships:0.2}); _flushStatToast(); _grad_relationships(); };
   } else if (f >= 4) {
     _sophShow(`<div class="soph-badge">FRIENDSHIPS ${f.toFixed(1)} — NOT ENOUGH</div>
       <div class="soph-scene"><p>The senior trip gets brought up. Someone mentions Cabo. You wait for the invitation. It doesn't come. Your friend group is too small, too scattered, too noncommittal to make it happen. You spend graduation weekend at home. The group chat is popping. You're not in it.</p></div>
       <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">CONTINUE →</button></div>`);
-    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-1}); _grad_relationships(); };
+    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-0.1}); _grad_relationships(); };
   } else {
     _sophShow(`<div class="soph-badge">FRIENDSHIPS ${f.toFixed(1)} — YOUR FRIENDS ARE TOO BUMMY</div>
       <div class="soph-scene"><p>There is no senior trip. Your friends can't coordinate, can't commit, and two of them are already fighting over a parking lot incident from February. You spend graduation weekend watching other people's stories. This could have been avoided.</p></div>
       <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">CONTINUE →</button></div>`);
-    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-2}); _grad_relationships(); };
+    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-0.2}); _grad_relationships(); };
   }
 }
 
@@ -4009,18 +4009,18 @@ function _grad_relationships() {
         <button class="soph-choice" id="prom-a"><span class="soph-choice-label">The whole thing — dinner, photos, limo, venue, afterparty. Legendary.</span></button>
         <button class="soph-choice" id="prom-b"><span class="soph-choice-label">Skip the pre-game chaos, arrive at the venue together, leave with memories intact</span></button>
       </div>`);
-    document.getElementById('prom-a').onclick = () => { Engine.modifyStats({relationships:2,happiness:3,friendships:1}); _flushStatToast(); _grad_sports(); };
-    document.getElementById('prom-b').onclick = () => { Engine.modifyStats({relationships:3,happiness:2}); _flushStatToast(); _grad_sports(); };
+    document.getElementById('prom-a').onclick = () => { Engine.modifyStats({relationships:0.2,happiness:0.3,friendships:0.1}); _flushStatToast(); _grad_sports(); };
+    document.getElementById('prom-b').onclick = () => { Engine.modifyStats({relationships:0.3,happiness:0.2}); _flushStatToast(); _grad_sports(); };
   } else if (r >= 3.5) {
     _sophShow(`<div class="soph-badge">RELATIONSHIPS ${r.toFixed(1)} — NO DATE</div>
       <div class="soph-scene"><p>You go to prom. Solo. You convinced yourself it wouldn't matter. You were half right — the dancing is fine, the food is fine, but at 11 PM when everyone starts pairing off, you're the one finding somewhere to be. Not terrible. Not memorable.</p></div>
       <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">CONTINUE →</button></div>`);
-    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:1,relationships:0}); _grad_sports(); };
+    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:0.1,relationships:0}); _grad_sports(); };
   } else {
     _sophShow(`<div class="soph-badge">RELATIONSHIPS ${r.toFixed(1)} — TOO LONELY FOR PROM</div>
       <div class="soph-scene"><p>You don't go. Nobody asked, you didn't ask anyone, and buying a ticket to stand alone in a rented venue felt like a statement you didn't want to make. You stay home. Order food. Scroll through other people's stories until midnight. This was avoidable.</p></div>
       <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">CONTINUE →</button></div>`);
-    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-2,relationships:-1}); _grad_sports(); };
+    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-0.2,relationships:-0.1}); _grad_sports(); };
   }
 }
 
@@ -4035,18 +4035,18 @@ function _grad_sports() {
         <button class="soph-choice" id="ccs-a"><span class="soph-choice-label">Go out there and compete like every game prior. Clean execution. Maximum output.</span></button>
         <button class="soph-choice" id="ccs-b"><span class="soph-choice-label">Play loose — it's the last game. Enjoy every second of it.</span></button>
       </div>`);
-    document.getElementById('ccs-a').onclick = () => { Engine.modifyStats({sports:2,athleticism:2,happiness:2,friendships:1}); _flushStatToast(); _grad_intelligence(); };
-    document.getElementById('ccs-b').onclick = () => { Engine.modifyStats({sports:1,happiness:3,friendships:2}); _flushStatToast(); _grad_intelligence(); };
+    document.getElementById('ccs-a').onclick = () => { Engine.modifyStats({sports:0.2,athleticism:0.2,happiness:0.2,friendships:0.1}); _flushStatToast(); _grad_intelligence(); };
+    document.getElementById('ccs-b').onclick = () => { Engine.modifyStats({sports:0.1,happiness:0.3,friendships:0.2}); _flushStatToast(); _grad_intelligence(); };
   } else if (s >= 4.5) {
     _sophShow(`<div class="soph-badge">SPORTS ${s.toFixed(1)} — DID NOT QUALIFY</div>
       <div class="soph-scene"><p>You didn't make CCS. Close — Coach mentions you were right on the bubble. But the bubble didn't move for you. You watch the qualifiers list get posted, find your name missing, and spend the bus ride home not talking. Decent career. You just didn't finish the way you wanted.</p></div>
       <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">CONTINUE →</button></div>`);
-    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-1}); _grad_intelligence(); };
+    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-0.1}); _grad_intelligence(); };
   } else {
     _sophShow(`<div class="soph-badge">SPORTS ${s.toFixed(1)} — A DISGRACE</div>
       <div class="soph-scene"><p>You didn't make CCS. You weren't close. Coach didn't have a speech. At the end-of-season banquet, you got a participation trophy, which is the athletic equivalent of being told to your face that your effort was not enough. Four years. This is what you leave behind in sports.</p></div>
       <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">CONTINUE →</button></div>`);
-    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-1,sports:0}); _grad_intelligence(); };
+    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-0.1,sports:0}); _grad_intelligence(); };
   }
 }
 
@@ -4057,7 +4057,7 @@ function _grad_intelligence() {
     _sophShow(`<div class="soph-badge">ACADEMIC AWARD · INTELLIGENCE ${i.toFixed(1)}</div>
       <div class="soph-scene"><p>Mr. Chen presents the Academic Excellence Award at the senior assembly. Your name is on the plaque. He calls you "one of the most intellectually serious students I've taught in fifteen years." You're not entirely sure you deserve it, but the plaque is real.</p></div>
       <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">CONTINUE →</button></div>`);
-    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({intelligence:1,happiness:2}); _flushStatToast(); _grad_extracurriculars(); };
+    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({intelligence:0.1,happiness:0.2}); _flushStatToast(); _grad_extracurriculars(); };
   } else if (i >= 5.5) {
     _sophShow(`<div class="soph-badge">INTELLIGENCE ${i.toFixed(1)} — SOLID</div>
       <div class="soph-scene"><p>You're sharp. You passed the hard classes, held your own in discussions, and tested out of two subjects. No award, but your transcript reflects someone who actually engaged with the material. That's rarer than it sounds.</p></div>
@@ -4078,7 +4078,7 @@ function _grad_extracurriculars() {
     _sophShow(`<div class="soph-badge">SENIOR RECOGNITION · EC ${ec.toFixed(1)}</div>
       <div class="soph-scene"><p>At the senior assembly, your name is announced for the Student Involvement Award. Vice Principal Torres reads your activity list aloud. It takes a while. The crowd is impressed. This is the résumé you built over four years.</p></div>
       <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">CONTINUE →</button></div>`);
-    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({extracurriculars:1,happiness:2}); _flushStatToast(); _grad_happiness(); };
+    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({extracurriculars:0.1,happiness:0.2}); _flushStatToast(); _grad_happiness(); };
   } else if (ec >= 3.5) {
     _sophShow(`<div class="soph-badge">EC ${ec.toFixed(1)} — SOME INVOLVEMENT</div>
       <div class="soph-scene"><p>You showed up to some things. Put some clubs on the app, logged some hours. Respectable. Not remarkable. The résumé line is there; it just doesn't shine the way it could have.</p></div>
@@ -4088,7 +4088,7 @@ function _grad_extracurriculars() {
     _sophShow(`<div class="soph-badge">EC ${ec.toFixed(1)} — NOTHING TO SHOW</div>
       <div class="soph-scene"><p>The activity section of your college app had three lines, two of which were debatable. Four years in the building and you didn't build anything. No club, no team, no project, no legacy. That's on you. That's entirely on you.</p></div>
       <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">CONTINUE →</button></div>`);
-    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-1}); _grad_happiness(); };
+    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:-0.1}); _grad_happiness(); };
   }
 }
 
@@ -4099,7 +4099,7 @@ function _grad_happiness() {
     _sophShow(`<div class="soph-badge">HAPPINESS ${h.toFixed(1)} — A GOOD RUN</div>
       <div class="soph-scene"><p>You look around at the ceremony — the people you've known since freshman orientation, the teachers who cared, the moments that defined you — and you genuinely feel okay. Not happy in a forced way. Actually okay. That's rarer than most people make it look.</p></div>
       <div class="soph-nav"><span></span><button class="btn-primary" id="soph-next">CONTINUE →</button></div>`);
-    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:1}); _flushStatToast(); _grad_final(); };
+    document.getElementById('soph-next').onclick = () => { Engine.modifyStats({happiness:0.1}); _flushStatToast(); _grad_final(); };
   } else if (h >= 4.5) {
     _sophShow(`<div class="soph-badge">HAPPINESS ${h.toFixed(1)} — IT WAS FINE</div>
       <div class="soph-scene"><p>High school was fine. Some good years, some rough ones. You found your people, eventually. The ceremony is pleasant. You're ready for what comes next — partly because you're ready to leave this behind.</p></div>
@@ -4147,10 +4147,10 @@ const _COLLEGES = [
   { name:'UC Davis',                           prestige:3, min:{gpa:2.8,intelligence:4.5,extracurriculars:2} },
   { name:'Arizona State University (Honors)',  prestige:3, min:{gpa:2.7,intelligence:4.0,extracurriculars:2} },
   // prestige 2 — Local
-  { name:'San Jose State University',          prestige:2, min:{gpa:2.2,intelligence:3.0,extracurriculars:1} },
+  { name:'San Jose State University',          prestige:2, min:{gpa:2.2,intelligence:3.0,extracurriculars:0.1} },
   { name:'Cal State East Bay',                 prestige:2, min:{gpa:2.0,intelligence:2.5,extracurriculars:0} },
   // prestige 1 — Community
-  { name:'De Anza College',                    prestige:1, min:{gpa:0,intelligence:0,extracurriculars:0} },
+  { name:'De Anza College',                    prestige:0.1, min:{gpa:0,intelligence:0,extracurriculars:0} },
 ];
 
 function _assignCollege() {
@@ -4180,28 +4180,28 @@ function _assignCollege() {
 // ════════════════════════════════════════════════════════
 const _CAREER_PATHS = {
   5: [
-    { id:'cs_elite',   icon:'💻', label:'Computer Science / AI',     desc:'Top-tier CS program. Recruiting pipeline to FAANG before junior year.' },
-    { id:'finance',    icon:'📈', label:'Finance / Investment Banking', desc:'Finance track. Sophomore summer IB internship. Brutal and worth it.' },
-    { id:'pre_med',    icon:'🩺', label:'Pre-Med / Biology',          desc:'3.9 GPA required. Med school or bust. You knew this going in.' },
-    { id:'law_track',  icon:'⚖️', label:'Political Science / Pre-Law', desc:'Debate team, law review, Bar exam in 7 years.' },
+    { id:'cs_elite',   icon:null, label:'Computer Science / AI',     desc:'Top-tier CS program. Recruiting pipeline to FAANG before junior year.' },
+    { id:'finance',    icon:null, label:'Finance / Investment Banking', desc:'Finance track. Sophomore summer IB internship. Brutal and worth it.' },
+    { id:'pre_med',    icon:null, label:'Pre-Med / Biology',          desc:'3.9 GPA required. Med school or bust. You knew this going in.' },
+    { id:'law_track',  icon:null, label:'Political Science / Pre-Law', desc:'Debate team, law review, Bar exam in 7 years.' },
   ],
   4: [
-    { id:'cs_high',    icon:'💻', label:'Computer Science',           desc:'Solid program. Internships at mid-tier tech companies are realistic.' },
-    { id:'business',   icon:'🏢', label:'Business / Economics',       desc:'Finance, consulting, or grad school. Strong alumni network.' },
-    { id:'engineering',icon:'⚙️', label:'Engineering',               desc:'Mechanical, electrical, or civil. Steady demand, solid ceiling.' },
+    { id:'cs_high',    icon:null, label:'Computer Science',           desc:'Solid program. Internships at mid-tier tech companies are realistic.' },
+    { id:'business',   icon:null, label:'Business / Economics',       desc:'Finance, consulting, or grad school. Strong alumni network.' },
+    { id:'engineering',icon:null, label:'Engineering',               desc:'Mechanical, electrical, or civil. Steady demand, solid ceiling.' },
   ],
   3: [
-    { id:'cs_mid',     icon:'💻', label:'Information Technology',     desc:'IT and software development. Good market, realistic grind.' },
-    { id:'bio_sci',    icon:'🔬', label:'Biology / Public Health',    desc:'Research, health sector, or nursing path.' },
-    { id:'comm',       icon:'📢', label:'Communications / Media',     desc:'Journalism, marketing, content. Competitive but wide open.' },
+    { id:'cs_mid',     icon:null, label:'Information Technology',     desc:'IT and software development. Good market, realistic grind.' },
+    { id:'bio_sci',    icon:null, label:'Biology / Public Health',    desc:'Research, health sector, or nursing path.' },
+    { id:'comm',       icon:null, label:'Communications / Media',     desc:'Journalism, marketing, content. Competitive but wide open.' },
   ],
   2: [
-    { id:'trade',      icon:'🔧', label:'Business Administration',    desc:'Regional business track. Local companies, stable salary.' },
-    { id:'education',  icon:'📚', label:'Education',                  desc:'Teaching credential. Summers off. Meaningful work.' },
+    { id:'trade',      icon:null, label:'Business Administration',    desc:'Regional business track. Local companies, stable salary.' },
+    { id:'education',  icon:null, label:'Education',                  desc:'Teaching credential. Summers off. Meaningful work.' },
   ],
   1: [
-    { id:'transfer',   icon:'🔁', label:'Transfer Track to UC/CSU',   desc:'Two years, then transfer. The 2+2 path is real and it works.' },
-    { id:'vocational', icon:'🛠️', label:'Vocational / Trade',         desc:'Electrician, HVAC, plumbing. Six figures faster than most 4-year paths.' },
+    { id:'transfer',   icon:null, label:'Transfer Track to UC/CSU',   desc:'Two years, then transfer. The 2+2 path is real and it works.' },
+    { id:'vocational', icon:null, label:'Vocational / Trade',         desc:'Electrician, HVAC, plumbing. Six figures faster than most 4-year paths.' },
   ],
 };
 
@@ -4245,68 +4245,68 @@ function _showEnding(college, careerId) {
   let title, salary, icon, desc, flavor;
 
   if (p >= 5 && careerId === 'cs_elite' && intel >= 8) {
-    title = 'FAANG SOFTWARE ENGINEER'; icon = '🚀'; salary = '$185,000';
+    title = 'FAANG SOFTWARE ENGINEER'; icon = null; salary = '$185,000';
     desc = `Stanford or MIT CS. You get an offer sophomore year. By senior year you have a return internship and a full-time offer at $185k base. Stock options vest over four years. The total comp is closer to $300k. You live in a one-bedroom in SoMa and eat out every night.`;
     flavor = 'Peak outcome. You ran the table.';
   } else if (p >= 5 && careerId === 'finance' && intel >= 8) {
-    title = 'INVESTMENT BANKING ANALYST'; icon = '💰'; salary = '$220,000';
+    title = 'INVESTMENT BANKING ANALYST'; icon = null; salary = '$220,000';
     desc = `Bulge bracket. 80-hour weeks, two years of structured misery, and a title that opens every door afterward. Year-1 all-in comp: $220k. You call your parents every Sunday from a midtown hotel at 11 PM. They're proud. You're exhausted. You'd do it again.`;
     flavor = 'The classic grind. Respect.';
   } else if (p >= 5 && careerId === 'pre_med') {
-    title = 'MEDICAL SCHOOL ADMISSION'; icon = '🩺'; salary = '$0 (now)';
+    title = 'MEDICAL SCHOOL ADMISSION'; icon = null; salary = '$0 (now)';
     desc = `You maintain a 3.8 in the hardest major on campus, survive the MCAT, and get into a top-10 med school. You are $300,000 in debt, residency is seven years away, and you genuinely love what you're doing. You are exactly the person this path was designed for.`;
     flavor = 'Long road. Right destination.';
   } else if (p >= 5 && careerId === 'law_track') {
-    title = 'LAW REVIEW / PRE-LAW TRACK'; icon = '⚖️'; salary = '$160,000';
+    title = 'LAW REVIEW / PRE-LAW TRACK'; icon = null; salary = '$160,000';
     desc = `You end up at a T-14 law school. First year associate at a biglaw firm, $220k salary, and billing 2,200 hours a year. You know exactly what you signed up for. The firm is ranked. The work is real.`;
     flavor = 'Built for this. Now deliver.';
   } else if (p >= 4 && (careerId === 'cs_high' || careerId === 'cs_elite') && intel >= 6.5) {
-    title = 'MID-TIER TECH ENGINEER'; icon = '💻'; salary = '$130,000';
+    title = 'MID-TIER TECH ENGINEER'; icon = null; salary = '$130,000';
     desc = `You land a full-time SWE role at a mid-tier tech company out of Berkeley or UCLA. $130k base, decent equity, good work-life balance. You're comfortable. Not rich — but you're building toward it.`;
     flavor = 'Solid career. Real trajectory.';
   } else if (p >= 4 && careerId === 'business') {
-    title = 'MANAGEMENT CONSULTANT'; icon = '📊'; salary = '$95,000';
+    title = 'MANAGEMENT CONSULTANT'; icon = null; salary = '$95,000';
     desc = `MBB won't touch you out of undergrad. Big-4 will. You join Deloitte's strategy practice at $95k, travel 3 days a week, and spend your twenties learning how companies actually work. Most people can't handle the pace. You decide if you can.`;
     flavor = 'Respectable ceiling. High floor.';
   } else if (p >= 4 && careerId === 'engineering') {
-    title = 'MECHANICAL / CIVIL ENGINEER'; icon = '⚙️'; salary = '$88,000';
+    title = 'MECHANICAL / CIVIL ENGINEER'; icon = null; salary = '$88,000';
     desc = `You passed the FE exam junior year. Offer at a mid-size engineering firm, $88k starting. Licensed PE in 4 years. Steady, stable, and you can actually explain what you do at dinner.`;
     flavor = 'Dependable. You built something.';
   } else if (p >= 3 && careerId === 'cs_mid' && intel >= 5) {
-    title = 'SOFTWARE DEVELOPER'; icon = '🖥️'; salary = '$78,000';
+    title = 'SOFTWARE DEVELOPER'; icon = null; salary = '$78,000';
     desc = `State school CS gets you in the door. $78k starting at a regional tech firm. Not glamorous, not FAANG, but the runway is real. You grind LeetCode nights and weekends, get better, and start targeting the next tier.`;
     flavor = 'Underestimated. Climbing.';
   } else if (p >= 3 && careerId === 'comm' && happy >= 6) {
-    title = 'CONTENT CREATOR / MEDIA'; icon = '🎬'; salary = '$55,000';
+    title = 'CONTENT CREATOR / MEDIA'; icon = null; salary = '$55,000';
     desc = `Degree in communications, minor in digital media. You start at a content agency at $55k. Two years later you've built a side channel with 80k followers. The math starts to look interesting.`;
     flavor = 'Creative path. Nonlinear upside.';
   } else if (p >= 3 && careerId === 'bio_sci') {
-    title = 'RESEARCH ANALYST / PUBLIC HEALTH'; icon = '🔬'; salary = '$62,000';
+    title = 'RESEARCH ANALYST / PUBLIC HEALTH'; icon = null; salary = '$62,000';
     desc = `Research position at a state health department. $62k, meaningful work, clear path to a master's program on tuition reimbursement. This isn't glamorous. The work is real.`;
     flavor = 'Steady. You chose purpose.';
   } else if (sports >= 7.5 && (careerId === 'cs_mid' || careerId === 'cs_high' || careerId === 'cs_elite' || p >= 3)) {
-    title = 'DIVISION I WALK-ON ATHLETE'; icon = '🏆'; salary = 'Full Ride';
+    title = 'DIVISION I WALK-ON ATHLETE'; icon = null; salary = 'Full Ride';
     desc = `Thompson came through. Walk-on offer at a D1 program. The stipend is small, the scholarship is real, and you spend four years competing at the highest amateur level in the country. A handful of people get this. You're one of them.`;
     flavor = 'You earned every step of this.';
   } else if (p >= 2 && careerId === 'trade') {
-    title = 'REGIONAL BUSINESS CAREER'; icon = '🏢'; salary = '$58,000';
+    title = 'REGIONAL BUSINESS CAREER'; icon = null; salary = '$58,000';
     desc = `Business administration degree from a local state school, $58k at a regional firm. Consistent raises, solid benefits, real work. The ceiling is lower but so is the stress. You'll be fine.`;
     flavor = 'Stable ground. Build from here.';
   } else if (p >= 2 && careerId === 'education') {
-    title = 'HIGH SCHOOL TEACHER'; icon = '📚'; salary = '$52,000';
+    title = 'HIGH SCHOOL TEACHER'; icon = null; salary = '$52,000';
     desc = `You come back to a place like Westbrook. $52k starting, summers off, a pension, and twenty-five kids a day who need someone to actually care. You remember what that felt like when it was you. You'll be good at this.`;
     flavor = 'Full circle. This matters.';
   } else if (p === 1 && careerId === 'transfer') {
-    title = 'TRANSFER STUDENT — UC/CSU BOUND'; icon = '🔁'; salary = 'TBD';
+    title = 'TRANSFER STUDENT — UC/CSU BOUND'; icon = null; salary = 'TBD';
     desc = `De Anza to UCLA or UCSD via the guaranteed transfer agreement. Two years of focus gets you where a straight application could not. The GPA you build here is the GPA that gets you in. You have everything you need. Now use it.`;
     flavor = 'The 2+2. It works. Bet on yourself.';
   } else if (p === 1 && careerId === 'vocational') {
-    title = 'LICENSED ELECTRICIAN'; icon = '⚡'; salary = '$95,000+';
+    title = 'LICENSED ELECTRICIAN'; icon = null; salary = '$95,000+';
     desc = `Four-year apprenticeship. Union card. $95k+ five years out, $120k after ten. No student debt. In-demand skill set. People will always need electricity. You saw the math before most people your age even declared a major. Smart.`;
     flavor = 'Slept on. Correctly calculated.';
   } else {
     // Generic fallback
-    title = 'FINDING YOUR WAY'; icon = '🌍'; salary = 'TBD';
+    title = 'FINDING YOUR WAY'; icon = null; salary = 'TBD';
     desc = `You graduate from ${college.name}. The career path isn't clear yet — and that's okay. You have a degree, some skills, and four years of experience being a person under pressure. The job market is waiting. So is the rest of your life.`;
     flavor = 'Everyone starts somewhere.';
   }
@@ -4603,7 +4603,7 @@ function _sophBrawlPhase(done) {
     window._brawlTournamentOnly();
   };
   document.getElementById('brawl-no').onclick = () => {
-    Engine.modifyStats({ stress: -1, extracurriculars: -1 }); _flushStatToast();
+    Engine.modifyStats({ stress: -0.1, extracurriculars: -0.1 }); _flushStatToast();
     Engine.setFlag('brawl_tournament_declined');
     _sophShow(`
       <div class="soph-badge">PHONE</div>
@@ -4630,7 +4630,7 @@ function _sophPSATPhase(done) {
     </div>
   `);
   document.getElementById('psat-study').onclick = () => {
-    Engine.modifyStats({ gpa: -1, happiness: -1, stress: +2, sleep: -1 }); _flushStatToast();
+    Engine.modifyStats({ gpa: -0.1, happiness: -0.1, stress: +0.2, sleep: -0.1 }); _flushStatToast();
     Engine.setFlag('psat_studied');
     _sophShow(`
       <div class="soph-badge">PSAT — RESULT</div>
@@ -4640,7 +4640,7 @@ function _sophPSATPhase(done) {
     document.getElementById('soph-done').onclick = () => { _sophHide(() => done && done()); };
   };
   document.getElementById('psat-wing').onclick = () => {
-    Engine.modifyStats({ happiness: +1, stress: -1 }); _flushStatToast();
+    Engine.modifyStats({ happiness: +0.1, stress: -0.1 }); _flushStatToast();
     Engine.setFlag('psat_skipped_prep');
     _sophShow(`
       <div class="soph-badge">PSAT — RESULT</div>
@@ -4707,8 +4707,8 @@ function _apcsa1_beat4() {
       <button class="soph-choice" id="sc-c"><span class="soph-choice-label">SHRUG AND PACK UP</span></button>
     </div>
     <div class="soph-nav"><span class="soph-progress">4 / 5</span></div>`);
-  document.getElementById('sc-a').onclick = () => { Engine.modifyStats({ friendships:1, integrity:1 }); _flushStatToast(); _apcsa1_beat5('You spend five minutes at the board. He gets it.'); };
-  document.getElementById('sc-b').onclick = () => { Engine.modifyStats({ friendships:1 }); _flushStatToast(); _apcsa1_beat5('Close enough. He nods and writes something down.'); };
+  document.getElementById('sc-a').onclick = () => { Engine.modifyStats({ friendships:0.1, integrity:0.1 }); _flushStatToast(); _apcsa1_beat5('You spend five minutes at the board. He gets it.'); };
+  document.getElementById('sc-b').onclick = () => { Engine.modifyStats({ friendships:0.1 }); _flushStatToast(); _apcsa1_beat5('Close enough. He nods and writes something down.'); };
   document.getElementById('sc-c').onclick = () => { _apcsa1_beat5('You leave. He figures it out on his own, probably.'); };
 }
 function _apcsa1_beat5(narr) {
@@ -4829,12 +4829,12 @@ function _apcsa_ambulance_scene() {
   `;
 
   const beats = [
-    { ms: 600,  txt: '📢  "SOMEONE CALL THE NURSE! NOW!"' },
+    { ms: 600,  txt: '  "SOMEONE CALL THE NURSE! NOW!"' },
     { ms: 1800, txt: 'Two teachers sprint down the hallway from opposite ends.' },
-    { ms: 3200, txt: '🚑  Sirens outside. Getting louder. Red and blue through the windows.' },
+    { ms: 3200, txt: '  Sirens outside. Getting louder. Red and blue through the windows.' },
     { ms: 4600, txt: 'Paramedics push through the double doors with a gurney. The hallway clears in seconds.' },
     { ms: 6100, txt: '"Jaw fracture — possible. Pulse stable." Neck brace. Backboard. You can\'t feel your face.' },
-    { ms: 7800, txt: '🚑  The exam room empties out to watch through the glass. Chen stands in the doorway, not moving.' },
+    { ms: 7800, txt: '  The exam room empties out to watch through the glass. Chen stands in the doorway, not moving.' },
     { ms: 9400, txt: 'Ambulance doors. Cold air. The siren starts again. Then everything goes very quiet.' },
   ];
 
@@ -4868,7 +4868,7 @@ function _apcsa_ambulance_scene() {
 }
 
 function _apcsa_hospital() {
-  Engine.modifyStats({ stress:3, sleep:-2, gpa:-1 }); _flushStatToast();
+  Engine.modifyStats({ stress:0.3, sleep:-0.2, gpa:-0.1 }); _flushStatToast();
   _sophShow(`
     <div class="soph-badge">VALLEY MEDICAL CENTER · ROOM 7</div>
     <h1 class="soph-title" style="color:#b8d0f0;font-size:2.4rem">YOU WAKE UP.</h1>
@@ -4986,7 +4986,7 @@ function _robotics_build_done(errors, timeLeft, late) {
     ? { extracurriculars:1, intelligence:1 }
     : { extracurriculars:1, stress:1 };
   const deltaStr = perfect ? '+2 EC · +1 INT · GPA +0.2' : decent ? '+1 EC · +1 INT' : '+1 EC · +1 STRESS';
-  Engine.modifyStats(delta); if (late) Engine.modifyStats({extracurriculars:-0.5}); _flushStatToast();
+  Engine.modifyStats(delta); if (late) Engine.modifyStats({extracurriculars:-0.2}); _flushStatToast();
 
   _sophShow(`
     <div class="soph-badge">ROOM 108 · ROBOTICS TEAM</div>
@@ -5096,7 +5096,7 @@ function _football_sprint_done(taps, late) {
     : `${taps} steps. ${time}. Hoffman: "You've got more in there. We'll find it."`;
   const delta = elite ? { athleticism:3, physique:2 } : good ? { athleticism:2, physique:1 } : { athleticism:1, physique:1 };
   const ds    = elite ? '+3 ATH · +2 PHY' : good ? '+2 ATH · +1 PHY' : '+1 ATH · +1 PHY';
-  Engine.modifyStats(delta); if (late) Engine.modifyStats({ athleticism:-1 }); _flushStatToast();
+  Engine.modifyStats(delta); if (late) Engine.modifyStats({ athleticism:-0.1 }); _flushStatToast();
 
   _sophShow(`
     <div class="soph-badge">ATHLETIC FIELD · VARSITY FOOTBALL</div>
@@ -5112,11 +5112,11 @@ function _football_sprint_done(taps, late) {
     <div class="soph-nav"><span class="soph-progress">3 / 3</span></div>
   `);
   document.getElementById('rt-a').onclick = () => {
-    Engine.modifyStats({ athleticism:2, toxicity:1 }); _flushStatToast();
+    Engine.modifyStats({ athleticism:0.2, toxicity:0.1 }); _flushStatToast();
     _football_end('You sell the fake hard. Corner bites. Hoffman whistles twice. "Do it again."', '+2 ATH · +1 TOX');
   };
   document.getElementById('rt-b').onclick = () => {
-    Engine.modifyStats({ athleticism:1, integrity:1 }); _flushStatToast();
+    Engine.modifyStats({ athleticism:0.1, integrity:0.1 }); _flushStatToast();
     _football_end('Clean break at the cone. Hoffman: "That\'s the standard. Every time."', '+1 ATH · +1 INT');
   };
 }
@@ -5153,9 +5153,9 @@ function _studies1_beat2() {
       <button class="soph-choice" id="st-b"><span class="soph-choice-label">"YOU HAVE THAT CLASS WITH MR. CHEN, RIGHT?"</span></button>
       <button class="soph-choice" id="st-c"><span class="soph-choice-label">WAIT FOR THEM TO GO FIRST</span></button>
     </div><div class="soph-nav"><span class="soph-progress">2 / 5</span></div>`);
-  document.getElementById('st-a').onclick = () => { Engine.modifyStats({relationships:1,integrity:1}); _flushStatToast(); _studies1_beat3('"Oh — yeah. Hey." They smile once. Something shifted.'); };
-  document.getElementById('st-b').onclick = () => { Engine.modifyStats({relationships:1,selfAwareness:1}); _flushStatToast(); _studies1_beat3('"Yeah, Chen is brutal." You both laugh. Nguyen says time.'); };
-  document.getElementById('st-c').onclick = () => { Engine.modifyStats({selfAwareness:1}); _flushStatToast(); _studies1_beat3('"I\'m Jordan." You give your name back.'); };
+  document.getElementById('st-a').onclick = () => { Engine.modifyStats({relationships:0.1,integrity:0.1}); _flushStatToast(); _studies1_beat3('"Oh — yeah. Hey." They smile once. Something shifted.'); };
+  document.getElementById('st-b').onclick = () => { Engine.modifyStats({relationships:0.1,selfAwareness:0.1}); _flushStatToast(); _studies1_beat3('"Yeah, Chen is brutal." You both laugh. Nguyen says time.'); };
+  document.getElementById('st-c').onclick = () => { Engine.modifyStats({selfAwareness:0.1}); _flushStatToast(); _studies1_beat3('"I\'m Jordan." You give your name back.'); };
 }
 function _studies1_beat3(narr) {
   _sophShow(`<div class="soph-badge">ROOM 119 · STUDIES PERIOD</div>
@@ -5167,9 +5167,9 @@ function _studies1_beat3(narr) {
       <button class="soph-choice" id="st2-b"><span class="soph-choice-label">ASK WHAT THEY THINK FIRST</span></button>
       <button class="soph-choice" id="st2-c"><span class="soph-choice-label">SPLIT THE WORK</span></button>
     </div><div class="soph-nav"><span class="soph-progress">3 / 5</span></div>`);
-  document.getElementById('st2-a').onclick = () => { Engine.modifyStats({gpa:1,relationships:-1}); _flushStatToast(); _studies1_beat4('You drive. Strong thesis but they seem distant.','+1 GPA · −1 REL'); };
-  document.getElementById('st2-b').onclick = () => { Engine.modifyStats({relationships:2,gpa:1}); _flushStatToast(); _studies1_beat4('Their angle is better than yours. The thesis is good. So is the conversation.','+2 REL · +1 GPA'); };
-  document.getElementById('st2-c').onclick = () => { Engine.modifyStats({gpa:1}); _flushStatToast(); _studies1_beat4('Efficient. Professional. Transactional.','+1 GPA'); };
+  document.getElementById('st2-a').onclick = () => { Engine.modifyStats({gpa:0.1,relationships:-0.1}); _flushStatToast(); _studies1_beat4('You drive. Strong thesis but they seem distant.','+1 GPA · −1 REL'); };
+  document.getElementById('st2-b').onclick = () => { Engine.modifyStats({relationships:0.2,gpa:0.1}); _flushStatToast(); _studies1_beat4('Their angle is better than yours. The thesis is good. So is the conversation.','+2 REL · +1 GPA'); };
+  document.getElementById('st2-c').onclick = () => { Engine.modifyStats({gpa:0.1}); _flushStatToast(); _studies1_beat4('Efficient. Professional. Transactional.','+1 GPA'); };
 }
 function _studies1_beat4(narr, delta) {
   _sophShow(`<div class="soph-badge">ROOM 119 · STUDIES PERIOD</div>
@@ -5180,8 +5180,8 @@ function _studies1_beat4(narr, delta) {
       <button class="soph-choice" id="st3-b"><span class="soph-choice-label">"THAT WASN'T AS BAD AS I THOUGHT."</span></button>
       <button class="soph-choice" id="st3-c"><span class="soph-choice-label">JUST SMILE AND NOD</span></button>
     </div><div class="soph-nav"><span class="soph-progress">4 / 5</span></div>`);
-  document.getElementById('st3-a').onclick = () => { Engine.modifyStats({relationships:1}); _flushStatToast(); _studies1_beat5('They smile once before the door closes.'); };
-  document.getElementById('st3-b').onclick = () => { Engine.modifyStats({relationships:2}); _flushStatToast(); _studies1_beat5('They actually laugh. "Same." Then they\'re gone. The day feels different.'); };
+  document.getElementById('st3-a').onclick = () => { Engine.modifyStats({relationships:0.1}); _flushStatToast(); _studies1_beat5('They smile once before the door closes.'); };
+  document.getElementById('st3-b').onclick = () => { Engine.modifyStats({relationships:0.2}); _flushStatToast(); _studies1_beat5('They actually laugh. "Same." Then they\'re gone. The day feels different.'); };
   document.getElementById('st3-c').onclick = () => { _studies1_beat5('They give you one look and leave.'); };
 }
 function _studies1_beat5(narr) {
@@ -5211,9 +5211,9 @@ function _studies2_beat2() {
       <button class="soph-choice" id="gp-b"><span class="soph-choice-label">TELL MR. NGUYEN YOUR GROUP ISN'T WORKING</span></button>
       <button class="soph-choice" id="gp-c"><span class="soph-choice-label">ASSIGN TASKS OUT LOUD</span><span class="soph-choice-hint">"Tyler, intro. Camille, section two." Make it direct.</span></button>
     </div><div class="soph-nav"><span class="soph-progress">2 / 4</span></div>`);
-  document.getElementById('gp-a').onclick = () => { Engine.modifyStats({gpa:1,stress:2,integrity:-1}); _flushStatToast(); _studies2_beat3('You write everything. Nguyen glances at you. He knows. The outline is the best in the room. You\'re also furious.','+1 GPA · +2 STRESS · −1 INT'); };
-  document.getElementById('gp-b').onclick = () => { Engine.modifyStats({integrity:2,stress:-1,toxicity:1}); _flushStatToast(); _studies2_beat3('Nguyen comes over. Doesn\'t say anything — just watches. Suddenly everyone has opinions.','+2 INT · −1 STRESS · +1 TOX'); };
-  document.getElementById('gp-c').onclick = () => { Engine.modifyStats({friendships:1,extracurriculars:1,stress:1}); _flushStatToast(); _studies2_beat3('"Tyler — intro. Camille — sources. Devon — conclusion." It works. Barely.','+1 FRND · +1 EC · +1 STRESS'); };
+  document.getElementById('gp-a').onclick = () => { Engine.modifyStats({gpa:0.1,stress:0.2,integrity:-0.1}); _flushStatToast(); _studies2_beat3('You write everything. Nguyen glances at you. He knows. The outline is the best in the room. You\'re also furious.','+1 GPA · +2 STRESS · −1 INT'); };
+  document.getElementById('gp-b').onclick = () => { Engine.modifyStats({integrity:0.2,stress:-0.1,toxicity:0.1}); _flushStatToast(); _studies2_beat3('Nguyen comes over. Doesn\'t say anything — just watches. Suddenly everyone has opinions.','+2 INT · −1 STRESS · +1 TOX'); };
+  document.getElementById('gp-c').onclick = () => { Engine.modifyStats({friendships:0.1,extracurriculars:0.1,stress:0.1}); _flushStatToast(); _studies2_beat3('"Tyler — intro. Camille — sources. Devon — conclusion." It works. Barely.','+1 FRND · +1 EC · +1 STRESS'); };
 }
 function _studies2_beat3(narr, delta) {
   _sophShow(`<div class="soph-badge">ROOM 119 · STUDIES PERIOD</div>
@@ -5277,27 +5277,27 @@ function _phys1_drop() {
   // 9 = perfect, 7-8 = good, 5-6 = marginal, 3-4 = poor, 2 = catastrophic
   let grade, gpaD, stressD, resultColor, resultLine, torresLine;
   if (_eggScore === 9) {
-    grade='PERFECT'; gpaD=2; stressD=-1; resultColor='#6bcb77';
+    grade='PERFECT'; gpaD=0.2; stressD=-0.1; resultColor='#6bcb77';
     resultLine='✓ EGG SURVIVED — FLAWLESS.';
     torresLine='"Textbook execution. Full marks. Both of them."';
   } else if (_eggScore >= 7) {
-    grade='GOOD'; gpaD=1; stressD=0; resultColor='#a8d8a0';
+    grade='GOOD'; gpaD=0.1; stressD=0; resultColor='#a8d8a0';
     resultLine='✓ EGG SURVIVED — MINOR HAIRLINE CRACK.';
     torresLine='"Survived, technically. Some energy transfer at impact. Decent."';
   } else if (_eggScore >= 5) {
-    grade='MARGINAL'; gpaD=0; stressD=1; resultColor='#f7b731';
+    grade='MARGINAL'; gpaD=0; stressD=0.1; resultColor='#f7b731';
     resultLine='~ EGG CRACKED — PARTIAL CREDIT ONLY.';
     torresLine='"Cracked. Your cushioning was insufficient. Half marks."';
   } else if (_eggScore >= 3) {
-    grade='POOR'; gpaD=-1; stressD=2; resultColor='#fc9d5a';
+    grade='POOR'; gpaD=-0.1; stressD=0.2; resultColor='#fc9d5a';
     resultLine='✗ EGG BROKEN — MINIMAL CREDIT.';
     torresLine='"That\'s a failed design. You get one point for showing up."';
   } else {
-    grade='CATASTROPHIC'; gpaD=-2; stressD=3; resultColor='#fc7b54';
+    grade='CATASTROPHIC'; gpaD=-0.2; stressD=0.3; resultColor='#fc7b54';
     resultLine='✗ EGG DESTROYED ON IMPACT.';
     torresLine='"Did you even try? Zero. Log it as a learning experience." The class winces.';
   }
-  Engine.modifyStats({ gpa: gpaD, stress: stressD, extracurriculars: 1 }); _flushStatToast();
+  Engine.modifyStats({ gpa: gpaD, stress: stressD, extracurriculars: 0.2 }); _flushStatToast();
   _sophShow(`<div class="soph-badge">ROOM 203 — EGG DROP · THE DROP</div>
     <div class="soph-scene"><p>Torres lines everyone up at the second-floor balcony. She counts down. Three seconds of silence.</p></div>
     <div class="soph-scene" style="font-size:20px;text-align:center;padding:14px 0;color:${resultColor};font-weight:bold;letter-spacing:0.04em">
@@ -5330,12 +5330,12 @@ function _fieldtrip_park() {
   _buildGAMap();
 }
 const GA_RIDES = [
-  { id:'demon',     label:'The Demon',    x:50,  y:40,  w:100,h:55, color:'#8B2020', desc:'Classic steel coaster. Four inversions. 3.5g.',         stats:{athleticism:1,stress:1,happiness:2} },
-  { id:'gold',      label:'Gold Striker', x:190, y:35,  w:110,h:60, color:'#8B6914', desc:'Tallest wooden coaster on the West Coast. 103 ft drop.', stats:{athleticism:2,stress:2,happiness:3} },
-  { id:'flight',    label:'Flight Deck',  x:340, y:40,  w:110,h:55, color:'#1a4a7a', desc:'Inverted coaster. Feet dangle. 4g on the loop.',         stats:{athleticism:2,stress:3,happiness:2,sleep:-1} },
-  { id:'log',       label:'Loggers Run',  x:50,  y:155, w:100,h:55, color:'#2a6e2a', desc:'Log flume. A 45-foot plunge. You will get soaked.',       stats:{happiness:2,stress:-1} },
-  { id:'skytower',  label:'Sky Tower',    x:190, y:160, w:100,h:55, color:'#4a3a8a', desc:'Observation tower. 30 seconds up. View of the whole bay.',stats:{selfAwareness:2,stress:-2,happiness:1} },
-  { id:'vortex',    label:'Vortex',       x:340, y:155, w:110,h:55, color:'#7a3a20', desc:'Stand-up coaster. Your quads will not thank you.',        stats:{athleticism:2,physique:1,stress:2} },
+  { id:'demon',     label:'The Demon',    x:50,  y:40,  w:100,h:55, color:'#8B2020', desc:'Classic steel coaster. Four inversions. 3.5g.',         stats:{athleticism:0.1,stress:0.1,happiness:0.2} },
+  { id:'gold',      label:'Gold Striker', x:190, y:35,  w:110,h:60, color:'#8B6914', desc:'Tallest wooden coaster on the West Coast. 103 ft drop.', stats:{athleticism:0.2,stress:0.2,happiness:0.3} },
+  { id:'flight',    label:'Flight Deck',  x:340, y:40,  w:110,h:55, color:'#1a4a7a', desc:'Inverted coaster. Feet dangle. 4g on the loop.',         stats:{athleticism:0.2,stress:0.3,happiness:0.2,sleep:-0.1} },
+  { id:'log',       label:'Loggers Run',  x:50,  y:155, w:100,h:55, color:'#2a6e2a', desc:'Log flume. A 45-foot plunge. You will get soaked.',       stats:{happiness:0.2,stress:-0.1} },
+  { id:'skytower',  label:'Sky Tower',    x:190, y:160, w:100,h:55, color:'#4a3a8a', desc:'Observation tower. 30 seconds up. View of the whole bay.',stats:{selfAwareness:0.2,stress:-0.2,happiness:0.1} },
+  { id:'vortex',    label:'Vortex',       x:340, y:155, w:110,h:55, color:'#7a3a20', desc:'Stand-up coaster. Your quads will not thank you.',        stats:{athleticism:0.2,physique:0.1,stress:0.2} },
 ];
 let _gaVisited = new Set();
 function _buildGAMap() {
@@ -5391,12 +5391,12 @@ function _buildGAMap() {
   };
   document.getElementById('ga-done-btn').onclick = () => {
     if (_gaVisited.size > 4) { _fieldtrip_missedbus(); return; }
-    Engine.modifyStats({happiness:2,stress:-1}); _flushStatToast();
+    Engine.modifyStats({happiness:0.2,stress:-0.1}); _flushStatToast();
     _sophDone('soph_physics_trip_done');
   };
 }
 function _fieldtrip_missedbus() {
-  Engine.modifyStats({ happiness: -2, stress: 4, gpa: -1, relationships: -2 }); _flushStatToast();
+  Engine.modifyStats({ happiness: -0.4, stress: 0.8, gpa: -0.3, relationships: -0.2 }); _flushStatToast();
   _sophShow(`<div class="soph-badge">GREAT AMERICA — 4:07 PM</div>
     <h1 class="soph-title" style="color:#fc7b54">YOU MISSED THE BUS.</h1>
     <div class="soph-scene"><p>You sprint to the front gate — lungs burning, worksheet flying out of your hands. The parking lot is empty. The bus is gone.</p></div>
@@ -5438,7 +5438,7 @@ function _brawl_intro() {
     </div>`);
   document.getElementById('brawl-yes').onclick = () => { Engine.setFlag('brawl_tournament'); _brawl_tournament(1,32); };
   document.getElementById('brawl-no').onclick  = () => {
-    Engine.modifyStats({extracurriculars:1,intelligence:1}); _flushStatToast();
+    Engine.modifyStats({extracurriculars:0.1,intelligence:0.1}); _flushStatToast();
     _sophShow(`<div class="soph-badge">ESPORTS CLUB — PRACTICE</div><div class="soph-scene"><p>Scrimmages for two hours. Solid practice.</p></div><div class="soph-stat-delta">+1 EC · +1 INT</div><div class="soph-nav"><span></span><button class="btn-primary" id="soph-done">CONTINUE →</button></div>`);
     document.getElementById('soph-done').onclick = () => _sophDone('soph_brawl_done');
   };
@@ -5472,20 +5472,20 @@ function _brawl_tournament(round, remaining) {
   });
 }
 function _brawl_roundWin(round, remaining, pick, cpu) {
-  Engine.modifyStats({extracurriculars:1,intelligence:1,friendships:1}); _flushStatToast();
+  Engine.modifyStats({extracurriculars:0.1,intelligence:0.1,friendships:0.1}); _flushStatToast();
   const nextRound = round*2, nextRemaining = Math.floor(remaining/2), isFinal = nextRound > 16;
   _sophShow(`<div class="soph-badge">BRAWL STARS · WIN</div>
     <div class="soph-scene"><p><strong style="color:#f7b731">${pick}</strong> beats <strong style="color:#fc7b54">${cpu}</strong>. ${isFinal?'You win the tournament. The chat explodes. Okafor stands up from his desk.':`You advance. ${nextRemaining} players left.`}</p></div>
     <div class="soph-stat-delta">+1 EC · +1 INT · +1 FRIENDSHIPS</div>
     <div class="soph-nav"><span></span>${isFinal?`<button class="btn-primary" id="brawl-done">CLAIM VICTORY →</button>`:`<button class="btn-primary" id="brawl-next">NEXT ROUND →</button>`}</div>`);
   if (isFinal) {
-    document.getElementById('brawl-done').onclick = () => { Engine.modifyStats({extracurriculars:2,friendships:2,intelligence:2}); _flushStatToast(); _sophDone('brawl_champion', 'soph_brawl_done'); };
+    document.getElementById('brawl-done').onclick = () => { Engine.modifyStats({extracurriculars:0.2,friendships:0.2,intelligence:0.2}); _flushStatToast(); _sophDone('brawl_champion', 'soph_brawl_done'); };
   } else {
     document.getElementById('brawl-next').onclick = () => _brawl_tournament(nextRound, nextRemaining);
   }
 }
 function _brawl_roundLose(round, pick, cpu) {
-  Engine.modifyStats({extracurriculars:1,intelligence:1}); _flushStatToast();
+  Engine.modifyStats({extracurriculars:0.1,intelligence:0.1}); _flushStatToast();
   _sophShow(`<div class="soph-badge">BRAWL STARS · ELIMINATED</div>
     <div class="soph-scene"><p><strong style="color:#f7b731">${pick}</strong> loses to <strong style="color:#6bcb77">${cpu}</strong>. ${Math.log2(round)===0?'First round exit.':'You made it ' + Math.log2(round+1) + ' rounds in. That\'s something.'}</p></div>
     <div class="soph-stat-delta">+1 EC · +1 INT</div>
@@ -5521,7 +5521,7 @@ function _fitness_commitment() {
   document.getElementById('fit-high').onclick = () => _fitness_workout('high');
 }
 function _fitness_workout(level) {
-  const o = { low:{stats:{physique:1,athleticism:1},narr:'One session a week. Your energy levels up slightly after a month.'}, medium:{stats:{physique:2,athleticism:2,sleep:1,stress:-1},narr:'Three days a week. You see actual change. Your sleep improves too.'}, high:{stats:{physique:3,athleticism:3,sleep:-1,stress:2},narr:'Five days a week. Best shape of your life. Also exhausted.'} }[level];
+  const o = { low:{stats:{physique:0.1,athleticism:0.1},narr:'One session a week. Your energy levels up slightly after a month.'}, medium:{stats:{physique:0.2,athleticism:0.2,sleep:0.1,stress:-0.1},narr:'Three days a week. You see actual change. Your sleep improves too.'}, high:{stats:{physique:0.3,athleticism:0.3,sleep:-0.1,stress:0.2},narr:'Five days a week. Best shape of your life. Also exhausted.'} }[level];
   Engine.modifyStats(o.stats); _flushStatToast();
   _sophShow(`<div class="soph-badge">MONTA VISTA HIGH · GYM</div>
     <div class="soph-scene"><p>${o.narr}</p></div>
