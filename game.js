@@ -130,22 +130,22 @@ const BACKGROUNDS = [
 ];
 
 const SECRETS = [
-  { id: 'anxiety',      label: 'You have anxiety',                  desc: 'You manage it. Mostly.',                                     icon: null },
-  { id: 'learning',     label: 'Learning disability (hidden)',       desc: "You've been compensating for years.",                         icon: null },
-  { id: 'wealthy',      label: 'Secretly very wealthy',             desc: "You don't look it. On purpose.",                             icon: null },
-  { id: 'talent',       label: 'Hidden artistic talent',            desc: "You haven't shown anyone yet.",                              icon: null },
-  { id: 'family',       label: 'Difficult home life',               desc: "You leave it at the door. Every single day.",                icon: null },
-  { id: 'ex_athlete',   label: 'Quit a sport you were elite at',    desc: 'The muscle memory stays.',                                   icon: null },
-  { id: 'crush',        label: 'Already in love with someone here', desc: "First day. Already complicated.",                            icon: null },
-  { id: 'following',    label: 'Anonymous online following',        desc: "Thousands know your work. Not your face.",                   icon: null },
-  { id: 'chronic',      label: 'Chronic illness — managed, hidden', desc: "Invisible. Exhausting. Nobody knows.",                       icon: null },
-  { id: 'therapy',      label: "You've been in therapy for 2 years", desc: "Best decision you ever made. You'll never tell anyone.",   icon: null},
-  { id: 'ghosted',      label: 'You ghosted your entire old friend group', desc: "They still don't know why. Neither do you, fully.",   icon: null },
-  { id: 'writer',       label: 'You write — real stuff, dark stuff', desc: "Not for class. It goes somewhere nobody will ever read.",   icon: null },
-  { id: 'bad_breakup',  label: 'A relationship ended badly',        desc: "It shaped you more than you want to admit.",                 icon: null },
-  { id: 'secret_keep',  label: "You know someone's secret",         desc: "Something big. You haven't decided what to do with it.",    icon: null },
-  { id: 'language',     label: 'Fluent in a language nobody here speaks', desc: "You use it to think. To stay private.",               icon: null },
-  { id: 'dropout_risk', label: 'You almost didn\'t come back this year', desc: "Something almost changed everything. It still might.", icon: null },
+  { id: 'anxiety',      label: 'You have anxiety',                  desc: 'You manage it. Mostly.',                                     icon: '' },
+  { id: 'learning',     label: 'Learning disability (hidden)',       desc: "You've been compensating for years.",                         icon: '' },
+  { id: 'wealthy',      label: 'Secretly very wealthy',             desc: "You don't look it. On purpose.",                             icon: '' },
+  { id: 'talent',       label: 'Hidden artistic talent',            desc: "You haven't shown anyone yet.",                              icon: '' },
+  { id: 'family',       label: 'Difficult home life',               desc: "You leave it at the door. Every single day.",                icon: '' },
+  { id: 'ex_athlete',   label: 'Quit a sport you were elite at',    desc: 'The muscle memory stays.',                                   icon: '' },
+  { id: 'crush',        label: 'Already in love with someone here', desc: "First day. Already complicated.",                            icon: '' },
+  { id: 'following',    label: 'Anonymous online following',        desc: "Thousands know your work. Not your face.",                   icon: '' },
+  { id: 'chronic',      label: 'Chronic illness — managed, hidden', desc: "Invisible. Exhausting. Nobody knows.",                       icon: '' },
+  { id: 'therapy',      label: "You've been in therapy for 2 years", desc: "Best decision you ever made. You'll never tell anyone.",   icon: ''},
+  { id: 'ghosted',      label: 'You ghosted your entire old friend group', desc: "They still don't know why. Neither do you, fully.",   icon: '' },
+  { id: 'writer',       label: 'You write — real stuff, dark stuff', desc: "Not for class. It goes somewhere nobody will ever read.",   icon: '' },
+  { id: 'bad_breakup',  label: 'A relationship ended badly',        desc: "It shaped you more than you want to admit.",                 icon: '' },
+  { id: 'secret_keep',  label: "You know someone's secret",         desc: "Something big. You haven't decided what to do with it.",    icon: '' },
+  { id: 'language',     label: 'Fluent in a language nobody here speaks', desc: "You use it to think. To stay private.",               icon: '' },
+  { id: 'dropout_risk', label: 'You almost didn\'t come back this year', desc: "Something almost changed everything. It still might.", icon: '' },
 ];
 
 // ── Utility ───────────────────────────────────────────
@@ -339,10 +339,10 @@ function applyPersonalityStats(p) {
 //  SCENE 5 — RANDOMIZE
 // ════════════════════════════════════════════════════════
 const RANDOM_SEQUENCE = [
-  { key: 'height',     label: 'HEIGHT',     pool: HEIGHTS,     icon: null, accent: '#F7B731', glow: 'rgba(247,183,49,0.18)' },
-  { key: 'rumor',      label: 'RUMOR',      pool: RUMORS,      icon: null, accent: '#FC7B54', glow: 'rgba(252,123,84,0.2)',  special: true },
-  { key: 'background', label: 'BACKGROUND', pool: BACKGROUNDS, icon: null, accent: '#6BCB77', glow: 'rgba(107,203,119,0.2)', special: true },
-  { key: 'secret',     label: 'SECRET',     pool: SECRETS,     icon: null, accent: '#E8849A', glow: 'rgba(232,132,154,0.2)', special: true, hidden: true },
+  { key: 'height',     label: 'HEIGHT',     pool: HEIGHTS,     icon: '', accent: '#F7B731', glow: 'rgba(247,183,49,0.18)' },
+  { key: 'rumor',      label: 'RUMOR',      pool: RUMORS,      icon: '', accent: '#FC7B54', glow: 'rgba(252,123,84,0.2)',  special: true },
+  { key: 'background', label: 'BACKGROUND', pool: BACKGROUNDS, icon: '', accent: '#6BCB77', glow: 'rgba(107,203,119,0.2)', special: true },
+  { key: 'secret',     label: 'SECRET',     pool: SECRETS,     icon: '', accent: '#E8849A', glow: 'rgba(232,132,154,0.2)', special: true, hidden: true },
 ];
 
 function startRandomizeScene() {
@@ -1037,25 +1037,25 @@ function _queueStatToast(key, delta) {
 const CLUB_DATA = {
   robotics: {
     name:       'ROBOTICS CLUB',
-    icon:       null,
+    icon:       '',
     desc:       'Build robots, write code, compete nationally.',
-    flavor:     null,
+    flavor:     '',
     joinDeltas: { gpa: -0.2, friendships: 0.4, relationships: 0.2, extracurriculars: 2.8 },
     missDeltas: { },
   },
   football: {
     name:       'FOOTBALL TEAM',
-    icon:       null,
+    icon:       '',
     desc:       'Practice every day after school.',
-    flavor:     null,
+    flavor:     '',
     joinDeltas: { gpa: -0.5, friendships: 0.8, sports: 4.0, intelligence: -1, extracurriculars: 1.2 },
     missDeltas: { },
   },
   none: {
     name:       'NO COMMITMENT',
-    icon:       null,
+    icon:       '',
     desc:       'Focus on your studies.',
-    flavor:     null,
+    flavor:     '',
     joinDeltas: { gpa: 0.4, friendships: -0.8, intelligence: 0.3, extracurriculars: -1.1 },
     missDeltas: {},
   },
@@ -1237,7 +1237,7 @@ const PIG_STATIONS = [
   {
     id: 'A', system: 'Cardiovascular System',
     setup: 'The pig is pinned supine. The chest cavity is open, exposing a dark reddish-purple, fist-sized organ nestled between two deflated, pale lungs.',
-    region: 'HEART', emoji: null,
+    region: 'HEART', emoji: '',
     question: 'What is the primary function of the heart?',
     choices: ['Filter toxins from the bloodstream', 'Pump blood through the circulatory system', 'Regulate body temperature'],
     correct: 1,
@@ -1247,7 +1247,7 @@ const PIG_STATIONS = [
   {
     id: 'B', system: 'Digestive System',
     setup: 'The abdominal cavity is pinned open. A large, multi-lobed brownish-red organ dominates the upper right quadrant of the body cavity.',
-    region: 'LIVER', emoji: null,
+    region: 'LIVER', emoji: '',
     question: 'What are the two main functions of the liver?',
     choices: ['Pumping blood and filtering oxygen', 'Producing bile and detoxifying blood', 'Gas exchange and nutrient absorption'],
     correct: 1,
@@ -1257,7 +1257,7 @@ const PIG_STATIONS = [
   {
     id: 'C', system: 'Respiratory System',
     setup: 'The thoracic cavity is pinned wide. Two pale, spongy organs flank the heart. Below them, a dome-shaped sheet of muscle separates the chest from the abdomen.',
-    region: 'DIAPHRAGM', emoji: null,
+    region: 'DIAPHRAGM', emoji: '',
     question: 'What does the diaphragm do when you inhale?',
     choices: ['It relaxes and rises, compressing the lungs', 'It contracts and flattens, expanding chest volume to draw air in', 'It filters incoming air for pathogens'],
     correct: 1,
@@ -1267,7 +1267,7 @@ const PIG_STATIONS = [
   {
     id: 'D', system: 'Urinary System',
     setup: 'Pinned against the dorsal body wall are two bean-shaped organs. A whitish tube runs from each toward the midline, merging at a small balloon-like organ below.',
-    region: 'KIDNEYS', emoji: null,
+    region: 'KIDNEYS', emoji: '',
     question: 'How do the kidneys maintain homeostasis?',
     choices: ['By secreting hormones that control heart rate', 'By filtering blood and regulating fluid/electrolyte balance', 'By absorbing nutrients from the digestive tract'],
     correct: 1,
@@ -1277,7 +1277,7 @@ const PIG_STATIONS = [
   {
     id: 'E', system: 'Nervous System',
     setup: 'The dorsal cranium is carefully opened. A small, wrinkled organ sits in the braincase. It connects via the spinal cord running down the dorsal side of the spine.',
-    region: 'BRAINSTEM', emoji: null,
+    region: 'BRAINSTEM', emoji: '',
     question: 'Which region controls involuntary functions like breathing and heart rate?',
     choices: ['The cerebrum — conscious thought and movement', 'The cerebellum — balance and coordination', 'The brainstem / medulla oblongata — autonomic functions'],
     correct: 2,
@@ -1429,7 +1429,7 @@ function showBioPractical() {
     const pct = score / PIG_STATIONS.length;
     let grade, gpaDelta, col;
     if (pct >= 1.0)        { grade='A+'; gpaDelta= 0.45; col='#F7B731'; }
-    else if (pct >= 0.8)   { grade='A';  gpaDelta= 0..3; col='#6BCB77'; }
+    else if (pct >= 0.8)   { grade='A';  gpaDelta= 0.3;  col='#6BCB77'; }
     else if (pct >= 0.6)   { grade='B'; gpaDelta= 0.1; col='#6BCB77'; }
     else if (pct >= 0.4)   { grade='C';  gpaDelta= -.1;    col='#aaa';    }
     else if (pct >= 0.2)   { grade='D';  gpaDelta=-0.3; col='#FC7B54'; }
@@ -1663,11 +1663,11 @@ function showPEBombThreat() {
 
     // Phase 1 sequence — plays up to the choice point
     const phase1 = [
-      { delay: 0,    pa: '[— PA STATIC —]',   text: null, effect: 'crackle' },
-      { delay: 900,  pa: '"ATTENTION ALL MONTA VISTA HIGH STUDENTS AND STAFF."', text: null, effect: 'alarm' },
-      { delay: 2800, pa: '"A THREAT HAS BEEN RECEIVED AT THIS FACILITY."', text: null, effect: null },
-      { delay: 4600, pa: '"THIS IS A LOCKDOWN. THIS IS NOT A DRILL."', text: null, effect: 'strobe' },
-      { delay: 6200, pa: '"ALL STUDENTS AND STAFF REPORT TO SECURE LOCATIONS IMMEDIATELY. DO NOT LEAVE YOUR SECURE LOCATION UNTIL FURTHER NOTICE."', text: null, effect: null },
+      { delay: 0,    pa: '[— PA STATIC —]',   text: '', effect: 'crackle' },
+      { delay: 900,  pa: '"ATTENTION ALL MONTA VISTA HIGH STUDENTS AND STAFF."', text: '', effect: 'alarm' },
+      { delay: 2800, pa: '"A THREAT HAS BEEN RECEIVED AT THIS FACILITY."', text: '', effect: '' },
+      { delay: 4600, pa: '"THIS IS A LOCKDOWN. THIS IS NOT A DRILL."', text: '', effect: 'strobe' },
+      { delay: 6200, pa: '"ALL STUDENTS AND STAFF REPORT TO SECURE LOCATIONS IMMEDIATELY. DO NOT LEAVE YOUR SECURE LOCATION UNTIL FURTHER NOTICE."', text: '', effect: '' },
     ];
 
     function addBeat(text, cls) {
@@ -1732,9 +1732,9 @@ function showPEBombThreat() {
     // Branch A — obey
     function runPhase2_stay() {
       const beats = [
-        { delay: 0,    pa: '[41 MINUTES LATER]', text: null, time: true },
-        { delay: 1400, pa: null, text: 'All-clear.' },
-        { delay: 4200, pa: null, text: 'You walk out into the afternoon.' },
+        { delay: 0,    pa: '[41 MINUTES LATER]', text: '', time: true },
+        { delay: 1400, pa: '', text: 'All-clear.' },
+        { delay: 4200, pa: '', text: 'You walk out into the afternoon.' },
       ];
 
       function rb(i) {
@@ -2120,32 +2120,32 @@ const _SR_STAT_ORDER = ['gpa','friendships','relationships','sports','intelligen
 // ── SOPHOMORE YEAR ──────────────────────────────────
 
 const SOPH_PATHS = [
-  { id:'ap_cs',   icon: null , title:'AP COMPUTER SCIENCE A',
+  { id:'ap_cs',   icon: '' , title:'AP COMPUTER SCIENCE A',
     desc:'Learn to code.',
     outcome:'',
     deltas:{ intelligence:0.7, extracurriculars:0.1, happiness:-0.7, gpa:-0.2 } },
-  { id:'studies', icon: null, title:'STUDIES CLASS',
+  { id:'studies', icon: '', title:'STUDIES CLASS',
     desc:'Group work is key.',
     outcome:'',
     deltas:{ gpa:0.4, relationships:1.0, happiness:0.9, extracurriculars:-0.2 } },
-  { id:'precalc', icon: null, title:'PRE-CALC HONORS',
+  { id:'precalc', icon: '', title:'PRE-CALC HONORS',
     desc:'First test. You open the booklet and know nothing.',
     outcome:'You fail the exam. Tutoring follows.',
     deltas:{ intelligence:1.0, gpa:-0.5, happiness:-1.5, extracurriculars:0.5 } },
-  { id:'physics', icon: null, title:'AP PHYSICS 1',
+  { id:'physics', icon: '', title:'AP PHYSICS 1',
     desc:'Your first introduction to physics.',
     outcome:'',
     deltas:{ gpa:0.3, friendships:0.9, happiness:-0.3, intelligence:1.2 } }
 ];
 
 const SOPH_EVENTS = [
-  { icon:null, title:'BRAWL STARS PHASE',
+  { icon:'', title:'BRAWL STARS PHASE',
     desc:'Brawl Stars is so back.',
     deltas:{ friendships:0.3, gpa:-0.1, happiness:0.4 } },
-  { icon:null, title:'THE PSAT',
+  { icon:'', title:'THE PSAT',
     desc:"First standardized test.",
     deltas:{ intelligence:0.3, happiness:-0.3 } },
-  { icon:null, title:'FITNESS JOURNEY',
+  { icon:'', title:'FITNESS JOURNEY',
     desc:'You start hitting the gym.',
     deltas:{ sports:0.8, happiness:0.3, extracurriculars:-0.2 } }
 ];
@@ -2269,27 +2269,27 @@ function showSophomoreYearEnd() {
 // ════════════════════════════════════════════════════════
 
 const JR_PATHS = [
-  { id:'calc_bc',     icon: null,  title:'CALC BC - THE CONLIN GRIND',
+  { id:'calc_bc',     icon: '',  title:'CALC BC - THE CONLIN GRIND',
     desc:'Mr. Conlin is a legend and a nightmare.',
     deltas:{ gpa:-0.3, intelligence:1.5, extracurriculars:0.2, happiness:-1.0 } },
-  { id:'dual_enroll', icon: null, title:'DUAL ENROLLMENT @ DE ANZA',
+  { id:'dual_enroll', icon: '', title:'DUAL ENROLLMENT @ DE ANZA',
     desc:'Your first experience with actual college courses.',
     deltas:{ gpa:0.3, intelligence:0.8, extracurriculars:0.3 } },
-  { id:'apush',       icon: null, title:'APUSH — MR.HOFFMAN',
+  { id:'apush',       icon: '', title:'APUSH — MR.HOFFMAN',
     desc:'Meet your new best friend, Heimler.',
     deltas:{ gpa:0.15, friendships:0.2, intelligence:0.5, happiness:-0.2 } }
 ];
 
 
 const JR_LIFE = [
-  { id:'socialite', icon: null, title:'THE SOCIALITE',
-    desc:null,
+  { id:'socialite', icon: '', title:'THE SOCIALITE',
+    desc:'',
     deltas:{ gpa:-0.4, friendships:1.0, relationships:1.1, happiness:1.0 } },
-  { id:'athlete',   icon:null, title:'TRIPLE-THREAT ATHLETE',
-    desc:null,
+  { id:'athlete',   icon:'', title:'TRIPLE-THREAT ATHLETE',
+    desc:'',
     deltas:{ gpa:-0.6, friendships:2.0, sports:3.0, intelligence:-1.1 } },
-  { id:'body',      icon:null, title:'BODY TRANSFORMATION',
-    desc:null,
+  { id:'body',      icon:'', title:'BODY TRANSFORMATION',
+    desc:'',
     deltas:{ sports:1.3, happiness:1.95, relationships:0.6, extracurriculars:-0.4 } }
 ];
 
@@ -4180,28 +4180,28 @@ function _assignCollege() {
 // ════════════════════════════════════════════════════════
 const _CAREER_PATHS = {
   5: [
-    { id:'cs_elite',   icon:null, label:'Computer Science / AI',     desc:'Top-tier CS program. Recruiting pipeline to FAANG before junior year.' },
-    { id:'finance',    icon:null, label:'Finance / Investment Banking', desc:'Finance track. Sophomore summer IB internship. Brutal and worth it.' },
-    { id:'pre_med',    icon:null, label:'Pre-Med / Biology',          desc:'3.9 GPA required. Med school or bust. You knew this going in.' },
-    { id:'law_track',  icon:null, label:'Political Science / Pre-Law', desc:'Debate team, law review, Bar exam in 7 years.' },
+    { id:'cs_elite',   icon:'', label:'Computer Science / AI',     desc:'Top-tier CS program. Recruiting pipeline to FAANG before junior year.' },
+    { id:'finance',    icon:'', label:'Finance / Investment Banking', desc:'Finance track. Sophomore summer IB internship. Brutal and worth it.' },
+    { id:'pre_med',    icon:'', label:'Pre-Med / Biology',          desc:'3.9 GPA required. Med school or bust. You knew this going in.' },
+    { id:'law_track',  icon:'', label:'Political Science / Pre-Law', desc:'Debate team, law review, Bar exam in 7 years.' },
   ],
   4: [
-    { id:'cs_high',    icon:null, label:'Computer Science',           desc:'Solid program. Internships at mid-tier tech companies are realistic.' },
-    { id:'business',   icon:null, label:'Business / Economics',       desc:'Finance, consulting, or grad school. Strong alumni network.' },
-    { id:'engineering',icon:null, label:'Engineering',               desc:'Mechanical, electrical, or civil. Steady demand, solid ceiling.' },
+    { id:'cs_high',    icon:'', label:'Computer Science',           desc:'Solid program. Internships at mid-tier tech companies are realistic.' },
+    { id:'business',   icon:'', label:'Business / Economics',       desc:'Finance, consulting, or grad school. Strong alumni network.' },
+    { id:'engineering',icon:'', label:'Engineering',               desc:'Mechanical, electrical, or civil. Steady demand, solid ceiling.' },
   ],
   3: [
-    { id:'cs_mid',     icon:null, label:'Information Technology',     desc:'IT and software development. Good market, realistic grind.' },
-    { id:'bio_sci',    icon:null, label:'Biology / Public Health',    desc:'Research, health sector, or nursing path.' },
-    { id:'comm',       icon:null, label:'Communications / Media',     desc:'Journalism, marketing, content. Competitive but wide open.' },
+    { id:'cs_mid',     icon:'', label:'Information Technology',     desc:'IT and software development. Good market, realistic grind.' },
+    { id:'bio_sci',    icon:'', label:'Biology / Public Health',    desc:'Research, health sector, or nursing path.' },
+    { id:'comm',       icon:'', label:'Communications / Media',     desc:'Journalism, marketing, content. Competitive but wide open.' },
   ],
   2: [
-    { id:'trade',      icon:null, label:'Business Administration',    desc:'Regional business track. Local companies, stable salary.' },
-    { id:'education',  icon:null, label:'Education',                  desc:'Teaching credential. Summers off. Meaningful work.' },
+    { id:'trade',      icon:'', label:'Business Administration',    desc:'Regional business track. Local companies, stable salary.' },
+    { id:'education',  icon:'', label:'Education',                  desc:'Teaching credential. Summers off. Meaningful work.' },
   ],
   1: [
-    { id:'transfer',   icon:null, label:'Transfer Track to UC/CSU',   desc:'Two years, then transfer. The 2+2 path is real and it works.' },
-    { id:'vocational', icon:null, label:'Vocational / Trade',         desc:'Electrician, HVAC, plumbing. Six figures faster than most 4-year paths.' },
+    { id:'transfer',   icon:'', label:'Transfer Track to UC/CSU',   desc:'Two years, then transfer. The 2+2 path is real and it works.' },
+    { id:'vocational', icon:'', label:'Vocational / Trade',         desc:'Electrician, HVAC, plumbing. Six figures faster than most 4-year paths.' },
   ],
 };
 
@@ -4245,68 +4245,68 @@ function _showEnding(college, careerId) {
   let title, salary, icon, desc, flavor;
 
   if (p >= 5 && careerId === 'cs_elite' && intel >= 8) {
-    title = 'FAANG SOFTWARE ENGINEER'; icon = null; salary = '$185,000';
+    title = 'FAANG SOFTWARE ENGINEER'; icon = ''; salary = '$185,000';
     desc = `Stanford or MIT CS. You get an offer sophomore year. By senior year you have a return internship and a full-time offer at $185k base. Stock options vest over four years. The total comp is closer to $300k. You live in a one-bedroom in SoMa and eat out every night.`;
     flavor = 'Peak outcome. You ran the table.';
   } else if (p >= 5 && careerId === 'finance' && intel >= 8) {
-    title = 'INVESTMENT BANKING ANALYST'; icon = null; salary = '$220,000';
+    title = 'INVESTMENT BANKING ANALYST'; icon = ''; salary = '$220,000';
     desc = `Bulge bracket. 80-hour weeks, two years of structured misery, and a title that opens every door afterward. Year-1 all-in comp: $220k. You call your parents every Sunday from a midtown hotel at 11 PM. They're proud. You're exhausted. You'd do it again.`;
     flavor = 'The classic grind. Respect.';
   } else if (p >= 5 && careerId === 'pre_med') {
-    title = 'MEDICAL SCHOOL ADMISSION'; icon = null; salary = '$0 (now)';
+    title = 'MEDICAL SCHOOL ADMISSION'; icon = ''; salary = '$0 (now)';
     desc = `You maintain a 3.8 in the hardest major on campus, survive the MCAT, and get into a top-10 med school. You are $300,000 in debt, residency is seven years away, and you genuinely love what you're doing. You are exactly the person this path was designed for.`;
     flavor = 'Long road. Right destination.';
   } else if (p >= 5 && careerId === 'law_track') {
-    title = 'LAW REVIEW / PRE-LAW TRACK'; icon = null; salary = '$160,000';
+    title = 'LAW REVIEW / PRE-LAW TRACK'; icon = ''; salary = '$160,000';
     desc = `You end up at a T-14 law school. First year associate at a biglaw firm, $220k salary, and billing 2,200 hours a year. You know exactly what you signed up for. The firm is ranked. The work is real.`;
     flavor = 'Built for this. Now deliver.';
   } else if (p >= 4 && (careerId === 'cs_high' || careerId === 'cs_elite') && intel >= 6.5) {
-    title = 'MID-TIER TECH ENGINEER'; icon = null; salary = '$130,000';
+    title = 'MID-TIER TECH ENGINEER'; icon = ''; salary = '$130,000';
     desc = `You land a full-time SWE role at a mid-tier tech company out of Berkeley or UCLA. $130k base, decent equity, good work-life balance. You're comfortable. Not rich — but you're building toward it.`;
     flavor = 'Solid career. Real trajectory.';
   } else if (p >= 4 && careerId === 'business') {
-    title = 'MANAGEMENT CONSULTANT'; icon = null; salary = '$95,000';
+    title = 'MANAGEMENT CONSULTANT'; icon = ''; salary = '$95,000';
     desc = `MBB won't touch you out of undergrad. Big-4 will. You join Deloitte's strategy practice at $95k, travel 3 days a week, and spend your twenties learning how companies actually work. Most people can't handle the pace. You decide if you can.`;
     flavor = 'Respectable ceiling. High floor.';
   } else if (p >= 4 && careerId === 'engineering') {
-    title = 'MECHANICAL / CIVIL ENGINEER'; icon = null; salary = '$88,000';
+    title = 'MECHANICAL / CIVIL ENGINEER'; icon = ''; salary = '$88,000';
     desc = `You passed the FE exam junior year. Offer at a mid-size engineering firm, $88k starting. Licensed PE in 4 years. Steady, stable, and you can actually explain what you do at dinner.`;
     flavor = 'Dependable. You built something.';
   } else if (p >= 3 && careerId === 'cs_mid' && intel >= 5) {
-    title = 'SOFTWARE DEVELOPER'; icon = null; salary = '$78,000';
+    title = 'SOFTWARE DEVELOPER'; icon = ''; salary = '$78,000';
     desc = `State school CS gets you in the door. $78k starting at a regional tech firm. Not glamorous, not FAANG, but the runway is real. You grind LeetCode nights and weekends, get better, and start targeting the next tier.`;
     flavor = 'Underestimated. Climbing.';
   } else if (p >= 3 && careerId === 'comm' && happy >= 6) {
-    title = 'CONTENT CREATOR / MEDIA'; icon = null; salary = '$55,000';
+    title = 'CONTENT CREATOR / MEDIA'; icon = ''; salary = '$55,000';
     desc = `Degree in communications, minor in digital media. You start at a content agency at $55k. Two years later you've built a side channel with 80k followers. The math starts to look interesting.`;
     flavor = 'Creative path. Nonlinear upside.';
   } else if (p >= 3 && careerId === 'bio_sci') {
-    title = 'RESEARCH ANALYST / PUBLIC HEALTH'; icon = null; salary = '$62,000';
+    title = 'RESEARCH ANALYST / PUBLIC HEALTH'; icon = ''; salary = '$62,000';
     desc = `Research position at a state health department. $62k, meaningful work, clear path to a master's program on tuition reimbursement. This isn't glamorous. The work is real.`;
     flavor = 'Steady. You chose purpose.';
   } else if (sports >= 7.5 && (careerId === 'cs_mid' || careerId === 'cs_high' || careerId === 'cs_elite' || p >= 3)) {
-    title = 'DIVISION I WALK-ON ATHLETE'; icon = null; salary = 'Full Ride';
+    title = 'DIVISION I WALK-ON ATHLETE'; icon = ''; salary = 'Full Ride';
     desc = `Thompson came through. Walk-on offer at a D1 program. The stipend is small, the scholarship is real, and you spend four years competing at the highest amateur level in the country. A handful of people get this. You're one of them.`;
     flavor = 'You earned every step of this.';
   } else if (p >= 2 && careerId === 'trade') {
-    title = 'REGIONAL BUSINESS CAREER'; icon = null; salary = '$58,000';
+    title = 'REGIONAL BUSINESS CAREER'; icon = ''; salary = '$58,000';
     desc = `Business administration degree from a local state school, $58k at a regional firm. Consistent raises, solid benefits, real work. The ceiling is lower but so is the stress. You'll be fine.`;
     flavor = 'Stable ground. Build from here.';
   } else if (p >= 2 && careerId === 'education') {
-    title = 'HIGH SCHOOL TEACHER'; icon = null; salary = '$52,000';
+    title = 'HIGH SCHOOL TEACHER'; icon = ''; salary = '$52,000';
     desc = `You come back to a place like Westbrook. $52k starting, summers off, a pension, and twenty-five kids a day who need someone to actually care. You remember what that felt like when it was you. You'll be good at this.`;
     flavor = 'Full circle. This matters.';
   } else if (p === 1 && careerId === 'transfer') {
-    title = 'TRANSFER STUDENT — UC/CSU BOUND'; icon = null; salary = 'TBD';
+    title = 'TRANSFER STUDENT — UC/CSU BOUND'; icon = ''; salary = 'TBD';
     desc = `De Anza to UCLA or UCSD via the guaranteed transfer agreement. Two years of focus gets you where a straight application could not. The GPA you build here is the GPA that gets you in. You have everything you need. Now use it.`;
     flavor = 'The 2+2. It works. Bet on yourself.';
   } else if (p === 1 && careerId === 'vocational') {
-    title = 'LICENSED ELECTRICIAN'; icon = null; salary = '$95,000+';
+    title = 'LICENSED ELECTRICIAN'; icon = ''; salary = '$95,000+';
     desc = `Four-year apprenticeship. Union card. $95k+ five years out, $120k after ten. No student debt. In-demand skill set. People will always need electricity. You saw the math before most people your age even declared a major. Smart.`;
     flavor = 'Slept on. Correctly calculated.';
   } else {
     // Generic fallback
-    title = 'FINDING YOUR WAY'; icon = null; salary = 'TBD';
+    title = 'FINDING YOUR WAY'; icon = ''; salary = 'TBD';
     desc = `You graduate from ${college.name}. The career path isn't clear yet — and that's okay. You have a degree, some skills, and four years of experience being a person under pressure. The job market is waiting. So is the rest of your life.`;
     flavor = 'Everyone starts somewhere.';
   }
