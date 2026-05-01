@@ -41,8 +41,8 @@ const STAT_LABELS = {
 // Stat bar colors — percentage-based so GPA (0–4) and others (0–10) use same thresholds
 function statColor(key, val) {
   const pct = key === 'gpa' ? val / 4 : val / 10;
-  if (pct >= 0.7) return '#F7B731';
-  if (pct >= 0.4) return '#6BCB77';
+  if (pct >= 0.8) return '#F7B731';
+  if (pct >= 0.5) return '#6BCB77';
   return '#FC7B54';
 }
 
@@ -55,36 +55,15 @@ function clampStat(key, val) {
 const HEIGHTS = ["5'2\"","5'3\"","5'4\"","5'5\"","5'6\"","5'7\"","5'8\"","5'9\"","5'10\"","5'11\"","6'0\"","6'1\"","6'2\"","6'3\"","6'4\"","6'5\""];
 
 const RUMORS = [
-  { text: 'Got expelled from their last school', tox: +2 },
-  { text: "Rumor is they're loaded but hiding it", tox: +1 },
-  { text: 'People say they were a prodigy at something', tox: 0 },
-  { text: "Word is they've already hooked up with someone here", tox: +2 },
-  { text: "Apparently their family is... controversial", tox: +1 },
-  { text: "People say they're not actually from here", tox: 0 },
-  { text: "They say this one's got a dark side", tox: +2 },
-  { text: "Supposedly the child of someone important", tox: +1 },
-  { text: "Overheard: 'Watch out for that one.'", tox: +1 },
-  { text: "They say they turned down a scholarship somewhere else", tox: 0 },
-  { text: "Someone said they used to be a completely different person", tox: 0 },
-  { text: "Apparently there's a video of them doing something embarrassing", tox: +2 },
-  { text: "Word is they've been to three different schools in two years", tox: +1 },
-  { text: "Supposedly they ghosted their entire old friend group over the summer", tox: +1 },
-  { text: "Heard they can actually fight — like, for real", tox: +1 },
-  { text: "People say they went through something serious last year", tox: 0 },
-  { text: "Word is they have a record", tox: +2 },
-  { text: "Someone swears they've seen them cry in a bathroom stall", tox: 0 },
-  { text: "They say this one's running from something", tox: +1 },
-  { text: "Heard they used to be homeschooled — this is their first real school", tox: 0 },
-  { text: "Supposedly dated someone twice their age over the summer", tox: +2 },
-  { text: "Heard they only got in because of a deal their parents made", tox: +1 },
-  { text: "Word is their parents are going through a really bad divorce", tox: 0 },
-  { text: "People say they're already talking to someone's girlfriend", tox: +2 },
-  { text: "Apparently they got caught cheating at their last school", tox: +2 },
-  { text: "Someone said they're only here for a semester", tox: 0 },
-  { text: "Overheard two teachers whispering about them on day one", tox: +1 },
-  { text: "Word is they turned down an offer from a D1 program", tox: 0 },
-  { text: "Supposedly they know something about someone powerful here", tox: +1 },
-  { text: "People say they used to be best friends with someone who hates them now", tox: +1 },
+  { text: 'Got expelled from their last school', friendships: -2 },
+  { text: "Rumor is they're loaded but hiding it", friendships: +1 },
+  { text: 'People say they were a prodigy at something', gpa: +.3 },
+  { text: "Word is they've already hooked up with someone here", relationships: +1 },
+  { text: "Apparently their family is... controversial", friendships: -.5 },
+  { text: "People say they're not actually from here", friendships: -1 },
+  { text: "They say this one's got a dark side", friendships: -2 },
+  { text: "Supposedly the child of someone important", friendships: +2 },
+  { text: "Overheard: 'Watch out for that one.'", happiness: -1 },
 ];
 
 const BACKGROUNDS = [
@@ -97,13 +76,13 @@ const BACKGROUNDS = [
   {
     id: 'legacy',
     label: 'LEGACY STUDENT',
-    desc: "Your family's name opens doors here.",
+    desc: "Your last name earns you respect.",
     bonus: { friendships: +2, gpa: -0.2, happiness: +1 },
   },
   {
     id: 'scholarship',
     label: 'SCHOLARSHIP KID',
-    desc: 'You earned your place. Everyone knows it.',
+    desc: 'You earned your place.',
     bonus: { gpa: +0.5, intelligence: +1, extracurriculars: +1 },
   },
   {
@@ -121,52 +100,52 @@ const BACKGROUNDS = [
   {
     id: 'military',
     label: 'MILITARY KID',
-    desc: "You've moved five times. This is just another school. You've gotten good at starting over.",
-    bonus: { intelligence: +1, friendships: -1, happiness: -1 },
+    desc: "You've moved five times.",
+    bonus: { intelligence: +1, friendships: -3, happiness: -1 },
   },
   {
     id: 'online_famous',
     label: 'QUIETLY INTERNET FAMOUS',
-    desc: "You have a following. Most people here don't know it yet.",
+    desc: "You have 4000 followers on tiktok.",
     bonus: { friendships: +1, extracurriculars: +2, happiness: +1 },
   },
   {
     id: 'returnee',
     label: 'RETURNEE',
-    desc: 'You went to middle school here, left for two years, and came back. Nobody knows why.',
+    desc: 'You went to middle school here, left for two years, and came back.',
     bonus: { intelligence: +1, friendships: -1 },
   },
   {
     id: 'prodigy',
     label: 'SKIPPED A GRADE',
-    desc: "You're younger than everyone. Some respect it. Others use it against you.",
+    desc: "You're younger than everyone.",
     bonus: { gpa: +0.8, intelligence: +2, friendships: -2 },
   },
   {
     id: 'old_money',
     label: 'OLD MONEY',
-    desc: "Your family has history at this school. Not all of it flattering.",
+    desc: "Your grandpa donated the science building.",
     bonus: { friendships: +1, happiness: +2, gpa: -0.2 },
   },
 ];
 
 const SECRETS = [
-  { id: 'anxiety',      label: 'You have anxiety',                  desc: 'You manage it. Mostly.',                                     icon: '🫀' },
-  { id: 'learning',     label: 'Learning disability (hidden)',       desc: "You've been compensating for years.",                         icon: '🧠' },
-  { id: 'wealthy',      label: 'Secretly very wealthy',             desc: "You don't look it. On purpose.",                             icon: '💰' },
-  { id: 'talent',       label: 'Hidden artistic talent',            desc: "You haven't shown anyone yet.",                              icon: '🎨' },
-  { id: 'family',       label: 'Difficult home life',               desc: "You leave it at the door. Every single day.",                icon: '🏠' },
-  { id: 'ex_athlete',   label: 'Quit a sport you were elite at',    desc: 'The muscle memory stays.',                                   icon: '⚡' },
-  { id: 'crush',        label: 'Already in love with someone here', desc: "First day. Already complicated.",                            icon: '💛' },
-  { id: 'following',    label: 'Anonymous online following',        desc: "Thousands know your work. Not your face.",                   icon: '📱' },
-  { id: 'chronic',      label: 'Chronic illness — managed, hidden', desc: "Invisible. Exhausting. Nobody knows.",                       icon: '💊' },
-  { id: 'therapy',      label: "You've been in therapy for 2 years", desc: "Best decision you ever made. You'll never tell anyone.",   icon: '🛋' },
-  { id: 'ghosted',      label: 'You ghosted your entire old friend group', desc: "They still don't know why. Neither do you, fully.",   icon: '👻' },
-  { id: 'writer',       label: 'You write — real stuff, dark stuff', desc: "Not for class. It goes somewhere nobody will ever read.",   icon: '✍️' },
-  { id: 'bad_breakup',  label: 'A relationship ended badly',        desc: "It shaped you more than you want to admit.",                 icon: '💔' },
-  { id: 'secret_keep',  label: "You know someone's secret",         desc: "Something big. You haven't decided what to do with it.",    icon: '🔑' },
-  { id: 'language',     label: 'Fluent in a language nobody here speaks', desc: "You use it to think. To stay private.",               icon: '🗣' },
-  { id: 'dropout_risk', label: 'You almost didn\'t come back this year', desc: "Something almost changed everything. It still might.", icon: '🚪' },
+  { id: 'anxiety',      label: 'You have anxiety',                  desc: 'You manage it. Mostly.',                                     icon: null },
+  { id: 'learning',     label: 'Learning disability (hidden)',       desc: "You've been compensating for years.",                         icon: null },
+  { id: 'wealthy',      label: 'Secretly very wealthy',             desc: "You don't look it. On purpose.",                             icon: null },
+  { id: 'talent',       label: 'Hidden artistic talent',            desc: "You haven't shown anyone yet.",                              icon: null },
+  { id: 'family',       label: 'Difficult home life',               desc: "You leave it at the door. Every single day.",                icon: null },
+  { id: 'ex_athlete',   label: 'Quit a sport you were elite at',    desc: 'The muscle memory stays.',                                   icon: null },
+  { id: 'crush',        label: 'Already in love with someone here', desc: "First day. Already complicated.",                            icon: null },
+  { id: 'following',    label: 'Anonymous online following',        desc: "Thousands know your work. Not your face.",                   icon: null },
+  { id: 'chronic',      label: 'Chronic illness — managed, hidden', desc: "Invisible. Exhausting. Nobody knows.",                       icon: null },
+  { id: 'therapy',      label: "You've been in therapy for 2 years", desc: "Best decision you ever made. You'll never tell anyone.",   icon: null},
+  { id: 'ghosted',      label: 'You ghosted your entire old friend group', desc: "They still don't know why. Neither do you, fully.",   icon: null },
+  { id: 'writer',       label: 'You write — real stuff, dark stuff', desc: "Not for class. It goes somewhere nobody will ever read.",   icon: null },
+  { id: 'bad_breakup',  label: 'A relationship ended badly',        desc: "It shaped you more than you want to admit.",                 icon: null },
+  { id: 'secret_keep',  label: "You know someone's secret",         desc: "Something big. You haven't decided what to do with it.",    icon: null },
+  { id: 'language',     label: 'Fluent in a language nobody here speaks', desc: "You use it to think. To stay private.",               icon: null },
+  { id: 'dropout_risk', label: 'You almost didn\'t come back this year', desc: "Something almost changed everything. It still might.", icon: null },
 ];
 
 // ── Utility ───────────────────────────────────────────
