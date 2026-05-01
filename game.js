@@ -272,9 +272,9 @@ function applyGroupStats(g) {
     s.gpa              = clamp(s.gpa              + 0.3, 0, 4);
   } else if (g === 'grind') {
     s.gpa            = clamp(s.gpa            + 0.8, 0, 4);
-    s.intelligence   = clamp(s.intelligence   + 3,   0, 10);
+    s.intelligence   = clamp(s.intelligence   + 1,   0, 10);
     s.relationships  = clamp(s.relationships  - 2,   0, 10);
-    s.happiness      = clamp(s.happiness      - 1,   0, 10);
+    s.happiness      = clamp(s.happiness      - 2,   0, 10);
   }
 }
 
@@ -339,10 +339,10 @@ function applyPersonalityStats(p) {
 //  SCENE 5 — RANDOMIZE
 // ════════════════════════════════════════════════════════
 const RANDOM_SEQUENCE = [
-  { key: 'height',     label: 'HEIGHT',     pool: HEIGHTS,     icon: '📏', accent: '#F7B731', glow: 'rgba(247,183,49,0.18)' },
-  { key: 'rumor',      label: 'RUMOR',      pool: RUMORS,      icon: '💬', accent: '#FC7B54', glow: 'rgba(252,123,84,0.2)',  special: true },
-  { key: 'background', label: 'BACKGROUND', pool: BACKGROUNDS, icon: '📋', accent: '#6BCB77', glow: 'rgba(107,203,119,0.2)', special: true },
-  { key: 'secret',     label: 'SECRET',     pool: SECRETS,     icon: '🔒', accent: '#E8849A', glow: 'rgba(232,132,154,0.2)', special: true, hidden: true },
+  { key: 'height',     label: 'HEIGHT',     pool: HEIGHTS,     icon: null, accent: '#F7B731', glow: 'rgba(247,183,49,0.18)' },
+  { key: 'rumor',      label: 'RUMOR',      pool: RUMORS,      icon: null, accent: '#FC7B54', glow: 'rgba(252,123,84,0.2)',  special: true },
+  { key: 'background', label: 'BACKGROUND', pool: BACKGROUNDS, icon: null, accent: '#6BCB77', glow: 'rgba(107,203,119,0.2)', special: true },
+  { key: 'secret',     label: 'SECRET',     pool: SECRETS,     icon: null, accent: '#E8849A', glow: 'rgba(232,132,154,0.2)', special: true, hidden: true },
 ];
 
 function startRandomizeScene() {
@@ -371,7 +371,7 @@ function startRandomizeScene() {
     // Show all cards at once in a grid
     const items = [
       { label: 'HEIGHT',     value: player.height,            sub: null,                       accent: '#C9913A', secret: false },
-      { label: 'RUMOR',      value: '"' + player.rumor + '"', sub: 'Affects early reputation', accent: '#C4613A', secret: false },
+      { label: 'RUMOR',      value: '"' + player.rumor + '"', sub: 'Affects your rep', accent: '#C4613A', secret: false },
       { label: 'BACKGROUND', value: player.background.label,  sub: player.background.desc,     accent: '#6E9E60', secret: false },
       { label: 'SECRET',     value: player.secret.label,      sub: player.secret.desc,         accent: '#C47A82', secret: true  },
     ];
@@ -420,7 +420,7 @@ function startRandomizeScene() {
 //  SCENE 6 — CHARACTER CARD
 // ════════════════════════════════════════════════════════
 function startCharCardScene() {
-  const groupLabels = { mob: 'GAYGOS', balance: 'XBOX', grind: "LUCAS'S GANG" };
+  const groupLabels = { mob: 'SOGYAG', balance: 'XOBX', grind: "SACUL" };
   const groupColors = { mob: '#FC7B54', balance: '#F7B731', grind: '#6BCB77' };
   const persLabels  = {
     grinder: 'THE GRINDER', social: 'SOCIAL BUTTERFLY',
@@ -568,12 +568,9 @@ function safeEventCheck() {
 // ════════════════════════════════════════════════════════
 
 const OR_SPEECH = [
-  { speaker: 'COACH RIVERA',         text: 'Welcome to Westbrook. You\'re freshmen. That means something here.' },
-  { speaker: 'COACH RIVERA',         text: 'This school has four hundred students. You\'ll see the same faces every single day for the next four years. What they think of you is entirely up to you.' },
-  { speaker: 'COACH RIVERA',         text: 'A few rules. Stay out of the senior lot. Don\'t touch the trophies in the front case. And if you\'re going to make a name for yourself — earn it.' },
-  { speaker: 'VICE PRINCIPAL HAYES', text: 'Your class schedules will be distributed at homeroom. Today is orientation. Look around. These are your people now.' },
-  { speaker: 'COACH RIVERA',         text: 'Before we continue — find your seat. This isn\'t assigned. But remember: where you sit on day one tells people something.' },
+  { speaker: 'COACH THOMAS',         text: 'Welcome to Monta Vista. You\'re a freshman. ' },
 ];
+
 let _orSpeechIdx = 0;
 let _orChoiceResolved = false; // guard: resolveOrientationChoice fires exactly once
 
@@ -590,7 +587,7 @@ function showOrientationOverlay() {
 function _renderSpeechLine(inner) {
   const line = OR_SPEECH[_orSpeechIdx];
   inner.innerHTML = `
-    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN ORIENTATION</div>
+    <div class="or-badge">MONTA VISTA HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN ORIENTATION</div>
     <div class="or-speech-speaker">${line.speaker}</div>
     <p class="or-speech-text">"${line.text}"</p>
     <div class="or-speech-nav">
@@ -618,32 +615,27 @@ function _renderSpeechLine(inner) {
 
 function _showSeatChoice(inner) {
   inner.innerHTML = `
-    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN ORIENTATION</div>
+    <div class="or-badge">MONTA VISTA HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN ORIENTATION</div>
     <h1 class="or-title">WHERE DO YOU SIT?</h1>
     <div class="or-scene">
-      <p>The gym smells like floor wax and new shoes. The bleachers are filling up fast. You've got maybe ninety seconds before Coach Rivera starts talking again.</p>
       <p class="or-prompt">Where do you go? <span class="or-key-hint">[ press 1 – 4 ]</span></p>
     </div>
     <div class="or-choices" id="or-choices-live">
       <button class="or-choice-btn" data-choice="alone_back">
         <span class="ocb-num">1</span>
         <span class="ocb-label">ALONE IN THE BACK</span>
-        <span class="ocb-hint">Top row. Nobody bothers you. You can see everything from up here.</span>
       </button>
       <button class="or-choice-btn" data-choice="familiar_face">
         <span class="ocb-num">2</span>
         <span class="ocb-label">NEXT TO SOMEONE FAMILIAR</span>
-        <span class="ocb-hint">You recognize them from middle school. Small relief. Just barely.</span>
       </button>
       <button class="or-choice-btn" data-choice="front_row">
         <span class="ocb-num">3</span>
         <span class="ocb-label">FRONT ROW</span>
-        <span class="ocb-hint">Make an impression. Let Coach Rivera see your face first.</span>
       </button>
       <button class="or-choice-btn" data-choice="popular_kids">
         <span class="ocb-num">4</span>
         <span class="ocb-label">NEXT TO THE POPULAR KIDS</span>
-        <span class="ocb-hint">You spot them immediately. Everyone does. A few glance over.</span>
       </button>
     </div>
   `;
@@ -675,24 +667,20 @@ function resolveOrientationChoice(choice) {
   _orChoiceResolved = true;
   const OUTCOMES = {
     alone_back: {
-      deltas: { intelligence: +1, happiness: -1, friendships: -1 },
-      text: 'Top row. You climb past empty seats until there\'s nobody on either side. The gym fills up below you.',
-      sub:  'Devon Clark sits two rows down. He nods once. Neither of you say anything. It\'s fine.',
+      deltas: { intelligence: +.3, happiness: -.6, friendships: -.8 },
+      text: 'Top row. The gym fills up below you.',
     },
     familiar_face: {
-      deltas: { friendships: +2, relationships: +1, happiness: +1 },
-      text: 'You recognize them from middle school — Jordan Park. Their face changes when they see you. Relief. Same as yours.',
-      sub:  '"Thank god," Jordan says. "Sit down before someone worse does." You do.',
+      deltas: { friendships: +.8, relationships: +.2, happiness: +.3 },
+      text: 'You recognize them from middle school.',
     },
     front_row: {
-      deltas: { gpa: +0.3, extracurriculars: +1, happiness: -1, friendships: -1 },
-      text: 'The front row is mostly empty. You take the center seat. Coach Rivera makes eye contact immediately.',
-      sub:  '"Good. A student who pays attention." Someone behind you laughs quietly. You pretend not to hear it.',
+      deltas: { gpa: +0.2, extracurriculars: +.3, happiness: -.5, friendships: -.3 },
+      text: 'The front row is mostly empty. You take the center seat.',
     },
     popular_kids: {
-      deltas: { friendships: +2, relationships: +1, happiness: +1, intelligence: -1 },
-      text: 'Tyler Brooks is already holding court in the third row. You walk straight toward the group like you\'ve been there before.',
-      sub:  'One of them — tall, red hoodie — slides over without being asked. Tyler watches you sit down. "You\'re new," he says. It\'s not a question.',
+      deltas: { friendships: +.8, relationships: +.6, happiness: +.2, intelligence: -.7 },
+      text: 'You walk straight toward the group like you\'ve been there before.',
     },
   };
 
@@ -706,7 +694,7 @@ function resolveOrientationChoice(choice) {
   // Swap inner content to result screen — no stat line shown
   const inner = document.querySelector('.or-inner');
   inner.innerHTML = `
-    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN ORIENTATION</div>
+    <div class="or-badge">MONTA VISTA HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN ORIENTATION</div>
     <p class="or-result-text">${outcome.text}</p>
     <p class="or-result-sub">${outcome.sub}</p>
     <button class="btn-primary" id="or-continue-btn" style="margin-top:28px;align-self:flex-start">BEGIN FRESHMAN YEAR →</button>
@@ -757,7 +745,7 @@ function renderMap() {
   // Title strip
   mapEl.innerHTML = `
     <div class="map-title-strip" style="grid-column:1/-1">
-      WESTBROOK HIGH SCHOOL
+      MONTA VISTA HIGH SCHOOL
       <span class="map-compass">CUPERTINO, CA ☀️</span>
     </div>
   `;
@@ -1049,26 +1037,26 @@ function _queueStatToast(key, delta) {
 const CLUB_DATA = {
   robotics: {
     name:       'ROBOTICS CLUB',
-    icon:       '🤖',
-    desc:       'Build robots, write code that moves metal, compete nationally.',
-    flavor:     'Meetings every Tuesday and Thursday in Room F3.',
-    joinDeltas: { gpa: -0.2, friendships: 1.5, relationships: -1.3, extracurriculars: 2.0 },
-    missDeltas: { gpa: -0.1, friendships: -0.5, extracurriculars: -0.5 },
+    icon:       null,
+    desc:       'Build robots, write code, compete nationally.',
+    flavor:     null,
+    joinDeltas: { gpa: -0.2, friendships: 0.4, relationships: 0.2, extracurriculars: 2.8 },
+    missDeltas: { },
   },
   football: {
     name:       'FOOTBALL TEAM',
-    icon:       '🏈',
-    desc:       'Practice every day after school. Friday night lights. The whole school watches.',
-    flavor:     'Tryouts this week. Practice on the field.',
-    joinDeltas: { gpa: -0.5, friendships: 1.8, sports: 2.0, intelligence: -1.6, extracurriculars: 1.2 },
-    missDeltas: { sports: -0.8, friendships: -0.6, happiness: -0.4 },
+    icon:       null,
+    desc:       'Practice every day after school.',
+    flavor:     null,
+    joinDeltas: { gpa: -0.5, friendships: 0.8, sports: 4.0, intelligence: -1, extracurriculars: 1.2 },
+    missDeltas: { },
   },
   none: {
     name:       'NO COMMITMENT',
-    icon:       '📚',
-    desc:       'Focus on your studies. Keep your schedule open. Your time is yours.',
-    flavor:     'No meetings. No obligations.',
-    joinDeltas: { gpa: 0.5, friendships: -1.0, intelligence: 1.4, extracurriculars: -0.8 },
+    icon:       null,
+    desc:       'Focus on your studies.',
+    flavor:     null,
+    joinDeltas: { gpa: 0.4, friendships: -0.8, intelligence: 0.3, extracurriculars: -1.1 },
     missDeltas: {},
   },
 };
@@ -1083,13 +1071,13 @@ function showClubFairOverlay(boothType) {
     ? `<div class="cf-rumor-tag">💬 <em>"${player.rumor}"</em></div>`
     : '';
   inner.innerHTML = `
-    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; CLUB FAIR</div>
+    <div class="or-badge">MONTA VISTA HIGH SCHOOL &nbsp;·&nbsp; CLUB FAIR</div>
     ${_rumorLine}
     <div class="cf-icon">${data.icon}</div>
     <div class="cf-title">${data.name}</div>
     <p class="cf-desc">${data.desc}</p>
     <p class="cf-flavor">${data.flavor}</p>
-    ${boothType !== 'none' ? '<p class="cf-warning">This is a commitment. Missing meetings has consequences.</p>' : ''}
+    ${boothType !== 'none' ? '<p class="cf-warning">Do you accept this commitment?.</p>' : ''}
     <div class="cf-buttons">
       <button class="btn-primary" id="cf-join-btn">JOIN →</button>
       <button class="cf-pass-btn" id="cf-pass-btn">PASS</button>
@@ -1132,11 +1120,11 @@ function resolveClubChoice(boothType, joined) {
 
   const inner = overlay.querySelector('.cf-inner');
   inner.innerHTML = `
-    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; CLUB FAIR</div>
+    <div class="or-badge">MONTA VISTA HIGH SCHOOL &nbsp;·&nbsp; CLUB FAIR</div>
     <div class="cf-icon">${joined ? '✓' : '—'}</div>
-    <div class="cf-title">${joined ? 'COMMITTED.' : 'YOUR CALL.'}</div>
+    <div class="cf-title">${joined ? 'COMMITTED.' : ''}</div>
     <p class="cf-desc">${joined
-      ? 'You\'re in. Show up when it counts.'
+      ? 'You\'re in.'
       : 'You walk past the booth. The recruiter doesn\'t say anything.'}</p>
     <button class="btn-primary" id="cf-done-btn" style="margin-top:28px">CONTINUE →</button>
     <div class="or-key-hint" style="margin-top:6px;font-size:0.72rem;opacity:0.5">[ ENTER ] to continue</div>
@@ -1155,7 +1143,7 @@ function resolveClubChoice(boothType, joined) {
         refreshStatsSidebar();
         if (window.MYTH_WORLD3D_CANVAS) window.MYTH_WORLD3D_CANVAS.requestPointerLock();
         setTimeout(() => {
-          if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('Head to Biology Room 102 — next to the Club Fair.');
+          if (window.MYTH_SHOW_NOTIF) window.MYTH_SHOW_NOTIF('Head to the Biology Room, next to the Club Fair.');
           if (joined && window.MYTH_CLUB_CHOICE && window.MYTH_CLUB_CHOICE !== 'none') {
             showECNavBanner(window.MYTH_CLUB_CHOICE);
           }
@@ -1174,8 +1162,8 @@ function showECNavBanner(ecChoice) {
 
   const isRobotics = ecChoice === 'robotics';
   const name = isRobotics ? 'Robotics Club' : 'Football Team';
-  const location = isRobotics ? 'the Gym (west side of campus)' : 'the Football Field (north of campus)';
-  const icon = isRobotics ? '⚙' : '▶';
+  const location = isRobotics ? '' : '';
+  const icon = isRobotics ? '' : '';
 
   const banner = document.createElement('div');
   banner.id = 'ec-nav-banner';
@@ -1213,9 +1201,9 @@ function showClubMissedOverlay() {
 
   const inner = overlay.querySelector('.cf-inner');
   inner.innerHTML = `
-    <div class="or-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; COMMITMENT</div>
+    <div class="or-badge">MONTA VISTA HIGH SCHOOL &nbsp;·&nbsp; COMMITMENT</div>
     <div class="cf-title">YOU MISSED ${clubName.toUpperCase()}.</div>
-    <p class="cf-desc">You didn't show up. People noticed.</p>
+    <p class="cf-desc">You didn't show up like you said you would.</p>
     <button class="btn-primary" id="cf-done-btn" style="margin-top:28px">OK</button>
     <div class="or-key-hint" style="margin-top:6px;font-size:0.72rem;opacity:0.5">[ ENTER ] to continue</div>
   `;
@@ -1249,52 +1237,52 @@ const PIG_STATIONS = [
   {
     id: 'A', system: 'Cardiovascular System',
     setup: 'The pig is pinned supine. The chest cavity is open, exposing a dark reddish-purple, fist-sized organ nestled between two deflated, pale lungs.',
-    region: 'HEART', emoji: '❤',
+    region: 'HEART', emoji: null,
     question: 'What is the primary function of the heart?',
     choices: ['Filter toxins from the bloodstream', 'Pump blood through the circulatory system', 'Regulate body temperature'],
     correct: 1,
     right: 'Correct. The heart is a muscular pump that drives blood through both the pulmonary and systemic circuits.',
-    wrong: 'Not quite. Filtration is the kidney\'s job — the heart is purely a pump.',
+    wrong: 'Not quite. Filtration is the kidney\'s job. The heart is purely a pump.',
   },
   {
     id: 'B', system: 'Digestive System',
     setup: 'The abdominal cavity is pinned open. A large, multi-lobed brownish-red organ dominates the upper right quadrant of the body cavity.',
-    region: 'LIVER', emoji: '🟤',
+    region: 'LIVER', emoji: null,
     question: 'What are the two main functions of the liver?',
     choices: ['Pumping blood and filtering oxygen', 'Producing bile and detoxifying blood', 'Gas exchange and nutrient absorption'],
     correct: 1,
     right: 'Correct. The liver produces bile for fat digestion and acts as the body\'s primary blood filter.',
-    wrong: 'That\'s not it. The large brownish organ is the liver — it produces bile and detoxifies blood.',
+    wrong: 'Wrong. The large brownish organ is the liver. Tt produces bile and detoxifies blood.',
   },
   {
     id: 'C', system: 'Respiratory System',
     setup: 'The thoracic cavity is pinned wide. Two pale, spongy organs flank the heart. Below them, a dome-shaped sheet of muscle separates the chest from the abdomen.',
-    region: 'DIAPHRAGM', emoji: '🫧',
+    region: 'DIAPHRAGM', emoji: null,
     question: 'What does the diaphragm do when you inhale?',
     choices: ['It relaxes and rises, compressing the lungs', 'It contracts and flattens, expanding chest volume to draw air in', 'It filters incoming air for pathogens'],
     correct: 1,
     right: 'Correct. Diaphragm contraction pulls the muscle downward, increasing chest volume and creating negative pressure.',
-    wrong: 'Close — it\'s a muscle, and muscles contract. The diaphragm flattens downward to pull air into the lungs.',
+    wrong: 'Wrong. It\'s a muscle, and muscles contract. The diaphragm flattens downward to pull air into the lungs.',
   },
   {
     id: 'D', system: 'Urinary System',
     setup: 'Pinned against the dorsal body wall are two bean-shaped organs. A whitish tube runs from each toward the midline, merging at a small balloon-like organ below.',
-    region: 'KIDNEYS', emoji: '🫘',
+    region: 'KIDNEYS', emoji: null,
     question: 'How do the kidneys maintain homeostasis?',
     choices: ['By secreting hormones that control heart rate', 'By filtering blood and regulating fluid/electrolyte balance', 'By absorbing nutrients from the digestive tract'],
     correct: 1,
     right: 'Correct. The kidneys filter roughly 180 L of blood daily, regulating water, electrolytes, and pH.',
-    wrong: 'Not quite. Kidneys filter blood and regulate fluid balance — homeostasis through excretion, not hormones.',
+    wrong: 'Wrong. Kidneys filter blood and regulate fluid balance, homeostasis through excretion, not hormones.',
   },
   {
     id: 'E', system: 'Nervous System',
     setup: 'The dorsal cranium is carefully opened. A small, wrinkled organ sits in the braincase. It connects via the spinal cord running down the dorsal side of the spine.',
-    region: 'BRAINSTEM', emoji: '🧠',
+    region: 'BRAINSTEM', emoji: null,
     question: 'Which region controls involuntary functions like breathing and heart rate?',
     choices: ['The cerebrum — conscious thought and movement', 'The cerebellum — balance and coordination', 'The brainstem / medulla oblongata — autonomic functions'],
     correct: 2,
     right: 'Correct. The medulla oblongata automates breathing, heart rate, and blood pressure without conscious input.',
-    wrong: 'Those handle voluntary actions. The brainstem / medulla oblongata controls the involuntary systems.',
+    wrong: 'Wrong. The brainstem / medulla oblongata controls the involuntary systems.',
   },
 ];
 
@@ -1346,13 +1334,11 @@ function showBioOutage() {
   const inner   = overlay.querySelector('.bio-inner');
 
   const beats = [
-    { delay: 0,    html: `<span class="outage-flash"></span><p>Mrs. Alvarez begins distributing the assessment rubrics. You pull back the paper towel on your tray. The smell hits harder now.</p>` },
-    { delay: 2400, html: `<p>Then — the lights. Every overhead fluorescent dies at once. The projector goes black. The ventilation fans wind down with a groan.</p>` },
-    { delay: 4600, html: `<span class="outage-emergency">⚠ EMERGENCY LIGHTING ACTIVATED</span><p>Red emergency strips flicker on along the baseboards. Outside the window, the sky has gone dark. Wind drives rain in sheets against the glass.</p>` },
-    { delay: 7200, html: `<p><span class="speaker">MRS. ALVAREZ:</span> <em>"Stay in your seats. Don't touch the specimens. Maintenance is — "</em> Her radio crackles. She listens. Her expression changes.</p>` },
-    { delay: 9800, html: `<p><span class="speaker">MRS. ALVAREZ:</span> <em>"All right. District policy. Weather-related power event. The practical is cancelled. Everyone receives credit for today."</em></p>` },
-    { delay: 12000, html: `<p class="outage-kicker">Automatic A. You didn't have to know a single organ. The storm just handed it to you.</p>` },
+    { delay: 0,    html: `<span class="outage-flash"></span><p>Mrs. Alvarez begins distributing the assessment rubrics.</p>` },
+    { delay: 2400, html: `<p>Then — the lights. All of them die at once.</p>` },
+    { delay: 4600, html: `<p class="outage-kicker">Because of the power outage, you got lucky and received an automatic A.</p>` },
   ];
+
 
   function renderBeat(idx) {
     const b = beats[idx];
@@ -1442,12 +1428,12 @@ function showBioPractical() {
   function showPracticalResult() {
     const pct = score / PIG_STATIONS.length;
     let grade, gpaDelta, col;
-    if (pct >= 1.0)        { grade='A+'; gpaDelta= 0.50; col='#F7B731'; }
-    else if (pct >= 0.8)   { grade='A';  gpaDelta= 0.35; col='#6BCB77'; }
-    else if (pct >= 0.6)   { grade='B+'; gpaDelta= 0.15; col='#6BCB77'; }
-    else if (pct >= 0.4)   { grade='B';  gpaDelta= 0;    col='#aaa';    }
-    else if (pct >= 0.2)   { grade='C';  gpaDelta=-0.15; col='#FC7B54'; }
-    else                   { grade='F';  gpaDelta=-0.40; col='#e05050'; }
+    if (pct >= 1.0)        { grade='A+'; gpaDelta= 0.45; col='#F7B731'; }
+    else if (pct >= 0.8)   { grade='A';  gpaDelta= 0..3; col='#6BCB77'; }
+    else if (pct >= 0.6)   { grade='B'; gpaDelta= 0.1; col='#6BCB77'; }
+    else if (pct >= 0.4)   { grade='C';  gpaDelta= -.1;    col='#aaa';    }
+    else if (pct >= 0.2)   { grade='D';  gpaDelta=-0.3; col='#FC7B54'; }
+    else                   { grade='F';  gpaDelta=-0.7; col='#e05050'; }
 
     inner.innerHTML = `
       <div class="practical-results">
@@ -1505,14 +1491,14 @@ function showBioChemical() {
   const inner   = overlay.querySelector('.bio-inner');
 
   const beats = [
-    { delay: 0,    text: 'Lab Technician Torres wheels in a supply cart just as the practical begins. He sets two bottles on the counter without checking the labels.' },
-    { delay: 2800, text: 'You see it before he does. The left bottle is pale yellow — the formaldehyde neutralizer. The right bottle is a concentrated bleach solution. He reaches for the right one.' },
-    { delay: 5800, text: 'The moment bleach contacts the residual formaldehyde in the trays, a pale greenish vapor rises from the nearest tray. Then the next. It spreads fast.' },
-    { delay: 8200, text: 'The smell is immediate and violent. Your eyes water. The front row staggers back.', special: 'smell' },
-    { delay: 10200, text: 'Jaylen Rodriguez — front left, the guy who always answers first — stands up from his stool. Looks confused. Then his knees buckle. His stool skitters across the tile.', special: 'faint' },
-    { delay: 13000, text: 'MRS. ALVAREZ: "OUT! EVERYONE OUT RIGHT NOW!" The fire alarm trips. Students flood into the hallway. You make it to the courtyard, eyes streaming.', special: 'alarm' },
-    { delay: 15500, text: 'WVFD Engine 7 arrives in four minutes. Two paramedics evaluate Jaylen on a gurney in the parking lot. A hazmat unit follows six minutes behind.', special: 'ambulance' },
-    { delay: 18500, text: 'Three students are treated for dizziness. Jaylen goes to the hospital for observation — he\'s fine, but the school is liable. Every student in Bio gets an automatic A, posted that night.' },
+    { delay: 0,    text: 'The janitor accidentally brought in the wrong cleaning chemicals.' },
+    { delay: 2800, text: 'Mrs.Chow, unaware, uses them on the pigs.' },
+    { delay: 5800, text: 'It turns out this causes a horrid-smelling scent.' },
+    { delay: 8200, text: 'Students enter the class the next day and immediately smell it.', special: 'smell' },
+    { delay: 10200, text: 'Your boy Yuvan smells it right away and collapses on the ground.', special: 'faint' },
+    { delay: 13000, text: 'MRS.CHOW: "OUT! EVERYONE OUT RIGHT NOW!" Students flood into the hallway. You make it to the courtyard with your eyes streaming.', special: 'alarm' },
+    { delay: 15500, text: 'The ambulance arrives in four minutes. Two paramedics evaluate Yuvan on a gurney in the parking lot.', special: 'ambulance' },
+    { delay: 18500, text: 'Three students are treated for dizziness. Yuvan goes to the hospital for observation. He\'s fine, but the school is liable. Every student in Bio gets an automatic A.' },
   ];
 
   inner.innerHTML = `
@@ -1573,22 +1559,24 @@ function showBioClassEvent() {
   overlay.classList.add('open');
   const inner = overlay.querySelector('.bio-inner');
   const _bgBioLines = {
-    new_kid:       "You barely know the building layout. You follow the antiseptic smell.",
-    legacy:        "The Westbrook crest above the door has been here longer than you have.",
-    scholarship:   "You earned your place in this room. Now you have to keep earning it.",
-    transfer:      "Different school, same frog smell. Some things don't change.",
-    local_legend:  "You've heard about this class since sixth grade. Everyone says it's brutal.",
-    military:      "You've started over enough times to know the first test sets the tone.",
-    online_famous: "Nobody in here knows you from your posts. Good.",
-    returnee:      "Room 102. You were in this hallway before. Feels different now.",
-    prodigy:       "You're the youngest one in here. You're also the most prepared.",
-    old_money:     "Your grandfather's name is on the science wing. No pressure.",
+    new_kid:       "Good luck!",
+    legacy:        "Good luck!",
+    scholarship:   "Good luck!",
+    transfer:      "Good luck!",
+    local_legend:  "Good luck!",
+    military:      "Good luck!",
+    online_famous: "Good luck!",
+    returnee:      "Good luck!",
+    prodigy:       "Good luck!",
+    old_money:     "Good luck!",
   };
+
   const _bgNote = (_bgBioLines[player.background && player.background.id] ||
-    "You make your way to the biology building. The antiseptic smell hits before you even open the door.");
+    "You make your way to the biology building.");
+
   inner.innerHTML = `
     <div class="bio-transition">
-      <div class="or-badge">WESTBROOK HIGH SCHOOL</div>
+      <div class="or-badge">MONTA VISTA HIGH SCHOOL</div>
       <div class="bio-trans-period">PERIOD 1</div>
       <div class="bio-trans-subject">BIOLOGY</div>
       <div class="bio-trans-room">South Wing · Room 102</div>
@@ -1632,7 +1620,7 @@ function showPEBombThreat() {
       <div class="threat-scene" id="threat-scene">
         <div class="threat-static" id="threat-static"></div>
         <div class="threat-alert-bar" id="threat-bar">
-          <span class="threat-bar-text">🚨 EMERGENCY BROADCAST — WESTBROOK HIGH SCHOOL 🚨</span>
+          <span class="threat-bar-text">EMERGENCY BROADCAST — MONTA VISTA HIGH SCHOOL</span>
         </div>
         <div class="threat-broadcast-stamp" id="threat-stamp">LIVE</div>
         <div class="threat-pa" id="threat-pa"></div>
@@ -1651,6 +1639,7 @@ function showPEBombThreat() {
 
     const _secretThought = (function() {
       const _t = {
+         /*
         anxiety:      "The silence is the worst part. Your brain won't stop running scenarios. You breathe through it, one count at a time. You've done this before.",
         learning:     "Your mind races in its own direction, like always. You catalog exits, patterns, details. A different kind of processing. It keeps you calm.",
         wealthy:      "You think about how none of this — the school, the floor, the bleachers — would feel real if you told anyone what your house looks like.",
@@ -1667,23 +1656,18 @@ function showPEBombThreat() {
         secret_keep:  "You think about what you know. About what it would mean if something actually happened here and certain people never got to answer for it.",
         language:     "You start counting in the other language. Quietly. In your head. It has always felt like a private room nobody else can enter.",
         dropout_risk: "You almost didn't come back this year. Sitting here now, you can't decide if that makes this feel more precious or more fragile.",
+        */
       };
-      return _t[player.secret && player.secret.id] || "The seconds stretch. You stop counting and just breathe.";
+      return _t[player.secret && player.secret.id] || "The seconds move slowly.";
     })();
 
     // Phase 1 sequence — plays up to the choice point
     const phase1 = [
       { delay: 0,    pa: '[— PA STATIC —]',   text: null, effect: 'crackle' },
-      { delay: 900,  pa: '"ATTENTION ALL WESTBROOK HIGH STUDENTS AND STAFF."', text: null, effect: 'alarm' },
-      { delay: 2800, pa: '"A CREDIBLE THREAT HAS BEEN RECEIVED AT THIS FACILITY."', text: null, effect: null },
+      { delay: 900,  pa: '"ATTENTION ALL MONTA VISTA HIGH STUDENTS AND STAFF."', text: null, effect: 'alarm' },
+      { delay: 2800, pa: '"A THREAT HAS BEEN RECEIVED AT THIS FACILITY."', text: null, effect: null },
       { delay: 4600, pa: '"THIS IS A LOCKDOWN. THIS IS NOT A DRILL."', text: null, effect: 'strobe' },
       { delay: 6200, pa: '"ALL STUDENTS AND STAFF REPORT TO SECURE LOCATIONS IMMEDIATELY. DO NOT LEAVE YOUR SECURE LOCATION UNTIL FURTHER NOTICE."', text: null, effect: null },
-      { delay: 9000, pa: null, text: 'The gym lights cut. Emergency strips on the ceiling click to red.', effect: 'dim' },
-      { delay: 11200, pa: null, text: '"CORNER — NORTHEAST — NOW! GO GO GO!" Coach Williams doesn\'t sound like a coach anymore.', effect: 'corner' },
-      { delay: 13400, pa: null, text: 'You compress into the far corner under the emergency exit sign. Cold concrete wall. Thirty bodies. Everyone is breathing too fast.', effect: 'hide' },
-      { delay: 15600, pa: null, text: 'Someone starts sobbing quietly behind you. A freshman you don\'t know. You don\'t turn around. Nobody does.', effect: null },
-      { delay: 17200, pa: null, text: _secretThought, effect: null },
-      { delay: 19000, pa: null, text: 'Coach Williams: "Nobody moves. I mean it. Nobody moves." His voice is completely flat. That\'s the scariest part.', effect: null },
     ];
 
     function addBeat(text, cls) {
@@ -2022,7 +2006,7 @@ function showFreshmanYearEnd() {
   const el = document.getElementById('year-end-overlay');
   el.innerHTML = `
     <div class="yr-inner">
-      <div class="yr-top-badge">WESTBROOK HIGH SCHOOL · CUPERTINO, CA</div>
+      <div class="yr-top-badge">MONTA VISTA HIGH SCHOOL · CUPERTINO, CA</div>
       <div class="yr-year-label">FRESHMAN YEAR</div>
       <div class="yr-complete">COMPLETE</div>
       <div class="yr-divider"></div>
@@ -2062,7 +2046,7 @@ function showFreshmanYearEnd() {
 }
 
 function groupLabels_g(g) {
-  return { mob: 'GAYGOS', balance: 'XBOX', grind: "LUCAS'S GANG" }[g] || '—';
+  return { mob: 'SOGYAG', balance: 'XOBX', grind: "SACUL" }[g] || '—';
 }
 function persLabels_g(p) {
   return {
@@ -4150,7 +4134,7 @@ function _grad_happiness() {
 
 function _grad_final() {
   const start = window.MYTH_START_STATS || {}, now = _currentStats();
-  _sophShow(`<div class="soph-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; CLASS OF 2030</div>
+  _sophShow(`<div class="soph-badge">MONTA VISTA HIGH SCHOOL &nbsp;·&nbsp; CLASS OF 2030</div>
     <h1 class="soph-title" style="font-size:2.8rem">YOU GRADUATED.</h1>
     <div class="soph-scene"><p style="font-size:1.1rem">Four years. Every decision, every consequence, every late night and early morning. That was your story. Now the next one starts.</p></div>
     <div class="yr-stats" style="width:100%;max-width:520px;margin:12px auto">
@@ -4440,7 +4424,7 @@ window.showFreshmanYearEnd = function() {
   }[window.MYTH_BIO_SCENARIO] || "Bio class. Whatever happened in that room, you survived it.";
 
   _sophShow(`
-    <div class="soph-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN YEAR — RECAP</div>
+    <div class="soph-badge">MONTA VISTA HIGH SCHOOL &nbsp;·&nbsp; FRESHMAN YEAR — RECAP</div>
     <h1 class="soph-title" style="font-size:2.6rem;margin-bottom:6px">YEAR ONE.</h1>
     <div class="soph-scene" style="max-width:560px;margin:0 auto 18px">
       <p style="font-size:1.2rem;line-height:1.8;color:#f0ece4">${_bioRecapLine}</p>
@@ -4462,7 +4446,7 @@ window.showFreshmanYearEnd = function() {
         { id:'studies', label:'STUDIES PERIOD',          desc:'Structured free period. More people. More drama. Easier on the GPA.' },
       ];
       _sophShow(`
-        <div class="soph-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; SOPHOMORE YEAR</div>
+        <div class="soph-badge">MONTA VISTA HIGH SCHOOL &nbsp;·&nbsp; SOPHOMORE YEAR</div>
         <h1 class="soph-title">PICK YOUR CLASSES.</h1>
         <div class="soph-scene"><p>You get to choose two courses this year. Choose wisely — you'll actually have to show up.</p></div>
         <div class="soph-grade-choice-grid" id="soph-course-grid" style="grid-template-columns:1fr 1fr 1fr">
@@ -5571,7 +5555,7 @@ function _fitness_workout(level) {
 window.showSophYearEnd = function() {
   const start = window.MYTH_START_STATS || {}, cur = Engine.getState().stats;
   _sophShow(`
-    <div class="soph-badge">WESTBROOK HIGH SCHOOL &nbsp;·&nbsp; END OF SOPHOMORE YEAR</div>
+    <div class="soph-badge">MONTA VISTA HIGH SCHOOL &nbsp;·&nbsp; END OF SOPHOMORE YEAR</div>
     <h1 class="soph-title" style="font-size:2.4rem;margin-bottom:6px">SOPHOMORE YEAR DONE.</h1>
     <div class="soph-scene" style="max-width:520px;margin:0 auto 12px">
       <p style="font-size:1.1rem;line-height:1.8;color:#f0ece4">Two years in. You know the campus now — the rhythms, the people, the unspoken rules. Something changed this year.</p>
