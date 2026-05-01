@@ -2632,6 +2632,16 @@ function initWorld3D(playerData) {
           calc_bc:     [window.showCalcBC_Class1,      window.showCalcBC_Class2],
           apush:       [window.showAPUSH_Class1,       window.showAPUSH_Class2],
           dual_enroll: [window.showDualEnroll_Class1,  window.showDualEnroll_Class2],
+          // Senior year
+          sr_admin:    [window.showSrApps],
+          sr_library:  [window.showSrLockIn],
+          sr_cafeteria:[window.showSrSenioritis],
+          sr_football: [window.showSrSunrise],
+          sr_gym:      [window.showSrHomecoming],
+          sr_gambler:  [window.showSrGambler],
+          sr_sports:   [window.showSrAthlete],
+          sr_assassin: [window.showSrAssassin],
+          sr_graduation:[window.showSrGraduation],
         };
         window.MYTH_SOPH_ON_DONE = _snt.done;
         var _fn = _classFns[_snt.course] && _classFns[_snt.course][_snt.classNum - 1];
