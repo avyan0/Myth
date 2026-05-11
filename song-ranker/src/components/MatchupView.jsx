@@ -110,6 +110,7 @@ export default function MatchupView({ songs, onVote, onReset, totalComparisons }
         <SongCard
           key={songA.id}
           song={songA}
+          position="a"
           onVote={() => handleVote(songA.id, songB.id)}
           isPlaying={activePlayer === songA.id}
           onPlay={() => setActivePlayer(songA.id)}
@@ -118,6 +119,7 @@ export default function MatchupView({ songs, onVote, onReset, totalComparisons }
         <SongCard
           key={songB.id}
           song={songB}
+          position="b"
           onVote={() => handleVote(songB.id, songA.id)}
           isPlaying={activePlayer === songB.id}
           onPlay={() => setActivePlayer(songB.id)}

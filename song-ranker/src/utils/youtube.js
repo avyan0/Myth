@@ -22,7 +22,6 @@ export async function fetchAllPlaylistItems(playlistId, apiKey) {
     if (pageToken) url.searchParams.set('pageToken', pageToken)
 
     const res = await fetch(url.toString())
-
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
       throw new Error(err?.error?.message || `API error ${res.status}`)
@@ -54,4 +53,33 @@ export async function fetchAllPlaylistItems(playlistId, apiKey) {
   } while (pageToken)
 
   return songs
+}
+
+// Checks each video against the Data API and returns only the ones that
+// actually exist and are public/unlisted. Batches in groups of 50.
+export async function filterAvailableSongs(songs, apiKey) {
+  const available = new Set()
+
+  for (let i = 0; i < songs.length; i += 50) {
+    const batch = songs.slice(i, i + 50).map(s => s.id)
+    const url = new URL('https://www.googleapis.com/youtube/v3/videos')
+    url.searchParams.set('part', 'status')
+    url.searchParams.set('id', batch.join(','))
+    url.searchParams.set('key', apiKey)
+
+    const res = await fetch(url.toString())
+    if (!res.ok) continue
+
+    const data = await res.json()
+    for (const item of data.items || []) {
+      const s = item.status
+      // Keep public + unlisted videos regardless of embeddability
+      // (Piped handles the non-embeddable ones)
+      if (s?.privacyStatus === 'public' || s?.privacyStatus === 'unlisted') {
+        available.add(item.id)
+      }
+    }
+  }
+
+  return songs.filter(s => available.has(s.id))
 }

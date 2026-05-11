@@ -1,10 +1,13 @@
-import { useRef, useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { loadYTApi, onYTReady } from '../utils/ytApi.js'
 
 const PIPED = 'https://piped.video'
 
-export default function SongCard({ song, onVote, isPlaying, onPlay }) {
-  const ytContainerRef = useRef(null)
+export default function SongCard({ song, onVote, isPlaying, onPlay, position }) {
+  // Use a stable DOM id — YT.Player targets it by string, not by React ref,
+  // so StrictMode's double-invoke doesn't break anything.
+  const playerId = `yt-player-${position}-${song.id}`
+
   const playerRef = useRef(null)
   const mountedRef = useRef(true)
   const [mode, setMode] = useState('yt')   // 'yt' | 'piped' | 'dead'
@@ -17,9 +20,11 @@ export default function SongCard({ song, onVote, isPlaying, onPlay }) {
     loadYTApi()
 
     onYTReady(() => {
-      if (!mountedRef.current || !ytContainerRef.current) return
+      if (!mountedRef.current) return
+      // Guard: the div must exist in the DOM
+      if (!document.getElementById(playerId)) return
       try {
-        playerRef.current = new window.YT.Player(ytContainerRef.current, {
+        playerRef.current = new window.YT.Player(playerId, {
           videoId: song.id,
           width: '100%',
           height: '100%',
@@ -34,24 +39,20 @@ export default function SongCard({ song, onVote, isPlaying, onPlay }) {
           events: {
             onStateChange(e) {
               if (!mountedRef.current) return
-              if (e.data === window.YT.PlayerState.PLAYING) {
+              if (e.data === window.YT?.PlayerState?.PLAYING) {
                 setLocalPlaying(true)
                 onPlay()
               } else if (
-                e.data === window.YT.PlayerState.PAUSED ||
-                e.data === window.YT.PlayerState.ENDED
+                e.data === window.YT?.PlayerState?.PAUSED ||
+                e.data === window.YT?.PlayerState?.ENDED
               ) {
                 setLocalPlaying(false)
               }
             },
             onError(e) {
               if (!mountedRef.current) return
-              // 100: not found, 101/150: embed blocked, 2/5: bad request / HTML5 error
-              if ([100, 101, 150].includes(e.data)) {
-                setMode('piped')
-              } else {
-                setMode('dead')
-              }
+              if ([100, 101, 150].includes(e.data)) setMode('piped')
+              else setMode('dead')
             },
           },
         })
@@ -66,9 +67,9 @@ export default function SongCard({ song, onVote, isPlaying, onPlay }) {
       try { playerRef.current?.destroy() } catch (_) {}
       playerRef.current = null
     }
-  }, [song.id, mode])
+  }, [song.id, mode, playerId])
 
-  // ── Pause when other card plays ───────────────────────────────────────
+  // ── Pause when the other card is playing ─────────────────────────────
   useEffect(() => {
     if (!isPlaying && localPlaying) {
       try { playerRef.current?.pauseVideo?.() } catch (_) {}
@@ -88,7 +89,8 @@ export default function SongCard({ song, onVote, isPlaying, onPlay }) {
       {/* ── Player ── */}
       <div className="song-card__player" onClick={e => e.stopPropagation()}>
         {mode === 'yt' && (
-          <div ref={ytContainerRef} style={{ width: '100%', height: '100%' }} />
+          // This div's id is what YT.Player targets; React never renders children into it.
+          <div id={playerId} style={{ width: '100%', height: '100%' }} />
         )}
 
         {mode === 'piped' && (

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { extractPlaylistId, fetchAllPlaylistItems } from '../utils/youtube.js'
+import { extractPlaylistId, fetchAllPlaylistItems, filterAvailableSongs } from '../utils/youtube.js'
 
 const ENV_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || ''
 
@@ -22,15 +22,23 @@ export default function PlaylistSetup({ onSongsLoaded }) {
     }
     setError('')
     setLoading(true)
-    setProgress('Fetching songs…')
+    setProgress('Fetching playlist…')
     try {
-      const songs = await fetchAllPlaylistItems(id, apiKey.trim())
-      if (songs.length === 0) {
+      const raw = await fetchAllPlaylistItems(id, apiKey.trim())
+      if (raw.length === 0) {
         setError('Playlist appears to be empty or all videos are private/deleted.')
         setLoading(false)
         return
       }
-      setProgress(`Loaded ${songs.length} songs!`)
+      setProgress(`Checking ${raw.length} videos for availability…`)
+      const songs = await filterAvailableSongs(raw, apiKey.trim())
+      const removed = raw.length - songs.length
+      if (songs.length === 0) {
+        setError('No playable videos found in this playlist.')
+        setLoading(false)
+        return
+      }
+      setProgress(`Ready — ${songs.length} songs loaded${removed > 0 ? ` (${removed} unavailable removed)` : ''}.`)
       onSongsLoaded(songs, id, apiKey.trim())
     } catch (e) {
       setError(e.message || 'Failed to fetch playlist.')
