@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react' // useRef kept for votedRef
 import SongCard from './SongCard.jsx'
 import TierHistogram from './TierHistogram.jsx'
 import RankingsView from './RankingsView.jsx'
@@ -6,7 +6,6 @@ import { getNextMatch, isComplete, getActiveTierCount } from '../utils/matchmaki
 
 export default function MatchupView({ songs, onVote, onReset, totalComparisons }) {
   const [match, setMatch] = useState(null)
-  const [activePlayer, setActivePlayer] = useState(null)
   const [showReset, setShowReset] = useState(false)
   const [showRankings, setShowRankings] = useState(false)
   const votedRef = useRef(false)
@@ -14,7 +13,6 @@ export default function MatchupView({ songs, onVote, onReset, totalComparisons }
   const advance = useCallback(() => {
     const next = getNextMatch(songs)
     setMatch(next)
-    setActivePlayer(null)
     votedRef.current = false
   }, [songs])
 
@@ -25,7 +23,6 @@ export default function MatchupView({ songs, onVote, onReset, totalComparisons }
   const handleVote = (winnerId, loserId) => {
     if (votedRef.current) return
     votedRef.current = true
-    setActivePlayer(null)
     setTimeout(() => {
       onVote(winnerId, loserId)
     }, 300)
@@ -110,19 +107,13 @@ export default function MatchupView({ songs, onVote, onReset, totalComparisons }
         <SongCard
           key={songA.id}
           song={songA}
-          position="a"
           onVote={() => handleVote(songA.id, songB.id)}
-          isPlaying={activePlayer === songA.id}
-          onPlay={() => setActivePlayer(songA.id)}
         />
         <div className="vs-divider">VS</div>
         <SongCard
           key={songB.id}
           song={songB}
-          position="b"
           onVote={() => handleVote(songB.id, songA.id)}
-          isPlaying={activePlayer === songB.id}
-          onPlay={() => setActivePlayer(songB.id)}
         />
       </div>
 
