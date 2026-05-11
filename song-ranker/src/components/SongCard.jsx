@@ -1,26 +1,23 @@
-import { useState } from 'react'
+import ErrorBoundary from './ErrorBoundary.jsx'
 
-const PIPED = 'https://piped.video'
-
-// Plain-iframe card — no YT IFrame API, nothing to crash.
-// Piped is primary: it plays all YouTube music without embedding restrictions.
-// YouTube is available as a toggle if the user prefers.
+// Plain YouTube iframe — no JS API, nothing to crash.
+// The load-time filter already strips deleted/private videos.
+// Songs with embedding disabled show YT's own "unavailable" screen inside
+// the iframe, which is fine — React never sees it as an error.
 function SongCardInner({ song, onVote }) {
-  const [useYT, setUseYT] = useState(false)
-
-  const pipedSrc  = `${PIPED}/embed/${song.id}?autoplay=0`
-  const ytSrc     = `https://www.youtube.com/embed/${song.id}?controls=1&rel=0&modestbranding=1&fs=0`
+  const src =
+    `https://www.youtube-nocookie.com/embed/${song.id}` +
+    `?controls=1&rel=0&modestbranding=1&fs=1`
 
   return (
     <div className="song-card" onClick={onVote}>
-
       <div className="song-card__player" onClick={e => e.stopPropagation()}>
         <iframe
-          key={useYT ? `yt-${song.id}` : `p-${song.id}`}
-          src={useYT ? ytSrc : pipedSrc}
+          key={song.id}
+          src={src}
           title={song.title}
           frameBorder="0"
-          allow="autoplay; encrypted-media"
+          allow="autoplay; encrypted-media; fullscreen"
           allowFullScreen
           style={{ width: '100%', height: '100%', display: 'block', border: 'none' }}
         />
@@ -33,12 +30,15 @@ function SongCardInner({ song, onVote }) {
           <div className="song-card__meta">
             <span className="tier-badge">Tier {song.tier}</span>
             <span className="comp-badge">{song.comparisons} matchups</span>
-            <button
-              className="source-toggle"
-              onClick={e => { e.stopPropagation(); setUseYT(v => !v) }}
+            <a
+              className="yt-link"
+              href={`https://music.youtube.com/watch?v=${song.id}`}
+              target="_blank"
+              rel="noreferrer"
+              onClick={e => e.stopPropagation()}
             >
-              {useYT ? 'Switch to Piped' : 'Switch to YouTube'}
-            </button>
+              ↗ YT Music
+            </a>
           </div>
         </div>
       </div>
@@ -50,8 +50,6 @@ function SongCardInner({ song, onVote }) {
   )
 }
 
-// Wrap in an inline error boundary so a broken iframe can never crash the app.
-import ErrorBoundary from './ErrorBoundary.jsx'
 export default function SongCard(props) {
   return (
     <ErrorBoundary song={props.song} onVote={props.onVote}>

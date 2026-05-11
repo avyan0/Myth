@@ -289,17 +289,16 @@ html, body, #root {
 .comp-badge { background: var(--surface2); color: var(--text-muted); }
 .fallback-badge { background: rgba(251, 146, 60, 0.15); color: var(--orange); }
 
-.source-toggle {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 100px;
+.yt-link {
   color: var(--text-muted);
   font-size: 11px;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 100px;
   padding: 2px 8px;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color 0.15s;
 }
-.source-toggle:hover { color: var(--text); border-color: var(--text-muted); }
+.yt-link:hover { color: var(--text); }
 
 .song-card--error { cursor: default; }
 .song-card--error .song-card__player { aspect-ratio: 16/9; }
