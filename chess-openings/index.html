@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Openings — Learn & Practice</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <span class="logo-icon">♟</span>
+    <span>Chess Openings</span>
+  </div>
+  <div class="header-stats">
+    <span class="stat-item">Lines learned: <strong id="stat-learned">0</strong></span>
+  </div>
+</header>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== HOME SCREEN ===== -->
+<div id="home-screen">
+  <div class="home-content">
+    <div class="home-title">
+      <h1>Master Chess Openings</h1>
+      <p>Learn the theory, explore all lines, and practice until it's second nature.</p>
+    </div>
+
+    <div class="color-tabs">
+      <button class="color-tab active" data-color="white">♔ White</button>
+      <button class="color-tab" data-color="black">♚ Black</button>
+    </div>
+
+    <div class="openings-grid" id="openings-grid"></div>
+  </div>
+</div>
+
+<!-- ===== OPENING SCREEN ===== -->
+<div id="opening-screen">
+  <div class="home-content" style="padding-bottom: 0; padding-top: 16px;">
+    <button class="back-btn" id="btn-back">← Back to Openings</button>
+  </div>
+
+  <div class="opening-layout">
+    <!-- Left: board and controls -->
+    <div class="board-area">
+      <div class="opening-header">
+        <h2 id="opening-title">Opening Name</h2>
+        <div class="opening-meta">
+          <span class="color-badge" id="color-badge">white</span>
+          <span class="eco-badge" id="eco-badge">E00</span>
+        </div>
+      </div>
+
+      <div class="board-wrapper">
+        <div class="board-coords-wrap">
+          <div></div>
+          <div class="coord-files" id="coord-files">
+            <span>a</span><span>b</span><span>c</span><span>d</span>
+            <span>e</span><span>f</span><span>g</span><span>h</span>
+          </div>
+          <div class="coord-ranks" id="coord-ranks">
+            <span>8</span><span>7</span><span>6</span><span>5</span>
+            <span>4</span><span>3</span><span>2</span><span>1</span>
+          </div>
+          <div class="chess-board" id="chess-board"></div>
+        </div>
+      </div>
+
+      <div class="move-controls">
+        <button class="ctrl-btn" id="btn-first" title="First move (Home)">⏮</button>
+        <button class="ctrl-btn" id="btn-prev" title="Previous move (←)">◀</button>
+        <span class="move-counter" id="move-counter">0 / 0</span>
+        <button class="ctrl-btn" id="btn-next" title="Next move (→)">▶</button>
+        <button class="ctrl-btn" id="btn-last" title="Last move (End)">⏭</button>
+        <button class="ctrl-btn" id="btn-flip" title="Flip board" style="margin-left: auto">⇅ Flip</button>
+      </div>
+
+      <div class="move-list-wrap">
+        <div class="move-list-title">Moves</div>
+        <div class="move-list" id="move-list"></div>
+      </div>
+    </div>
+
+    <!-- Right: panel -->
+    <div class="right-panel">
+      <div class="panel-tabs">
+        <button class="panel-tab active" data-tab="lines">Lines</button>
+        <button class="panel-tab" data-tab="practice">Practice</button>
+      </div>
+
+      <div class="panel-content">
+
+        <!-- Lines Tab -->
+        <div id="tab-lines">
+          <div class="opening-desc" id="line-description"></div>
+
+          <div class="lines-label">Available Lines</div>
+          <div id="lines-list"></div>
+
+          <div class="key-ideas" id="key-ideas-section">
+            <div class="key-ideas-title">Key Ideas</div>
+            <div id="key-ideas-list"></div>
+          </div>
+        </div>
+
+        <!-- Practice Tab -->
+        <div id="tab-practice" style="display:none">
+          <div class="practice-header">
+            <div class="practice-title">Practice Mode</div>
+            <div class="practice-desc">
+              Play through the opening moves from memory. The opponent's moves are played automatically.
+            </div>
+          </div>
+
+          <div class="score-display">
+            <div class="score-box">
+              <div class="score-num correct" id="score-correct">0</div>
+              <div class="score-label">Correct</div>
+            </div>
+            <div class="score-box">
+              <div class="score-num wrong" id="score-wrong">0</div>
+              <div class="score-label">Wrong</div>
+            </div>
+          </div>
+
+          <div class="practice-select">
+            <label>Practice line:</label>
+            <select id="practice-line-select">
+              <option value="all">All learned lines</option>
+            </select>
+          </div>
+
+          <div class="practice-status">
+            <div class="status-turn" id="practice-status-turn">Not practicing</div>
+            <div class="status-hint" id="practice-status-hint">Select a line and press Start Practice</div>
+          </div>
+
+          <div class="practice-result" id="practice-result"></div>
+
+          <div class="practice-progress">
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" id="progress-bar-fill" style="width:0%"></div>
+            </div>
+            <div class="progress-label">
+              <span id="progress-label-left">Move 0</span>
+              <span id="progress-label-right">0%</span>
+            </div>
+          </div>
+
+          <div class="practice-btns">
+            <button class="practice-btn primary" id="btn-start-practice">Start Practice</button>
+            <button class="practice-btn secondary" id="btn-hint">💡 Hint (show source)</button>
+            <button class="practice-btn secondary" id="btn-stop-practice">Stop Practice</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="engine.js"></script>
+<script src="openings.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
