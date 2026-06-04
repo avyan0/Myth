@@ -18,6 +18,7 @@ let state = {
     selectedSq: null,         // [r,c] or null
     score: { correct: 0, wrong: 0 },
   },
+  learnSelectedSq: null,      // selected square in learn mode
   progress: loadProgress(),   // { openingId: { lineId: { learned: bool, attempts, correct } } }
   boardFlipped: false,
   lastMove: null,             // { from: [r,c], to: [r,c] }
@@ -159,6 +160,7 @@ function renderPracticeMoveList() {
 // ===== Navigation =====
 function gotoMove(index) {
   if (state.practice.active) return; // disabled during practice
+  state.learnSelectedSq = null;
   state.currentMoveIndex = Math.max(0, Math.min(index, state.currentStates.length - 1));
   const g = state.currentStates[state.currentMoveIndex];
   const lm = buildLastMove(state.currentLine.moves, state.currentMoveIndex);
@@ -211,7 +213,66 @@ function handleSquareClick(r, c) {
     handlePracticeClick(r, c);
     return;
   }
-  // Learn mode: clicks do nothing (navigation via buttons/keys)
+  handleLearnClick(r, c);
+}
+
+// ===== Learn-mode click-to-move =====
+// Lets the user step through the line by clicking pieces instead of using buttons.
+function handleLearnClick(r, c) {
+  const moves = state.currentLine?.moves;
+  if (!moves) return;
+  const idx = state.currentMoveIndex;
+  if (idx >= moves.length) return; // already at end
+
+  const g = state.currentStates[idx];
+  const piece = g.board[r][c];
+  const isCurrentTurnPiece = piece &&
+    ((piece === piece.toUpperCase()) === (g.turn === 'white'));
+
+  // ── No piece selected yet ──────────────────────────────────────────────────
+  if (!state.learnSelectedSq) {
+    if (!isCurrentTurnPiece) return;
+    state.learnSelectedSq = [r, c];
+    const legalMoves = getLegalMoves(g, r, c);
+    const lm = buildLastMove(moves, idx);
+    renderBoard(g, [r, c], legalMoves, lm, state.boardFlipped);
+    return;
+  }
+
+  const [fr, fc] = state.learnSelectedSq;
+
+  // ── Clicked the same square → deselect ────────────────────────────────────
+  if (fr === r && fc === c) {
+    state.learnSelectedSq = null;
+    renderBoard(g, null, [], buildLastMove(moves, idx), state.boardFlipped);
+    return;
+  }
+
+  // ── Clicked another own piece → re-select ─────────────────────────────────
+  if (isCurrentTurnPiece) {
+    state.learnSelectedSq = [r, c];
+    const legalMoves = getLegalMoves(g, r, c);
+    renderBoard(g, [r, c], legalMoves, buildLastMove(moves, idx), state.boardFlipped);
+    return;
+  }
+
+  // ── Attempt to play the move ───────────────────────────────────────────────
+  state.learnSelectedSq = null;
+  const norm = s => s.replace(/[+#!?]/g, '');
+  const san = moveToSAN(g, fr, fc, r, c);
+
+  if (norm(san) === norm(moves[idx])) {
+    // Correct – advance the line
+    gotoMove(idx + 1);
+  } else {
+    // Wrong square – flash red and reset
+    const sq = document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+    if (sq) {
+      sq.classList.add('wrong-flash');
+      setTimeout(() => sq.classList.remove('wrong-flash'), 400);
+    }
+    renderBoard(g, null, [], buildLastMove(moves, idx), state.boardFlipped);
+  }
 }
 
 // ===== Load Opening =====
@@ -232,6 +293,7 @@ function loadLine(line) {
   state.currentStates = buildStates(line.moves);
   state.currentMoveIndex = 0;
   state.practice.active = false;
+  state.learnSelectedSq = null;
   state.lastMove = null;
   renderBoard(state.currentStates[0], null, [], null, state.boardFlipped);
   renderMoveList(line.moves, 0);
