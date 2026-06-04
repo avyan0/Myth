@@ -12,12 +12,11 @@ let state = {
   practice: {
     active: false,
     lineId: 'all',            // line id or 'all'
-    activeLine: null,
-    gamePractice: null,       // game state used in practice
-    moveIndex: 0,             // next expected move index
+    startingLines: [],        // lines filtered at practice start
+    movesPlayed: [],          // full move history this session
+    gamePractice: null,       // live game state
     selectedSq: null,         // [r,c] or null
     score: { correct: 0, wrong: 0 },
-    hintMode: false,
   },
   progress: loadProgress(),   // { openingId: { lineId: { learned: bool, attempts, correct } } }
   boardFlipped: false,
@@ -47,8 +46,7 @@ function renderBoard(gameState, selectedSq, legalMoves, lastMove, flipped) {
   if (!board) return;
   board.innerHTML = '';
 
-  // Determine render order
-  const rows = flipped ? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0]; // display rows
+  const rows = flipped ? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0];
   const cols = flipped ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
 
   const highlightSet = new Set((legalMoves || []).map(([r,c]) => r+','+c));
@@ -96,7 +94,7 @@ function renderBoard(gameState, selectedSq, legalMoves, lastMove, flipped) {
   if (rankEl) rankEl.innerHTML = [...ranks].map(r => `<span>${r}</span>`).join('');
 }
 
-// ===== Move List =====
+// ===== Move List (Learn Mode) =====
 function renderMoveList(moves, currentIndex) {
   const el = document.getElementById('move-list');
   if (!el) return;
@@ -115,13 +113,52 @@ function renderMoveList(moves, currentIndex) {
     btn.addEventListener('click', () => gotoMove(parseInt(btn.dataset.index)));
     el.appendChild(btn);
   }
-  // Scroll active into view
+  const active = el.querySelector('.active');
+  if (active) active.scrollIntoView({ block: 'nearest' });
+}
+
+// ===== Move List (Practice Mode) =====
+function renderPracticeMoveList() {
+  const el = document.getElementById('move-list');
+  if (!el) return;
+  el.innerHTML = '';
+  const moves = state.practice.movesPlayed;
+  for (let i = 0; i < moves.length; i++) {
+    if (i % 2 === 0) {
+      const num = document.createElement('span');
+      num.className = 'move-item';
+      num.innerHTML = `<span class="move-num">${i/2+1}.</span>`;
+      el.appendChild(num);
+    }
+    const btn = document.createElement('span');
+    btn.className = 'move-item' + (i === moves.length - 1 ? ' active' : '');
+    btn.textContent = moves[i];
+    el.appendChild(btn);
+  }
+
+  // Show "?" placeholder for the player's expected next move
+  const nextState = getPracticeNextState();
+  if (nextState && nextState.type === 'player') {
+    const idx = moves.length;
+    if (idx % 2 === 0) {
+      const num = document.createElement('span');
+      num.className = 'move-item';
+      num.innerHTML = `<span class="move-num">${idx/2+1}.</span>`;
+      el.appendChild(num);
+    }
+    const placeholder = document.createElement('span');
+    placeholder.className = 'move-item pending';
+    placeholder.textContent = '?';
+    el.appendChild(placeholder);
+  }
+
   const active = el.querySelector('.active');
   if (active) active.scrollIntoView({ block: 'nearest' });
 }
 
 // ===== Navigation =====
 function gotoMove(index) {
+  if (state.practice.active) return; // disabled during practice
   state.currentMoveIndex = Math.max(0, Math.min(index, state.currentStates.length - 1));
   const g = state.currentStates[state.currentMoveIndex];
   const lm = buildLastMove(state.currentLine.moves, state.currentMoveIndex);
@@ -141,11 +178,9 @@ function buildLastMove(moves, index) {
   if (index === 0) return null;
   const g0 = state.currentStates[index - 1];
   const g1 = state.currentStates[index];
-  // Find what changed
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
       if (g0.board[r][c] && !g1.board[r][c]) {
-        // piece moved from here - find where it went
         for (let tr = 0; tr < 8; tr++) {
           for (let tc = 0; tc < 8; tc++) {
             if (!g0.board[tr][tc] && g1.board[tr][tc] === g0.board[r][c]) {
@@ -170,13 +205,13 @@ function updateNavButtons() {
   if (el) el.textContent = `${idx} / ${max}`;
 }
 
-// ===== Square Click (Learn Mode) =====
+// ===== Square Click =====
 function handleSquareClick(r, c) {
   if (state.practice.active) {
     handlePracticeClick(r, c);
     return;
   }
-  // In learn mode, just go forward/back (clicking does nothing fancy)
+  // Learn mode: clicks do nothing (navigation via buttons/keys)
 }
 
 // ===== Load Opening =====
@@ -306,6 +341,40 @@ function updateScoreDisplay() {
   if (el2) el2.textContent = wrong;
 }
 
+// ===== Compatible-Lines Engine =====
+// Returns { type: 'player'|'opponent', moves: string[], compatibleCount: number }
+// or null if no compatible lines remain
+function getPracticeNextState() {
+  const opening = state.currentOpening;
+  const movesPlayed = state.practice.movesPlayed;
+  const nextIdx = movesPlayed.length;
+  const norm = s => s.replace(/[+#!?]/g, '');
+
+  const compatible = state.practice.startingLines.filter(line => {
+    if (nextIdx >= line.moves.length) return false;
+    for (let i = 0; i < nextIdx; i++) {
+      if (norm(line.moves[i]) !== norm(movesPlayed[i])) return false;
+    }
+    return true;
+  });
+
+  if (compatible.length === 0) return null;
+
+  // White opening: player is White (even indices 0, 2, 4…)
+  // Black opening: player is Black (odd indices 1, 3, 5…)
+  const isPlayerTurn = opening.color === 'white'
+    ? (nextIdx % 2 === 0)
+    : (nextIdx % 2 === 1);
+
+  const uniqueMoves = [...new Set(compatible.map(l => norm(l.moves[nextIdx])))];
+
+  return {
+    type: isPlayerTurn ? 'player' : 'opponent',
+    moves: uniqueMoves,
+    compatibleCount: compatible.length,
+  };
+}
+
 // ===== Start Practice =====
 function startPractice() {
   const o = state.currentOpening;
@@ -321,21 +390,16 @@ function startPractice() {
     candidateLines = candidateLines.filter(l => l.id === lineId);
   }
 
-  const line = candidateLines[Math.floor(Math.random() * candidateLines.length)];
   const practiceGame = createGame();
 
   state.practice.active = true;
-  state.practice.activeLine = line;
+  state.practice.startingLines = candidateLines;
+  state.practice.movesPlayed = [];
   state.practice.gamePractice = practiceGame;
-  state.practice.moveIndex = 0;
   state.practice.selectedSq = null;
-  state.practice.hintMode = false;
-
-  state.currentLine = line;
-  state.currentStates = buildStates(line.moves);
 
   renderBoard(practiceGame, null, [], null, state.boardFlipped);
-  renderMoveList(line.moves, 0);
+  renderPracticeMoveList();
   updateNavButtons();
 
   updatePracticeStatus();
@@ -348,25 +412,28 @@ function startPractice() {
   }
 }
 
+// Auto-play opponent's move (random from all compatible lines)
 function practiceAutoPlay() {
-  const line = state.practice.activeLine;
-  const idx = state.practice.moveIndex;
-  if (idx >= line.moves.length) return;
+  const next = getPracticeNextState();
+  if (!next || next.type !== 'opponent') return;
+
+  const san = next.moves[Math.floor(Math.random() * next.moves.length)];
 
   const g = state.practice.gamePractice;
-  const san = line.moves[idx];
   const newG = makeMove(g, san);
   state.practice.gamePractice = newG;
-  state.practice.moveIndex++;
+  state.practice.movesPlayed.push(san);
 
   const lm = buildLastMoveFromGames(g, newG);
   renderBoard(newG, null, [], lm, state.boardFlipped);
-  renderMoveList(line.moves, state.practice.moveIndex);
+  renderPracticeMoveList();
   updatePracticeStatus();
   updateProgressBar();
 
-  if (state.practice.moveIndex >= line.moves.length) {
-    finishPractice(true);
+  // Check if the book is exhausted after this move
+  const after = getPracticeNextState();
+  if (!after) {
+    setTimeout(() => finishPractice(true), 600);
   }
 }
 
@@ -387,45 +454,39 @@ function buildLastMoveFromGames(g0, g1) {
   return null;
 }
 
+// ===== Practice Click Handler =====
 function handlePracticeClick(r, c) {
   if (!state.practice.active) return;
 
-  const line = state.practice.activeLine;
-  const idx = state.practice.moveIndex;
-  if (idx >= line.moves.length) return;
+  const next = getPracticeNextState();
+  if (!next || next.type !== 'player') return; // not player's turn
 
   const g = state.practice.gamePractice;
   const o = state.currentOpening;
 
-  // Check if it's user's turn
-  const isUserTurn = (o.color === 'white') === (g.turn === 'white');
-  if (!isUserTurn) return;
-
   const piece = g.board[r][c];
   const isMyPiece = piece && ((piece === piece.toUpperCase()) === (g.turn === 'white'));
 
+  // First click: select piece
   if (!state.practice.selectedSq) {
     if (!isMyPiece) return;
     state.practice.selectedSq = [r, c];
     const legalMoves = getLegalMoves(g, r, c);
-    const lm = buildLastMoveFromGames(state.currentStates[idx > 0 ? idx : 0], g);
-    renderBoard(g, [r,c], legalMoves, lm, state.boardFlipped);
+    renderBoard(g, [r,c], legalMoves, null, state.boardFlipped);
     return;
   }
 
-  // Second click — try to make move
   const [fr, fc] = state.practice.selectedSq;
 
+  // Clicked same square: deselect
   if (fr === r && fc === c) {
-    // Deselect
     state.practice.selectedSq = null;
-    const lm = buildLastMoveFromGames(createGame(), g);
     renderBoard(g, null, [], null, state.boardFlipped);
     return;
   }
 
+  // Clicked another own piece: re-select
   if (isMyPiece) {
-    // Clicked another own piece — select that instead
     state.practice.selectedSq = [r, c];
     const legalMoves = getLegalMoves(g, r, c);
     renderBoard(g, [r,c], legalMoves, null, state.boardFlipped);
@@ -434,57 +495,81 @@ function handlePracticeClick(r, c) {
 
   // Attempt move
   state.practice.selectedSq = null;
+  const norm = s => s.replace(/[+#!?]/g, '');
   const san = moveToSAN(g, fr, fc, r, c);
-  const expectedSAN = line.moves[idx];
+  const normSan = norm(san);
 
-  // Normalize SANs for comparison (strip +/#)
-  const normSAN = (s) => s.replace(/[+#]/g, '');
+  // Check if this move exists in any compatible line
+  const matched = next.moves.find(e => norm(e) === normSan);
 
-  if (normSAN(san) === normSAN(expectedSAN) || san === expectedSAN) {
-    // Correct!
-    const newG = makeMove(g, expectedSAN);
+  if (matched) {
+    // ✓ Correct move
+    const newG = makeMove(g, matched);
     state.practice.gamePractice = newG;
-    state.practice.moveIndex++;
+    state.practice.movesPlayed.push(matched);
     state.practice.score.correct++;
 
     const lm = { from: [fr, fc], to: [r, c] };
     renderBoard(newG, null, [], lm, state.boardFlipped);
-    renderMoveList(line.moves, state.practice.moveIndex);
+    renderPracticeMoveList();
     updateScoreDisplay();
-    showPracticeResult(true, expectedSAN);
+    showPracticeResult(true, matched);
     updateProgressBar();
 
-    if (!state.progress[o.id]) state.progress[o.id] = {};
-    if (!state.progress[o.id][line.id]) state.progress[o.id][line.id] = { learned: true, attempts: 0, correct: 0 };
-    state.progress[o.id][line.id].attempts++;
-    state.progress[o.id][line.id].correct++;
+    // Record progress for all lines still compatible
+    const norm2 = s => s.replace(/[+#!?]/g, '');
+    for (const line of state.practice.startingLines) {
+      const played = state.practice.movesPlayed.map(norm2);
+      const lineMoves = line.moves.map(norm2);
+      if (played.length <= lineMoves.length &&
+          played.every((m, i) => m === lineMoves[i])) {
+        if (!state.progress[o.id]) state.progress[o.id] = {};
+        if (!state.progress[o.id][line.id])
+          state.progress[o.id][line.id] = { learned: true, attempts: 0, correct: 0 };
+        state.progress[o.id][line.id].attempts++;
+        state.progress[o.id][line.id].correct++;
+      }
+    }
     saveProgress();
 
-    if (state.practice.moveIndex >= line.moves.length) {
+    // Check if book is exhausted
+    const after = getPracticeNextState();
+    if (!after) {
       setTimeout(() => finishPractice(true), 600);
       return;
     }
 
-    // Auto-play opponent's move
-    const newIdx = state.practice.moveIndex;
-    const isNowUserTurn2 = (o.color === 'white') === (newG.turn === 'white');
-    if (!isNowUserTurn2 && newIdx < line.moves.length) {
+    // Auto-play opponent if it's their turn next
+    if (after.type === 'opponent') {
       setTimeout(() => practiceAutoPlay(), 600);
     } else {
       updatePracticeStatus();
     }
+
   } else {
-    // Wrong move
+    // ✗ Wrong move
     state.practice.score.wrong++;
     updateScoreDisplay();
-    showPracticeResult(false, expectedSAN);
 
-    if (!state.progress[o.id]) state.progress[o.id] = {};
-    if (!state.progress[o.id][line.id]) state.progress[o.id][line.id] = { learned: true, attempts: 0, correct: 0 };
-    state.progress[o.id][line.id].attempts++;
+    const hasMultiple = next.moves.length > 1;
+    showPracticeResult(false, next.moves[0], hasMultiple);
+
+    // Record failed attempt for compatible lines
+    const norm2 = s => s.replace(/[+#!?]/g, '');
+    for (const line of state.practice.startingLines) {
+      const played = state.practice.movesPlayed.map(norm2);
+      const lineMoves = line.moves.map(norm2);
+      if (played.length < lineMoves.length &&
+          played.every((m, i) => m === lineMoves[i])) {
+        if (!state.progress[o.id]) state.progress[o.id] = {};
+        if (!state.progress[o.id][line.id])
+          state.progress[o.id][line.id] = { learned: true, attempts: 0, correct: 0 };
+        state.progress[o.id][line.id].attempts++;
+      }
+    }
     saveProgress();
 
-    // Flash wrong
+    // Flash wrong target square
     const sq = document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
     if (sq) {
       sq.classList.add('wrong-flash');
@@ -494,16 +579,22 @@ function handlePracticeClick(r, c) {
   }
 }
 
-function showPracticeResult(correct, san) {
+function showPracticeResult(correct, san, hasMultiple = false) {
   const el = document.getElementById('practice-result');
   if (!el) return;
   el.className = 'practice-result show ' + (correct ? 'correct' : 'wrong');
-  el.textContent = correct ? `✓ Correct! ${san}` : `✗ Wrong. Expected: ${san}`;
+  if (correct) {
+    el.textContent = `✓ Correct! ${san}`;
+  } else {
+    el.textContent = hasMultiple
+      ? `✗ Wrong. Try: ${san} (or similar)`
+      : `✗ Wrong. Expected: ${san}`;
+  }
   setTimeout(() => el.classList.remove('show'), 1800);
 }
 
 function finishPractice(success) {
-  showToast(success ? '🎉 Line complete! Great job!' : 'Practice complete!');
+  showToast(success ? '🎉 All variations complete! Great job!' : 'Practice stopped.');
   state.practice.active = false;
   updatePracticeStatus();
   document.getElementById('btn-start-practice').textContent = 'Practice Again';
@@ -520,23 +611,24 @@ function updatePracticeStatus() {
     return;
   }
 
-  const g = state.practice.gamePractice;
-  const line = state.practice.activeLine;
-  const idx = state.practice.moveIndex;
-  const o = state.currentOpening;
+  const next = getPracticeNextState();
 
-  if (idx >= line.moves.length) {
-    statusEl.textContent = 'Line complete!';
+  if (!next) {
+    statusEl.textContent = 'All variations complete!';
     if (hintEl) hintEl.textContent = '';
     return;
   }
 
-  const isUserTurn = (o.color === 'white') === (g.turn === 'white');
-  statusEl.textContent = isUserTurn ? 'Your move' : "Opponent's move...";
-  if (hintEl) {
-    hintEl.textContent = isUserTurn
-      ? `Move ${Math.floor(idx/2)+1}: play the ${o.color} side`
-      : '';
+  if (next.type === 'player') {
+    const moveNum = Math.floor(state.practice.movesPlayed.length / 2) + 1;
+    statusEl.textContent = 'Your move';
+    if (hintEl) {
+      const v = next.compatibleCount;
+      hintEl.textContent = `Move ${moveNum} — ${v} variation${v !== 1 ? 's' : ''} in play`;
+    }
+  } else {
+    statusEl.textContent = "Opponent's move…";
+    if (hintEl) hintEl.textContent = '';
   }
 }
 
@@ -544,33 +636,42 @@ function updateProgressBar() {
   const el = document.getElementById('progress-bar-fill');
   const labelLeft = document.getElementById('progress-label-left');
   const labelRight = document.getElementById('progress-label-right');
-  if (!el || !state.practice.active) return;
+  if (!el) return;
 
-  const line = state.practice.activeLine;
-  const idx = state.practice.moveIndex;
-  const total = line.moves.length;
-  const pct = total > 0 ? (idx / total) * 100 : 0;
+  if (!state.practice.active || state.practice.startingLines.length === 0) {
+    el.style.width = '0%';
+    if (labelLeft) labelLeft.textContent = 'Move 0';
+    if (labelRight) labelRight.textContent = '0%';
+    return;
+  }
+
+  const played = state.practice.movesPlayed.length;
+  const maxLen = Math.max(...state.practice.startingLines.map(l => l.moves.length));
+  const pct = maxLen > 0 ? Math.min((played / maxLen) * 100, 100) : 0;
 
   el.style.width = pct + '%';
-  if (labelLeft) labelLeft.textContent = `Move ${idx} of ${total}`;
+  if (labelLeft) labelLeft.textContent = `Move ${played} of ${maxLen}`;
   if (labelRight) labelRight.textContent = Math.round(pct) + '%';
 }
 
+// ===== Hint =====
 function showHint() {
   if (!state.practice.active) return;
-  const line = state.practice.activeLine;
-  const idx = state.practice.moveIndex;
-  if (idx >= line.moves.length) return;
+  const next = getPracticeNextState();
+  if (!next || next.type !== 'player') return;
 
   const g = state.practice.gamePractice;
-  const o = state.currentOpening;
-  const isUserTurn = (o.color === 'white') === (g.turn === 'white');
-  if (!isUserTurn) return;
+  const san = next.moves[0]; // hint on first expected move
+  const parsed = parseSAN(san);
 
-  // Parse expected move and highlight source square
-  const parsed = parseSAN(line.moves[idx]);
+  if (parsed.type === 'castle') {
+    showToast(`Hint: Castle ${parsed.side === 'king' ? 'kingside (O-O)' : 'queenside (O-O-O)'}`);
+    return;
+  }
+
   if (parsed.type === 'move') {
-    const src = findSource(g, parsed.pieceType, parsed.targetRow, parsed.targetCol, parsed.disambigFile, parsed.disambigRank);
+    const src = findSource(g, parsed.pieceType, parsed.targetRow, parsed.targetCol,
+                           parsed.disambigFile, parsed.disambigRank);
     if (src) {
       const [r, c] = src;
       const legalMoves = getLegalMoves(g, r, c);
@@ -658,10 +759,8 @@ function showToast(msg) {
 
 // ===== Init =====
 function init() {
-  // Header stats
   updateHeaderStats();
 
-  // Color filter tabs
   document.querySelectorAll('.color-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.color-tab').forEach(t => t.classList.remove('active'));
@@ -671,31 +770,31 @@ function init() {
     });
   });
 
-  // Panel tabs
   document.querySelectorAll('.panel-tab').forEach(tab => {
     tab.addEventListener('click', () => switchPanelTab(tab.dataset.tab));
   });
 
-  // Navigation buttons
   document.getElementById('btn-first')?.addEventListener('click', () => gotoMove(0));
   document.getElementById('btn-prev')?.addEventListener('click', () => gotoMove(state.currentMoveIndex - 1));
   document.getElementById('btn-next')?.addEventListener('click', () => gotoMove(state.currentMoveIndex + 1));
   document.getElementById('btn-last')?.addEventListener('click', () => gotoMove(state.currentStates.length - 1));
   document.getElementById('btn-flip')?.addEventListener('click', () => {
     state.boardFlipped = !state.boardFlipped;
-    const g = state.practice.active ? state.practice.gamePractice : state.currentStates[state.currentMoveIndex];
-    const lm = buildLastMove(state.currentLine?.moves || [], state.currentMoveIndex);
+    const g = state.practice.active
+      ? state.practice.gamePractice
+      : state.currentStates[state.currentMoveIndex];
+    const lm = state.practice.active
+      ? null
+      : buildLastMove(state.currentLine?.moves || [], state.currentMoveIndex);
     renderBoard(g, null, [], lm, state.boardFlipped);
   });
 
-  // Back button
   document.getElementById('btn-back')?.addEventListener('click', () => {
     state.practice.active = false;
     showHomeScreen();
     updateHeaderStats();
   });
 
-  // Practice buttons
   document.getElementById('btn-start-practice')?.addEventListener('click', startPractice);
   document.getElementById('btn-hint')?.addEventListener('click', showHint);
   document.getElementById('btn-stop-practice')?.addEventListener('click', () => {
@@ -705,7 +804,6 @@ function init() {
     document.getElementById('btn-start-practice').textContent = 'Start Practice';
   });
 
-  // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (state.screen !== 'opening' || state.practice.active) return;
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') gotoMove(state.currentMoveIndex + 1);
