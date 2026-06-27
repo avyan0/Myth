@@ -51,8 +51,8 @@ export default function PlaylistSetup({ onSongsLoaded }) {
     <div className="center-view">
       <div className="auth-card">
         <div className="auth-icon">♪</div>
-        <h1>Song Ranker</h1>
-        <p className="subtitle">Rank your playlist one matchup at a time</p>
+        <h1>Song Sorter</h1>
+        <p className="subtitle">Merge-sort your playlist into one complete ranking</p>
 
         {!ENV_API_KEY && (
           <div className="field-group">
