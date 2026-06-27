@@ -4,6 +4,16 @@ import SortView from './components/SortView.jsx'
 import { loadState, saveState, clearState } from './utils/storage.js'
 import { initSort } from './utils/mergesort.js'
 
+// Fisher-Yates shuffle (returns a new array)
+function shuffle(arr) {
+  const a = arr.slice()
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
 export default function App() {
   // songsById: { [id]: songData }, sort: serialized merge-sort state
   const [data, setData] = useState(null)
@@ -29,10 +39,12 @@ export default function App() {
         onSongsLoaded={(songs, playlistId) => {
           const songsById = {}
           for (const s of songs) songsById[s.id] = s
+          // Shuffle so matchups don't follow playlist order
+          const ids = shuffle(songs.map(s => s.id))
           setData({
             songsById,
             playlistId,
-            sort: initSort(songs.map(s => s.id)),
+            sort: initSort(ids),
           })
         }}
       />
